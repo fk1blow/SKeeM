@@ -18,17 +18,17 @@ var ErrorMessages = {
 
 
 var WebSocketWrapper = SKMObject.extend({
-	_nativeConstructor: null,
+  _nativeConstructor: null,
 
-	_socket: null,
+  _socket: null,
 
-	initialize: function() {
-		Logger.debug('%cnew WebSocketWrapper', 'color:#A2A2A2');
-		this._socket = null;
-		this._nativeConstructor = this.getNativeConstructor();
-	},
+  initialize: function() {
+    Logger.debug('%cnew WebSocketWrapper', 'color:#A2A2A2');
+    this._socket = null;
+    this._nativeConstructor = this.getNativeConstructor();
+  },
 
-	getProperConstructor: function() {
+  getProperConstructor: function() {
     var c = null;
     if ('WebSocket' in window)
       c = WebSocket;
@@ -52,13 +52,13 @@ var WebSocketWrapper = SKMObject.extend({
   createSocket: function(url, protocols) {
     var c = this.getNativeConstructor();
     if ( !arguments.length )
-    	throw new TypeError(ErrorMessages.MISSSING_URL);
+      throw new TypeError(ErrorMessages.MISSSING_URL);
     this._socket = (protocols) ? new c(url, protocols) : new c(url);
     return this._socket;
   },
 
   destroySocket: function() {
-  	if ( !this._socket )
+    if ( !this._socket )
       return false;
     this._socket.close();
     this._socket = null;
