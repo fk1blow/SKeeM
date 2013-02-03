@@ -1,0 +1,70 @@
+### Today
+	- finishe Buffered send, Queue messaging and the Queued messaging timer
+		- the timer shouldn't run if the bufferedAmount or the queue has not pending
+		message stored
+			- stop the timer when those conditions occure
+	- finish the Timer implementation
+		- add ability to set the maximum nr of ticks
+	- add buffered send to websocket
+		- add a queue to the send method
+		- finish the ping method
+
+
+### Read more about stream, fragmentationa and buffers
+	- http://news.ycombinator.com/item?id=3377406
+	- usually, the buffer is used to fragment the messages and to keep some sort
+	of copy in case the server is not responding
+	- http://www.whatwg.org/specs/web-apps/current-work/multipage/network.html#dom-websocket-bufferedamount
+			
+		CODE:
+		----
+				
+		var socket = new WebSocket('ws://game.example.com:12010/updates');
+		socket.onopen = function () {
+		  setInterval(function() {
+		    if (socket.bufferedAmount == 0)
+		      socket.send(getUpdateData());
+		  }, 50);
+		};
+
+
+### https://github.com/LearnBoost/socket.io-client/blob/master/lib/transports/websocket.js
+
+
+### Add specific interaction methods
+	- sendMessage(), which will send a message as a UTF8 string
+	- sendPacket(), sends an ArrayBuffer
+
+	
+### Add maximum message sizes
+	- https://github.com/LearnBoost/socket.io/issues/886
+
+
+### Bindings and closures
+
+In loc sa bind-uiesti un closure declarand "self = this", mai bine adaugi un mecanism de binding( bind(function, context) ).
+Acest mecanism va permite binduirea unor functii pe un anumit context.
+
+EX:
+
+# 1
+function() {
+	var self = this;
+	......
+	aHandler(function callbackfn() {
+		....
+		// use [self] somewhere over here
+		....
+	})
+}
+
+# 2
+function() {
+	aHandler(this.handleThisThing, this);
+        // and don't forget to bind the aHandler to the correct context
+}
+
+function handleThisThing() {
+	// manipulate the handler here
+	// will also have access to the correct [this] variable
+}

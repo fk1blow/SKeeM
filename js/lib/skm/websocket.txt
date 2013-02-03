@@ -1,0 +1,65 @@
+@SKMWebSocket
++ wrapper: Wrapper
++ connect()
++ disconnect()
++ send()
++ ping()
+
+
+@Wrapper
++ nativeConstructor:WebSocket
+
+
+@EventsHandler
++ handleOnOpen()
++ handleOnClose()
++ handleOnError()
++ handleOnMessage()
++ handleOnPing()
+
+
+-------------------------------------------------------------
+
+/*
+- Deals with handling the native wrapper
+	- Gets the Native constructor
+- Creates the object from the native constructor
+- Create delegate handle object
+	- Delegate handler object will deal with the events of the Wrapper
+*/
+@Wrapper
+
+
+/*
+- Will handle the wrapper's events
+- Handle onopen, onclose, onerror native events
+*/
+@EventsHandler
+
+
+/**
+- An object that creates a connection to an endpoint using a specific transport layer
+- Transport layer could be a WebSocket, Ajax, Flash connection....
+- Handles connect, disconnect, send, ping messages
+- Should be an abstract object that will use a specific transport(either websocket or ajax)
+- NO: Implements the stack for the [bufferedAmount]
+*/
+@Connection
+
+
+-------------------------------------------------------------
+
+
+1. Identify the Base Objects
+	1.1 NativeWrapper
+	- this is the Object that wraps the native implementation, wheter is MozWebSocket or WebSocket
+	- this can(not sure if :D) be the main object, the one that will compose the other
+2. Identify the Main Object
+	2.1 That object can be name SKMWebSocket
+	- this will create the wrapper, 
+
+
+
+
+
+

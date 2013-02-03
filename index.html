@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>Seek-a-boo</title>
+	<style>
+		/*body, html { overflow:hidden; }*/
+		#button { font-size:22px; line-height:62px; padding:0 20px; display:inline-block; background-color: black; text-decoration:none; color:white; }
+		html, body { padding:0; margin:0; }
+		body { -webkit-touch-callout: none !important; }
+		a { -webkit-user-select: none !important; text-decoration: none; }
+
+		#console-wrapper {
+			/*float:right;*/
+			width:40%;
+		}
+		#console {
+			height:100px;
+			white-space: nowrap;
+			background-color: #d2d2d2;
+		}
+		#wrapper {
+			float:left;
+		}
+
+		#playbackControls { list-style-type: none; margin-bottom:0px; }
+		#playbackControls li { display:inline-block; background-color: gray; }
+		#playbackControls li a { display: block; padding:0 10px; line-height: 30px; color:#fff; }
+		#playbackControls li a:hover { background-color: red; }
+	</style>
+
+	
+	<script type="text/javascript" src="js/lib/require.min.js?build=146x2" data-main="js/application.js"></script>
+	<!--<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/ember.js/0.9.8/ember-0.9.8.min.js" ></script>-->
+
+  <!--<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.3/underscore-min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.10/backbone-min.js"></script>
+  <script type="text/javascript" src="js/playbackControls.js"></script>-->
+</head>
+<body>
+
+
+<ul id="playbackControls">
+	<li><a href="#" id="playbackBack">Back</a></li>
+	<li><a href="#" id="playbackStop">Stop</a></li>
+	<li><a href="#" id="playbackPause">Pause</a></li>
+	<li><a href="#" id="playbackPlay">Play</a></li>
+	<li><a href="#" id="playbackForward">Forward</a></li>
+</ul>
+
+<br style="clear:both" />
+
+
+<!-- <h3>Scroll disable; touch events; cacamaca</h3> -->
+<div id="console-wrapper">
+	<div id="console"></div>
+</div>
+
+<div id="wrapper" style="width:60%;">
+	<p id="update"></p>
+	<p id="create"></p>
+	<p id="delete"></p>
+
+	<div class="touch-canvas" style="height:600px; background-color:#22aa66">
+		<a id="button" href="#">test button</a>
+	</div>
+</div>
+
+
+<!-- <script type="text/javascript" src="js/libs/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/libs/underscore-min.js"></script>
+<script type="text/javascript" src="js/libs/console-wrapper.js"></script>
+<script type="text/javascript" src="js/libs/skm.js"></script>
+<script type="text/javascript" src="js/application.js"></script> -->
+
+</body>
+</html>
