@@ -5,7 +5,7 @@
  * 	2 - observable
  *
  * #1 Subscribable
- * - this mixin gives the ability to subscribe to notifications
+ * - basic pub/sub mechanism
  *
  * #2 Observable
  * - ability to observe object properties
