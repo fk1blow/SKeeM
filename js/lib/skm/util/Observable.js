@@ -1,7 +1,6 @@
-
 /**
  * Break apart the Publish-Subcribe part of the Observable
- * and build two distinc modules:
+ * and build two distinct modules:
  * 	1 - subscribable
  * 	2 - observable
  *
