@@ -57,8 +57,6 @@ Timer = SKMObject.extend(SKMObservable, {
         that._tickTack();
       }, this.tickInterval);
       this._lastTickTime = this.now();
-      // Why repeat a start when the start was clearly commanded
-      // this.handleStart.call(this, this.getTicksCounter());
     }
     return this;
   },
@@ -71,8 +69,6 @@ Timer = SKMObject.extend(SKMObservable, {
       clearTimeout(this._timerObject);
       this._timerObject = null;
     }
-    // @-//- L:60
-    // this.handleStop.call(this, lastTickCounter);
     return this;
   },
 
@@ -83,22 +79,6 @@ Timer = SKMObject.extend(SKMObservable, {
   handleTick: function(ticks) {
     this.fire('tick', ticks);
   },
-
-  /**
-   * @todo  To be removed
-   * @description higlhy repetitive
-   */
-  /*handleStop: function(ticks) {
-    this.fire('stop', ticks);
-  },*/
-
-  /**
-   * @todo  To be removed
-   * @description higlhy repetitive
-   */
-  /*handleStart: function(ticks) {
-    this.fire('start', ticks);
-  },*/
 
   /**
    * Getters/Setters
