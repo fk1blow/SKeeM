@@ -1,9 +1,11 @@
+
 // SKM WebSocket implementation
 
 define(['skm/k/Object',
   'skm/util/Logger',
   'skm/util/Observable'], function(SKMObject, SKMLogger, SKMObservable)
 {
+'use strict';
 
 
 var Logger = SKMLogger.create();
@@ -46,11 +48,11 @@ var EventResponder = SKMObject.extend({
 
   initialize: function() {
     this._gesturesCollection = [];
-      this._gestureManager = Gsture.GstureManager.create();
+    // this._gestureManager = Gsture.GstureManager.create();
   },
 
   /**
-   * Delegates an event to this.el
+   * Delegates a single event to this.el
    * 
    * @param  {Array}    events   the event/s
    * @param  {String}   selector selector to undelegate
@@ -182,7 +184,7 @@ var View = EventResponder.extend(SKMObservable, {
     SK.ui.EventResponder.prototype.initialize.call(this);
 
     // configure initialization options... if any
-    SK.util.Object.prepareDefaultAttributes(this, defaults || {});
+    // SK.util.Object.prepareDefaultAttributes(this, defaults || {});
 
     // set identifier
     this.cid = SK.util.Identifier.getIncrementedId(this['TYPE']);
@@ -240,8 +242,9 @@ var View = EventResponder.extend(SKMObservable, {
   },
 
   /**
-  * Removes this.el from the DOM and everything inside it() and 
-  * al bound events and jQuery data associated with the elements are removed.(jQuery docs)
+  * Removes this.el from the DOM, everything inside it and 
+  * all bound events and jQuery data associated with the
+  * elements are removed.(jQuery docs)
   */
   destroy: function() {
     this.fire('before:destroy');
