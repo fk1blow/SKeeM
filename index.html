@@ -24,33 +24,248 @@
 			float:left;
 		}
 
-		#playbackControls { list-style-type: none; margin-bottom:0px; }
+		#playbackControls { list-style-type: none; margin-bottom:0px; background-color: gray; }
 		#playbackControls li { display:inline-block; background-color: gray; }
 		#playbackControls li a { display: block; padding:0 10px; line-height: 30px; color:#fff; }
 		#playbackControls li a:hover { background-color: red; }
 	</style>
 
 	
-	<script type="text/javascript" src="js/lib/require.min.js?build=146x2" data-main="js/application.js"></script>
-	<!--<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/ember.js/0.9.8/ember-0.9.8.min.js" ></script>-->
+	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+	<!-- <script type="text/javascript" src="js/lib/require.min.js?build=146x2" data-main="js/application.js"></script> -->
 
-  <!--<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+	<script>
+	(function() {
+		var req = document.createElement('script');
+		req.type = 'text/javascript'; req.async = true;
+		req.src = 'js/lib/require.min.js?build=' + (new Date()).getTime();
+		req.setAttribute('data-main', "js/application.js");
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(req, s);
+	}());
+	</script>
+
+  <!--
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.3/underscore-min.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.10/backbone-min.js"></script>
   <script type="text/javascript" src="js/playbackControls.js"></script>-->
 </head>
 <body>
 
-
-<ul id="playbackControls">
-	<li><a href="#" id="playbackBack">Back</a></li>
-	<li><a href="#" id="playbackStop">Stop</a></li>
-	<li><a href="#" id="playbackPause">Pause</a></li>
-	<li><a href="#" id="playbackPlay">Play</a></li>
-	<li><a href="#" id="playbackForward">Forward</a></li>
-</ul>
+<div id="dummyParentModule">
+	<ul id="playbackControls">
+		<li><a href="#" id="playbackBack">Back</a></li>
+		<li><a href="#" id="playbackStop">Stop</a></li>
+		<li><a href="#" id="playbackPause">Pause</a></li>
+		<li><a href="#" id="playbackPlay">Play</a></li>
+		<li><a href="#" id="playbackForward">Forward</a></li>
+	</ul>
+</div>
 
 <br style="clear:both" />
+
+<ul id="playbackList">
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+	<li><a href="#">list item</a></li>
+</ul>
 
 
 <!-- <h3>Scroll disable; touch events; cacamaca</h3> -->
