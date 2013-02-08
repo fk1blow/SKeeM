@@ -28,7 +28,6 @@ var createFunctionalMixin = function(mixinObject) {
 
 var Mixin = function() {};
 
-
 Mixin.create = function() {
   var args = [].slice.call(arguments);
   var mixinDependencies = [].slice.call(args, 0, args.length - 1);
@@ -50,7 +49,6 @@ Mixin.create = function() {
 
   return instance;
 }
-
 
 Mixin.prototype._functionalMixin = null;
 
