@@ -13,8 +13,6 @@ requirejs.config({
 
 
 require(['console', 'skm/skm'], function() {
-  var testFile = require(['skm/test-websocket']);
-  // var testFile = require(['skm/test']);
-  // var EM = require(['js/lib/ember-0.9.3.js']);
+  var testFile = require(['skm/test-views']);
   console.log('Required :: application.js');
 });
