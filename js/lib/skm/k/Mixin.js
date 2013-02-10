@@ -6,29 +6,115 @@ define(['skm/k/Object', 'skm/util/ObjectUtils'], function(SKMObject, Utils)
 'use strict';
 
 
-var createFunctionalMixin = function(mixinObject) {
+cl('CHANGE: the type of a Mixin should be a function.')
+/**
+ * On adding it to an SKMObject, check to see if it is a function.
+ * If it's not a function, returning something that can
+ * be injected inside a context, won't be an issue.
+ * When an SKMObject wants to use a Mixin, it should first check if it's
+ * a Mixin.
+ * After that, check if it's an Object. If it's not,
+ * add a null extension.
+ *
+ * If not a function, maybe an extension of SKMObject.
+ */
+
+
+var createFunctionalMixin = function(extension) {
   return function() {
     // If the mixin has an [initialize] method
     // rename it and delete the mixin property(method) 
-    if('initialize' in mixinObject) {
-      this['initializeMixin'] = mixinObject.initialize;
-      delete mixinObject['initialize'];
+    if('initialize' in extension) {
+      this['initializeMixin'] = extension.initialize;
+      delete extension['initialize'];
     }
     // Now add every other property of the mixin to the caller's context 
-    for ( var item in mixinObject ) {
-      if ( mixinObject.hasOwnProperty(item) )
-        this[item] = mixinObject[item];
+    for ( var item in extension ) {
+      if ( extension.hasOwnProperty(item) )
+        this[item] = extension[item];
     }
     return this;
   }
-
-  mixinObject = null;
-};
+}
 
 
-var Mixin = function() {};
+// var Mixin = function() {};
 
-Mixin.create = function() {
+var SKMMixin = function() {
+  this._functionalMixin = null;
+}
+
+SKMMixin.prototype = {
+  injectInto: function(targetObject) {
+    var init = null;
+    var mixin = this.getMixinWrapper();
+    // check the target 
+    if ( Object.prototype.toString.apply(targetObject) !== '[object Object]' ) {
+      throw new TypeError('Mixin.inject :: targetObject param' +
+        'target must be of type Object!');
+    }
+    // check the mixin function against typeof
+    if ( typeof mixin !== 'function' ) {
+      throw new TypeError('Mixin.injectInto :: functional mixin' +
+        'must be of type function; current type :: ' + typeof mixin);
+    }
+    // add the mixin by calling the functional mixin
+    // on the target's context - targetObject 
+    mixin.call(targetObject);
+    // shortcut to mixin's initialize method 
+    init = targetObject.initializeMixin;
+    // check to see if there's a initialize mixin method 
+    if ( typeof init === 'function' ) {
+      init.call(targetObject);
+      delete targetObject['initializeMixin'];
+    }
+  },
+
+  getMixinWrapper: function(extension) {
+    return this._functionalMixin || function() {
+      // If the mixin has an [initialize] method
+      // rename it and delete the mixin property(method) 
+      if('initialize' in extension) {
+        this['initializeMixin'] = extension.initialize;
+        delete extension['initialize'];
+      }
+      // Now add every other property of the mixin to the caller's context 
+      for ( var item in extension ) {
+        if ( extension.hasOwnProperty(item) )
+          this[item] = extension[item];
+      }
+      return this;
+    };
+  }
+}
+
+SKMMixin.define = function() {
+  var args = [].slice.call(arguments);
+  var properties = args[args.length - 1];
+  var instance = new this();
+  // cl(instance)
+  instance._functionalMixin = instance.getMixinWrapper(properties);
+  return instance;
+}
+
+SKMMixin.create = SKMMixin.define;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*Mixin.create = function() {
   var args = [].slice.call(arguments);
   var mixinDependencies = [].slice.call(args, 0, args.length - 1);
   var properties = args[args.length - 1];
@@ -48,15 +134,15 @@ Mixin.create = function() {
   instance._functionalMixin = createFunctionalMixin(properties);
 
   return instance;
-}
+}*/
 
-Mixin.prototype._functionalMixin = null;
+/*Mixin.prototype._functionalMixin = null;*/
 
-Mixin.prototype.getFunctionalMixin = function() {
+/*Mixin.prototype.getFunctionalMixin = function() {
   return this._functionalMixin;
-}
+}*/
 
-Mixin.prototype.injectInto = function(targetObject) {
+/*Mixin.prototype.injectInto = function(targetObject) {
   var init = null;
   var mixin = this.getFunctionalMixin();
   // check the target 
@@ -78,10 +164,10 @@ Mixin.prototype.injectInto = function(targetObject) {
     init.call(targetObject);
     delete targetObject['initializeMixin'];
   }
-}
+}*/
 
 
-return Mixin;
+return SKMMixin;
 
 
 });
