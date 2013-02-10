@@ -68,9 +68,9 @@ SKMObject.extend = function(mixinsArr, propertiesObj) {
     parent.apply(this, arguments);
   }
   // Add the function object "static" methods
-  child.extend = this.extend;
-  child.create = this.create;
-  child.mixin = this.mixin;
+  child.extend = parent.extend;
+  child.create = parent.create;
+  child.mixin = parent.mixin;
   // Establish the basic proto chain
   inherits(child, parent);
   // If has extension(properties), add it
@@ -103,6 +103,14 @@ SKMObject.create = function() {
 
 
 /**
+ * Adds an extension to an Object
+ */
+SKMObject.add = function() {
+  //
+}
+
+
+/**
  * TO BE REMOVED
  *
  * It's not ok to add a mixin to an Object after it was declared.
@@ -116,8 +124,8 @@ SKMObject.mixin = function(mixins) {
   var argsLen = args.length;
   var asArray = Object.prototype.toString.apply(mixins) === '[object Array]';
   // if only one mixin function is passed 
-  if (argsLen == 1 && mixins instanceof SKMMixin) {
-    mixins[0].injectTo(this.prototype);
+  if (argsLen === 1 && mixins instanceof SKMMixin) {
+    mixins[0].injectInto(this.prototype);
   // if a single mixin array of multiple mixins as params 
   } else if ((asArray && argsLen == 1) || argsLen > 1) {
     var mixinsArr = ((argsLen > 1) ? args : args[0]),
