@@ -30,37 +30,32 @@ var WebSocket = SKMObject.extend(SKMObservable, {
 
   /**
    * How long before aborting the connection attempt
-   * @default 1500 ms
    */
   connectTimeout: 1500,
 
   /**
    * Amount of time, before trying to reconnect
-   * @default 3000 ms
    */
   reconnectDelay: 3000,
 
   /**
    * The number of times will attempt to reconnect
-   * @default 5
    */
   reconnectAttempts: 5,
 
   /**
    * If will try to ping the server or not
-   * @default true
    */
   pingServer: true,
 
   /**
    * The interval at which will send pings to the server
-   * @default 10000 ms
    */
   pingInterval: 10000, // 10 seconds
 
   /**
    * Similar to Socket.IO's "sync disconnect on unload"
-   * @todo implementation
+   * @todo add actual implementation
    * @type {Boolean}
    */
   syncDisconnectOnUnload: true,
