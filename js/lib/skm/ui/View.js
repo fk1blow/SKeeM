@@ -10,7 +10,7 @@ define(['skm/k/Object',
   'skm/k/Mixin',
   'skm/ui/EventResponder',
   'skm/util/Logger'],
-  function(SKMObject, SKMMixin, SKMResponder, SKMLogger)
+  function(SKMObject, SKMMixin, Responder, SKMLogger)
 {
 'use strict';
 
@@ -112,7 +112,7 @@ var InputEvents = SKMMixin.create({
  * @description similar to Backbone.View implementation
  * @type {Object}
  */
-var View = SKMResponder.extend(InputEvents, {
+var View = SKMObject.extend(InputEvents, Responder, {
   /**
    * The DOM element(object) associated with the View
    * @type {Object}
@@ -171,7 +171,7 @@ var View = SKMResponder.extend(InputEvents, {
    * View initialize process
    */
   initialize: function(defaults) {
-    SKMResponder.prototype.initialize.call(this);
+    // SKMResponder.prototype.initialize.call(this);
     // Prepares the bounding default element [this.el]
     this._prepareElement();
     // TBD - for live debugger version
@@ -280,6 +280,8 @@ var View = SKMResponder.extend(InputEvents, {
   }
 });
 
+
+cl(View)
 
 return View;
 
