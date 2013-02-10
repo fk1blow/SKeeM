@@ -39,9 +39,9 @@ SK.datastore = {
   collection: null
 };
 
-SK.net = {
-  geolocation: null,
+SK.location = {};
 
+SK.net = {
   socket: null,
 
   /*
