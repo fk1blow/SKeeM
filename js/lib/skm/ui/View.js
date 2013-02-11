@@ -281,8 +281,6 @@ var View = SKMObject.extend(InputEvents, Responder, {
 });
 
 
-cl(View)
-
 return View;
 
 
