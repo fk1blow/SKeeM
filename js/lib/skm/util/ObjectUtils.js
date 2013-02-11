@@ -61,27 +61,6 @@ var ObjectUtil = {
 
   isObject: function(object) {
     return Object.prototype.toString.apply(object) === '[object Object]';
-  },
-
-  /**
-   * TO BE REMOVED
-   */
-  prepareDefaultAttributes: function(target, defaultOptions) {
-    /* if the arguments is an Object */
-    if(ObjectUtil.isObject(defaultOptions)) {
-      for(var item in defaultOptions) {
-        if(defaultOptions.hasOwnProperty(item))
-          target[item] = defaultOptions[item];
-      }
-      target._defaultAttributes = defaultOptions;
-    /* if it's an Array of attributes, assign to each a value of undefined */
-    } else if(ArrayUtil.isArray(defaultOptions)) {
-      var len = defaultOptions.length;
-      for(var i = 0; i < len; i++) {
-        target[defaultOptions[i]] = undefined;
-      }
-      target._defaultAttributes = defaultOptions;
-    }
   }
 };
 
