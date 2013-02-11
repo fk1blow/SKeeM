@@ -26,21 +26,27 @@ var inherits = function(childCtor, parentCtor) {
   childCtor.prototype.constructor = childCtor;
 };
 
-
-var augmentInstance = function(extension, target) {
-  var argsLen = extension.length;
-  var item = null;
-  var i = 0;
-  if ( ! extension || ! extension.length )
-    return;
-  for (; i < argsLen; i++) {
-    item = extension[i];
-    if ( item === null )
-      continue;
-    if ( item instanceof SKMMixin ) {
-      item.injectInto(target);
-    } else if (Utils.ObjectUtil.isObject(item)) {
+/**
+ * Extends an Object with a given list or properties
+ * 
+ * @description adds an Object/function constructor
+ * to a target Object
+ * 
+ * @param  {function, Object} extension the object extension to be added
+ * @param  {Object} target    target object
+ */
+var mergeObjects = function(extensions, target) {
+  var item, len = extensions.length;
+  for (var i = 0; i < len; i++) {
+    item = extensions[i];
+    // If it's an Object, include it to this.prototype
+    if ( Utils.ObjectUtil.isObject(item) ) {
       Utils.ObjectUtil.include(target, item);
+    }
+    // if it's not an Object, assume this is a constructor function
+    // so take its prototype as a mixin
+    else {
+      Utils.ObjectUtil.include(target, item.prototype);
     }
   }
 }
@@ -48,8 +54,17 @@ var augmentInstance = function(extension, target) {
 
 var SKMObject = function() {};
 
-
-SKMObject.extend = function(mixinsArr, propertiesObj) {
+/**
+ * Creates a constructor function based its prototype
+ * to an SKMObject definition
+ * 
+ * @param  {Object} mixins     A list of zero or more SKM/Objects
+ * that representing a behaviour rather then inheritance
+ * @param  {Object} properties An Object that can be used as a 
+ * extension/template for this object
+ * @return {Function}               function
+ */
+SKMObject.extend = function(mixins, properties) {
   var args        = [].slice.call(arguments);
   var mixins      = [].slice.call(args, 0, args.length - 1);
   var extension   = args[args.length - 1];
@@ -78,12 +93,16 @@ SKMObject.extend = function(mixinsArr, propertiesObj) {
   if ( extension )
     Utils.ObjectUtil.include(child.prototype, extension);
   // Add the function mixins to child proto
-  if ( mixins )
-    child.mixin(mixins);
+  if ( mixins && mixins.length )
+    mergeObjects(mixins, this.prototype);
+    // child.mixin(mixins);
   return child;
 }
 
-
+/**
+ * [create description]
+ * @return {[type]} [description]
+ */
 SKMObject.create = function() {
   var args = [].slice.call(arguments);
   // Create the actual "instance"
@@ -92,7 +111,7 @@ SKMObject.create = function() {
   // If it's an Object, add it to the target instance
   // If it's a Mixin, use Mixin.injectTo and add it to the instance object
   if ( args.length ) {
-    augmentInstance(args, instance);
+    mergeObjects(args, instance);
   }
   // Try to call the initialize function
   if ( typeof instance.initialize === 'function' ) {
@@ -101,43 +120,12 @@ SKMObject.create = function() {
   return instance;
 }
 
-
 /**
- * Adds an extension to an Object
+ * Merges [this.prototype] with an Object
+ * or a function constructor's prototype
  */
-SKMObject.add = function() {
-  //
-}
-
-
-/**
- * TO BE REMOVED
- *
- * It's not ok to add a mixin to an Object after it was declared.
- * Also, it's kind of reduntant the add the posibility to inject
- * mixins when defining an SKMObject and after if was defined...
- */
-SKMObject.mixin = function(mixins) {
-  if ( !arguments.length )
-    return;
-  var args = [].slice.call(arguments);
-  var argsLen = args.length;
-  var asArray = Object.prototype.toString.apply(mixins) === '[object Array]';
-  // if only one mixin function is passed 
-  if (argsLen === 1 && mixins instanceof SKMMixin) {
-    mixins[0].injectInto(this.prototype);
-  // if a single mixin array of multiple mixins as params 
-  } else if ((asArray && argsLen == 1) || argsLen > 1) {
-    var mixinsArr = ((argsLen > 1) ? args : args[0]),
-      arrLen = mixinsArr.length, mixinItem;
-    for(var i = 0; i < arrLen; i++) {
-      mixinItem = mixinsArr[i];
-      if ( mixinItem instanceof SKMMixin ) {
-        mixinItem.injectInto(this.prototype);
-      }
-    }
-  }
-  return this;
+SKMObject.mixin = function() {
+  mergeObjects(arguments, this.prototype);
 }
 
 
