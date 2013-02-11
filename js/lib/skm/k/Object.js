@@ -1,14 +1,9 @@
-
+  
 // SKM Core Object definition
 
 define(['skm/k/Mixin', 'skm/util/ObjectUtils'], function(SKMMixin, Utils)
 {
 'use strict';
-
-
-cl('ADD: add Object.destroy method and fire a [beforeDestroy] event.');
-cl('ADD: on [beforeDestroy], the Observables will have to remove themselves.');
-cl('ADD: add Object.dispose - destroy');
 
 
 /**
@@ -62,7 +57,8 @@ var SKMObject = function() {};
  * that representing a behaviour rather then inheritance
  * @param  {Object} properties An Object that can be used as a 
  * extension/template for this object
- * @return {Function}               function
+ * @return {Function}  function  constructor function used as a 
+ * template for the new SKMObject
  */
 SKMObject.extend = function(mixins, properties) {
   var args        = [].slice.call(arguments);
