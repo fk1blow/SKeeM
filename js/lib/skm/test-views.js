@@ -1,8 +1,10 @@
 
 
 
-require(['skm/k/Object', 'skm/ui/View', 'skm/ui/EventResponder', 'skm/util/Observable'],
-  function(SKMObject, SKMView, SKMResponder, SKMObservable)
+// require(['skm/k/Object', 'skm/ui/View', 'skm/ui/EventResponder', 'skm/util/Observable'],
+require(['skm/k/Object', 'skm/k/Mixin'],
+  // function(SKMObject, SKMView, SKMResponder, SKMObservable)
+  function(SKMObject, SKMMixin)
 {
 
 
@@ -10,6 +12,55 @@ console.clear();
 
 
 
+
+
+var A = SKMObject.extend({
+  a: 'a'
+});
+
+var A1 = SKMObject.extend({
+  a1: 'a1'
+});
+
+var B = SKMObject.extend(A, A1, {
+  b: 'b'
+});
+
+var C = B.extend({
+  c: 'c'
+});
+
+C.mixin({ s: 'ssx' })
+
+B.mixin({ x: 'x' })
+
+// cl(B.prototype)
+// cl(C.prototype)
+cl(B.create({ y: 'igrec' }))
+
+// var CdB = B.extend(A, {
+//   cdb: 'cdb'
+// });
+
+// cl(CdB.prototype)
+
+
+// var fu = 'undefined'
+
+// A.mixin(B, { x: 'x' });
+
+// cl(A.prototype)
+
+// var a = A.create({ c1: 'c1', b1: 'b1' })
+// cl(a)
+
+
+
+
+
+
+
+return;
 
 var A = SKMView.extend({
   el: $('#dummyParentModule'),
