@@ -2,9 +2,9 @@
 
 
 // require(['skm/k/Object', 'skm/ui/View', 'skm/ui/EventResponder', 'skm/util/Observable'],
-require(['skm/k/Object', 'skm/k/Mixin'],
+require(['skm/k/Object'],
   // function(SKMObject, SKMView, SKMResponder, SKMObservable)
-  function(SKMObject, SKMMixin)
+  function(SKMObject)
 {
 
 
