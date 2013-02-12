@@ -5,6 +5,7 @@ define(['skm/util/Logger',
   'skm/util/Observable',
   'skm/k/Object'], function(SKMLogger, SKMObservable, SKMObject)
 {
+'use strict';
 
 
 var Logger = SKMLogger.create();
@@ -18,7 +19,7 @@ var Logger = SKMLogger.create();
  * i had to borrow much of the logic from google closure's timer.
  * @link http://closure-library.googlecode.com/svn/docs/closure_goog_timer_timer.js.html
  */
-Timer = SKMObject.extend(SKMObservable, {
+var Timer = SKMObject.extend(SKMObservable, {
   // How many times the interval will
   // trigger a tick; (x < 1) == infinity
   ticks: 1,
