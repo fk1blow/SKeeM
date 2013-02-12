@@ -7,10 +7,9 @@
 // SKM View implementation
 
 define(['skm/k/Object',
-  'skm/k/Mixin',
   'skm/ui/EventResponder',
   'skm/util/Logger'],
-  function(SKMObject, SKMMixin, Responder, SKMLogger)
+  function(SKMObject, Responder, SKMLogger)
 {
 'use strict';
 
@@ -24,7 +23,7 @@ var Logger = SKMLogger.create();
  * @todo add the touch events delegate mechanism
  * @type {SKMMixin}
  */
-var InputEvents = SKMMixin.create({
+var InputEvents = {
   /**
    * Holds data about the views primary
    * attributes - [el], [events], [binds]
@@ -104,7 +103,7 @@ var InputEvents = SKMMixin.create({
   _prepareElementRefresh: function(selector, events) {
     this._refreshData = { selector: selector, events: events };
   }
-});
+};
 
 
 /**
