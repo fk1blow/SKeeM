@@ -1,6 +1,6 @@
 // SKM Object utils definition
 
-define(['skm/k/Mixin'], function(SKMMixin)
+define([], function()
 {
 'use strict';
 
