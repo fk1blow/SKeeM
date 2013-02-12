@@ -119,6 +119,20 @@ var View = SKMObject.extend(InputEvents, Subscribable, {
       this.setup(defaults);
   },
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+    // configure initialization options... if any
+    // @todo REMOVE
+    SK.util.Object.prepareDefaultAttributes(this, defaults || {});
+>>>>>>> update
+
+
+
+
+
+>>>>>>> update
   /**
    * Sets SKMView.el and undelegates attached dom events
    * @param {Object/jQuery} element A dom element
