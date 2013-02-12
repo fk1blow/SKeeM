@@ -61,11 +61,11 @@ var SKMObject = function() {};
  * template for the new SKMObject
  */
 SKMObject.extend = function(mixins, properties) {
-  var args        = [].slice.call(arguments);
-  var mixins      = [].slice.call(args, 0, args.length - 1);
-  var extension   = args[args.length - 1];
-  var parent      = this;
-  var child       = null;
+  var args = [].slice.call(arguments);
+  var mixins = [].slice.call(args, 0, args.length - 1);
+  var extension = args[args.length - 1];
+  var parent = this;
+  var child = null;
   // Use the initialize function as a function constructor
   // Don't check for typeof intialize - "initialize" field should always be a function
   /*if ( extension && ( 'initialize' in extension ) ) {
