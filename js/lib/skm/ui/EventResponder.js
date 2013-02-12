@@ -37,7 +37,7 @@ cl("will compose html from handlerbar js templates or just a single tag.")
  * @type {Object}
  */
 // var EventResponder = SKMObject.extend(SKMObservable, {
-var EventResponder = SKMMixin.define({
+var EventResponder = {
   _childResponders: null,
 
   initialize: function() {
@@ -59,7 +59,7 @@ var EventResponder = SKMMixin.define({
     var args = [].slice.call(arguments);
     this.fire(eventName, args.slice(args.length - 1));
   }
-});
+};
 
 cl(EventResponder)
 
