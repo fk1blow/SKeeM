@@ -1,7 +1,7 @@
   
 // SKM Core Object definition
 
-define(['skm/k/Mixin', 'skm/util/ObjectUtils'], function(SKMMixin, Utils)
+define(['skm/util/ObjectUtils'], function(Utils)
 {
 'use strict';
 
