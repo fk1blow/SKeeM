@@ -11,13 +11,9 @@
  * - ability to observe object properties
  */
 
-define(['skm/skm',
-	'skm/k/Mixin'], function(skm, SKMMixin)
+define([], function()
 {
 'use strict';
-
-
-var SKM = window.SKM || {};
 
 
 var eventSplitter = /\s+/;
@@ -67,7 +63,7 @@ var triggerEvents = function(events, args) {
  * @author Jeremy Ashkenas, DocumentCloud Inc
  * @link http://documentcloud.github.com/backbone/
  */
-var Observable = SKMMixin.create({
+var Observable = {
 	// Bind one or more space separated events, or an events map,
   // to a `callback` function. Passing `"all"` will bind the callback to
   // all events fired.
@@ -158,7 +154,7 @@ var Observable = SKMMixin.create({
     }
     return this;
   }
-});
+};
 
 
 return Observable;
