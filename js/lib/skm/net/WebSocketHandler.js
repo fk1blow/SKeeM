@@ -2,8 +2,8 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Observable',
-  'skm/util/Timer'], function(SKMObject, SKMLogger, SKMObservable, SKMTimer)
+  'skm/util/Subscribable',
+  'skm/util/Timer'], function(SKMObject, SKMLogger, Subscribable, SKMTimer)
 {
 'use strict';
 
@@ -11,7 +11,7 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var WebSocketHandler = SKMObject.extend(SKMObservable, {
+var WebSocketHandler = SKMObject.extend(Subscribable, {
 	connectionTimeout: 1500,
 
 	autoReconnectDelay: 3000,
