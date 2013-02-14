@@ -2,11 +2,11 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Observable',
+  'skm/util/Subscribable',
   'skm/util/Timer',
   'skm/net/WebSocketWrapper',
   'skm/net/WebSocketHandler'],
-  function(SKMObject, SKMLogger, SKMObservable,
+  function(SKMObject, SKMLogger, Subscribable,
     SKMTimer, WSWrapper, WSHandler)
 {
 'use strict';
@@ -23,7 +23,7 @@ var WebsocketStates = {
 };
 
 
-var WebSocket = SKMObject.extend(SKMObservable, {
+var WebSocket = SKMObject.extend(Subscribable, {
   url: null,
 
   protocols: null,
