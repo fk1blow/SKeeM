@@ -1,8 +1,8 @@
 
 
 
-require(['skm/net/WebSocket', 'skm/k/Object', 'skm/util/Timer', 'skm/k/Mixin'],
-  function(SKMWebsocket, SKMObject, SKMTimer, SKMMixin)
+require(['skm/net/WebSocket', 'skm/k/Object', 'skm/util/Timer'],
+  function(SKMWebsocket, SKMObject, SKMTimer)
 {
 
 // console.clear();
