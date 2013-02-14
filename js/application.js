@@ -13,6 +13,6 @@ requirejs.config({
 
 
 require(['console', 'skm/skm'], function() {
-  var testFile = require(['skm/test-views']);
+  var testFile = require(['skm/test-websocket']);
   console.log('Required :: application.js');
 });
