@@ -1,7 +1,7 @@
   
 // SKM Core Object definition
 
-define(['skm/util/ObjectUtils'], function(Utils)
+define([], function()
 {
 'use strict';
 
