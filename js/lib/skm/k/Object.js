@@ -30,7 +30,7 @@ var extend = function(target) {
 
 
 /**
- * Safes test for an Object
+ * Safer test for an Object
  * though it excludes null and Array
  * 
  * @param  {Mixed}  obj The object to test
@@ -57,25 +57,6 @@ var inherits = function(childCtor, parentCtor) {
   childCtor.prototype.constructor = childCtor;
 };
 
-/**
- * Extends an Object with a given list or properties
- * 
- * @description adds an Object/function constructor
- * to a target Object
- * 
- * @param  {function, Object} extension the object extension to be added
- * @param  {Object} target    target object
- */
-var mergeObjects = function(extensions, target) {
-  var item, len = extensions.length;
-  for (var i = 0; i < len; i++) {
-    item = extensions[i];
-    // If it's an Object, include it to target
-    if ( isObject(item) )
-      extend(target, item);
-  }
-}
-
 
 var SKMObject = function() {};
 
@@ -92,6 +73,7 @@ var SKMObject = function() {};
 SKMObject.extend = function(mixins) {
   var args = slice.call(arguments);
   var parent = this, child = null;
+  var i, argsLen = args.length, mixin;
   // Use the initialize function as a function constructor
   /*if ( extension && ( 'initialize' in extension ) ) {
     child = extension.initialize;
@@ -104,25 +86,30 @@ SKMObject.extend = function(mixins) {
     parent.apply(this, arguments);
   }
 
+  // Establish the base prototype chain
+  inherits(child, parent);
+
   // Add static methods directly to child
   // function constructor
   extend(child, parent);
 
-  // Establish the base prototype chain
-  inherits(child, parent);
-
   // Inject every extension Object to [this.prototype]
-  if ( args.length ) {
-    args.splice(0, 0, this.prototype);
-    extend.apply(null, args);
+  // and see if the mixin is an Object
+  for (i = 0; i < argsLen; i++) {
+    if ( isObject(mixin = args[i]) )
+      extend(child.prototype, mixin);
   }
 
   return child;
 }
 
 /**
- * [create description]
- * @return {[type]} [description]
+ * Creates (instantiates) and object
+ * based on [this]
+ *
+ * @param {Object} options A single object to be 
+ * injected to the newly created object
+ * @return {Object}
  */
 SKMObject.create = function(options) {
   // Create the actual "instance"
@@ -148,8 +135,11 @@ SKMObject.create = function(options) {
  * or a function constructor's prototype
  */
 SKMObject.mixin = function() {
-  if ( arguments.length )
-    extend(this.prototype, arguments);
+  var i, mixin, len = arguments.length;
+  for (i = 0; i < len; i++) {
+    if ( isObject(mixin = arguments[i]) )
+      extend(this.prototype, mixin);
+  }
 }
 
 

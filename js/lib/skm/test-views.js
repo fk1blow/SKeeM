@@ -18,21 +18,24 @@ var A = SKMObject.extend({
   a: 'a'
 });
 
-var A1 = SKMObject.extend({
-  a1: 'a1'
-});
+// var A = { a: 'a' }
 
-var B = SKMObject.extend(A, A1, {
+var B = A.extend({
+  // a: 'ba',
   b: 'b'
 });
 
-var C = B.extend({
-  c: 'c'
-});
+// var C = B.extend({
+//   c: 'c'
+// });
 
-C.mixin({ s: 'ssx' })
+A.mixin({ s: 's' })
 
 B.mixin({ x: 'x' })
+
+// cl(Object.keys(A), A.prototype)
+cl(Object.keys(B), B.prototype)
+
 
 // cl(B.prototype)
 // cl(C.prototype)
