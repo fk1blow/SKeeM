@@ -65,11 +65,11 @@ var WSMessageDelegates = {
 
 
 var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
-	connectionTimeout: 1500,
+  connectionTimeout: 1500,
 
-	reconnectDelay: 3000,
+  reconnectDelay: 3000,
 
-	maxReconnectAttempts: 5,
+  maxReconnectAttempts: 5,
 
   _timerAutoDisconnect: null,
 
@@ -77,15 +77,15 @@ var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
 
   _reconnectionAttempt: 0,
 
-	_closeExpected: false,
+  _closeExpected: false,
 
-	_isReconnecting: false,
+  _isReconnecting: false,
 
-	initialize: function() {
-		Logger.debug('%cnew WSHandler', 'color:#A2A2A2');
+  initialize: function() {
+    Logger.debug('%cnew WSHandler', 'color:#A2A2A2');
     // Creates auto-disconnect and reconnect, timers
     this._createTimers();
-	},
+  },
 
   /**
    * Attaches the socket events to a handler
