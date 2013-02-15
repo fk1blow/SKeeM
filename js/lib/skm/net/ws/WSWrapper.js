@@ -24,6 +24,12 @@ var WebsocketStates = {
 };
 
 
+var iDevice = function() {
+  return typeof navigator !== 'undefined'
+    && /iPad|iPhone|iPod/i.test(navigator.userAgent);
+}
+
+
 var WSWrapper = SKMObject.extend(Subscribable, {
   url: null,
 
@@ -119,9 +125,13 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       return;
     }
     // Wrap inside a timeout if iDevice browser detected
-    setTimeout(function() {
+    if ( iDevice ) {
+      setTimeout(function() {
+        socketObject.send(message);
+      }, 0);
+    } else {
       socketObject.send(message);
-    }, 0);
+    }
   },
 
   /**
