@@ -23,7 +23,7 @@ var Logger = SKMLogger.create();
  * @type {Object}
  */
 var WSMessageDelegates = {
-  _handleOnClose: function(event) {
+  handleOnClose: function(event) {
     Logger.info('WSMessageDelegates : socket has closed : ', event);
     this.stopTimers();
     if ( this.isCloseExpected() ) {
@@ -36,19 +36,19 @@ var WSMessageDelegates = {
     this.shouldExpectClose(false);
   },
 
-  _handleOnOpen: function() {
+  handleOnOpen: function() {
     Logger.info('WSMessageDelegates connection opened');
     this.fire('open');
     this.stopTimers();
     this._reconnectionAttempt = 0;
   },
 
-  _handleOnError: function(event) {
+  handleOnError: function(event) {
     Logger.info('WSMessageDelegates : Socket error');
     this.fire('error', event);
   },
  
-  _handleOnMessage: function(message) {
+  handleOnMessage: function(message) {
     var data = message.data;
     switch( data ) {
       case 'pong':
@@ -95,16 +95,16 @@ var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
   listensToConnection: function(connection) {
     var that = this;
     connection.onopen = function() {
-      that._handleOnOpen.apply(that, arguments);
+      that.handleOnOpen.apply(that, arguments);
     }
     connection.onerror = function() {
-      that._handleOnError.apply(that, arguments);
+      that.handleOnError.apply(that, arguments);
     }
     connection.onclose = function() {
-      that._handleOnClose.apply(that, arguments);
+      that.handleOnClose.apply(that, arguments);
     }
     connection.onmessage = function() {
-      that._handleOnMessage.apply(that, arguments);
+      that.handleOnMessage.apply(that, arguments);
     }
   },
 
