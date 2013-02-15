@@ -2,8 +2,8 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Observable',
-  'skm/util/Timer'], function(SKMObject, SKMLogger) 
+  'skm/util/Subscribable',
+  'skm/util/Timer'], function(SKMObject, SKMLogger, Subscribable, Timer) 
 {
 'use strict';
 
