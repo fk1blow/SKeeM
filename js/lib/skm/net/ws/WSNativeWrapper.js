@@ -34,8 +34,6 @@ var WSNativeWrapper = SKMObject.extend({
       c = WebSocket;
     else if ('MozWebSocket' in window)
       c = MozWebSocket;
-    else
-      c = null;
     return c;
   },
 
