@@ -18,7 +18,7 @@ var wsUrls = [
 ];
 
 
-var ws = SKMWebsocket.create({ url: wsUrls[1], pingServer: true, pingInterval: 2000 });
+var ws = SKMWebsocket.create({ url: wsUrls[1], pingServer: true, pingInterval: 1000 });
 ws.on('received:pong', function() {
     cl('received:pong')
 }).on('received:message', function(message) {
