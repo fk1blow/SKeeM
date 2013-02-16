@@ -16,6 +16,14 @@ define([], function()
 'use strict';
 
 
+/**
+ * Event/Subscribable Mixin
+ * 
+ * @author Jeremy Ashkenas, DocumentCloud Inc
+ * @link http://documentcloud.github.com/backbone/
+ */
+ 
+ 
 var eventSplitter = /\s+/;
 
 
@@ -57,12 +65,6 @@ var triggerEvents = function(events, args) {
 };
 
 
-/**
- * Event/Observable mixin
- * 
- * @author Jeremy Ashkenas, DocumentCloud Inc
- * @link http://documentcloud.github.com/backbone/
- */
 var Subscribable = {
 	// Bind one or more space separated events, or an events map,
   // to a `callback` function. Passing `"all"` will bind the callback to
