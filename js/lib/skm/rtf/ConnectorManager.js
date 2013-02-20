@@ -42,9 +42,7 @@ var ConnectorManager = SKMObject.extend(Subscribable, ConnectorEvents, {
 		Logger.debug('ConnectorManager.addConnector', name, connector);
 		if ( !( name in this._connectorList ) ) {
 			this._connectorList[name] = connector;
-			connector.on('terminate', function() {
-				cl('connector terminates');
-			});
+			this._attachConnectorEvents(connector);
 		}
 		return this;
 	},
@@ -68,6 +66,16 @@ var ConnectorManager = SKMObject.extend(Subscribable, ConnectorEvents, {
 	beginUpdateUsing: function(connectorName) {
 		var connector = this._connectorList[connectorName];
 		connector.openConnection();
+	},
+
+	/**
+	 * Private
+	 */
+	
+	_attachConnectorEvents: function(connector) {
+		connector.on('terminate', function() {
+			cl('connector terminates');
+		});
 	}
 });
 

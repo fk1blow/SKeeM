@@ -3,8 +3,9 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Subscribable'],
-  function(SKMObject, SKMLogger, Subscribable)
+  'skm/util/Subscribable',
+  'skm/rtf/AbstractConnector'],
+  function(SKMObject, SKMLogger, Subscribable, AbstractConnector)
 {
 'use strict';
 
@@ -13,73 +14,44 @@ var Logger = SKMLogger.create();
 
 
 /**
- * Abstract connector
- */
-var Connector = SKMObject.extend(Subscribable, {
-	/**
-	 * Transport type object
-	 * 
-	 * @description Represents an instance of a Connection object,
-	 * represented by a transport type - WebSocket, XHR, flash, etc
-	 * @type {WSWrapper, XHRWrapper} an instance of a Transport type
-	 */
-	transport: null,
-
-	openConnection: function() {
-		cl('Connector.openConnection');
-		this.transport.connect();
-		return this;
-	},
-
-	closeConnection: function() {
-		this.transport.disconnect();
-		return this;
-	},
-
-	sendMessage: function(message) {
-		this.transport.send(message);
-		return this;
-	},
-
-	/**
-	 * Restarts the channel's update process
-	 * @return {Boolean}
-	 */
-	restart: function() {
-		cl('Connector.restart');
-	},
-
-	/**
-	 * Destroys the object and unbinds all events
-	 * @return {Boolean}
-	 */
-	destroy: function() {
-		cl('Connector.destroy - should destroy the transport as well.')
-		this.off();
-	}
-});
-
-
-/**
  * [WSConnector description]
  * @type {[type]}
  */
-var WSConnector = Connector.extend({
+var WebSocketConnector = AbstractConnector.extend({
 	initialize: function() {
-		Logger.debug('%cnew WSConnector', 'color:#A2A2A2');
-
-		this.transport.on('reconnecting:stopped', function() {
-			this.fire('terminate');
-		}, this)
-		.on('server:disconnected', function() {
-			this.fire('terminate');
-		}, this);
+		Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
+		this.attachTransportListeners();
 	},
 
-	restart: function() {
-		cl('WSConnector.restart');
-		this.transport.connect();
-	}
+	/**
+   * Starts the update(sync) between
+   * client(transport object) and server
+   */
+  beginUpdate: function() {
+  	Logger.info('WebSocketConnector.beginUpdate');
+  	this.transport.connect();
+  },
+
+  /**
+   * Closes the update(sync) channel
+   * and disconnects the transport object
+   */
+  terminateUpdate: function() {
+  	Logger.info('WebSocketConnector.terminateUpdate');
+  	this.transport.disconnect();
+  },
+
+  attachTransportListeners: function() {
+  	this.transport.on('disconnected', function() {
+  		cl('transport disconnected')
+  	}, this)
+  	.on('reconnecting:stopped', function() {
+  		cl('transport reconnecting:stopped - disconnected')
+  	}, this)
+  	.on('message', function(msg) {
+  		cl('transport:message', msg)
+  	}, this);
+  }
 });
 
 
@@ -87,16 +59,16 @@ var WSConnector = Connector.extend({
  * [XHRConnector description]
  * @type {[type]}
  */
-var XHRConnector = Connector.extend({
-	restart: function() {
-		cl('XHRConnector.restart')
+var AjaxConnector = AbstractConnector.extend({
+	initialize: function() {
+		Logger.debug('%cnew AjaxConnector', 'color:#A2A2A2');
 	}
 });
 
 
 return {
-	XHR: XHRConnector,
-	WS: WSConnector
+	XHR: AjaxConnector,
+	WS: WebSocketConnector
 };
 
 
