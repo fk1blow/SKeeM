@@ -26,12 +26,19 @@ var WSMessageDelegates = {
   handleOnClose: function(event) {
     Logger.info('WSMessageDelegates : socket has closed : ', event);
     this.stopTimers();
-    if ( this.isCloseExpected() ) {
-      Logger.info('Close expected. Nothing more to do');
-      // should inform the DelegatesHandler about this state change
+    // If server sends a close event
+    if ( event.wasClean ) {
+      Logger.info('WSMessageDelegates.handleOnClose : connection closed by server.');
       this._isReconnecting = false;
+      this.fire('server:close');
     } else {
-      this._makeReconnectAttempt();
+      if ( this.isCloseExpected() ) {
+        Logger.info('Close expected/invoked. Nothing more to do');
+        // should inform the DelegatesHandler about this state change
+        this._isReconnecting = false;
+      } else {
+        this._makeReconnectAttempt();
+      }
     }
     this.shouldExpectClose(false);
   },
@@ -51,11 +58,11 @@ var WSMessageDelegates = {
   handleOnMessage: function(message) {
     var data = message.data;
     switch( data ) {
-      case 'pong':
-        this.fire('message:pong');
+      case 'server:pong':
+        this.fire('server:pong');
         break;
-      case 'close':
-        this.fire('message:close');
+      case 'server:close':
+        this.fire('server:close');
         break;
       default:
         this.fire('message', data);
