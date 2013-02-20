@@ -222,30 +222,45 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
   _handleCloseByServer: function() {
     this._stopAndClose();
-    this.fire('disconnected');
   },
 
   _attachConnectionEvents: function() {
-    this._connectionHandler.on('autodisconnect', function() {
+    var connection = this._connectionHandler;
+    
+    // Timeout/reconnect listeners
+    connection.on('autodisconnect', function() {
       this._nativeWrapper.destroySocket();
     }, this)
-    .on('reconnecting', function() {
+    .on('reconnecting:started', function() {
       this._createAndBindWrapper();
+      this.fire('reconnecting:started');
     }, this)
     .on('reconnecting:stopped', function() {
       this.fire('reconnecting:stopped');
-    }, this)
-    .on('open', function() {
+    }, this);
+    
+    // Base connection events
+    connection.on('connected', function() {
       this._initPingTimer();
       this.fire('connected');
     }, this)
-    .on('server:close', function() {
+    .on('disconnected', function() {
       this._handleCloseByServer();
+      this.fire('disconnected');
+    }, this);
+
+    // Custom server messages
+    connection.on('server:close', function() {
+      this._handleCloseByServer();
+      this.fire('server:close');
     }, this)
     .on('server:pong', function() {
-      this.fire('received:pong');
-    }, this)
-    .on('message', function(message) {
+      this.fire('server:pong');
+    }, this);
+
+
+    // Basic message listener
+    connection.on('message', function(message) {
       this.fire('message', message);
     }, this);
   },

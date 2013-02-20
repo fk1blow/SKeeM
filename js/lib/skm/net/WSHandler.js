@@ -30,7 +30,7 @@ var WSMessageDelegates = {
     if ( event.wasClean ) {
       Logger.info('WSMessageDelegates.handleOnClose : connection closed by server.');
       this._isReconnecting = false;
-      this.fire('server:close');
+      this.fire('disconnected');
     } else {
       if ( this.isCloseExpected() ) {
         Logger.info('Close expected/invoked. Nothing more to do');
@@ -45,7 +45,7 @@ var WSMessageDelegates = {
 
   handleOnOpen: function() {
     Logger.info('WSMessageDelegates connection opened');
-    this.fire('open');
+    this.fire('connected');
     this.stopTimers();
     this._reconnectionAttempt = 0;
   },
@@ -165,7 +165,7 @@ var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
     Logger.debug('WSHandler._handleAutoReconnect; attempt #', this._reconnectionAttempt);
     this.stopTimers();
     this.shouldExpectClose(false);
-    this.fire('reconnecting');
+    this.fire('reconnecting:started');
   },
   
   _createTimers: function() {
