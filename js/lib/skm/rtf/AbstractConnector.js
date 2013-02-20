@@ -43,17 +43,9 @@ var AbstractConnector = SKMObject.extend(Subscribable, {
 
   /**
    * @abstract
-   * Starts the update between
-   * client(transport object) and server
+   * Sends a message to the RTF server
    */
-  beginUpdate: function() {},
-
-  /**
-   * @abstract
-   * Closes the update channel
-   * and disconnects the transport object
-   */
-  terminateUpdate: function() {},
+  sendMessage: function(message) {},
 
   /**
    * @abstract
