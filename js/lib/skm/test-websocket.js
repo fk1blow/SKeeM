@@ -17,14 +17,20 @@ console.clear();
 
 
 
-
+var wsurls = ['ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test',
+'ws://10.0.3.98:3000']
 
 var wsConnector = RTFConnector.WS.create({
-	transport: WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 2 })
+	transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 2, pingServer: false })
 });
-// wsConnector.openConnection();
+wsConnector.beginUpdate();
 
-var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime()
+// setTimeout(function() {
+//   cl('wsconnector terminates...')
+//   wsConnector.terminateUpdate()
+// }, 1000)
+
+/*var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime()
 var xhrConnector = RTFConnector.XHR.create({
 	transport: XHRWrapper.Wrapper.create({ url: xhrUrl })
 });
@@ -33,7 +39,7 @@ var CM = RTFConnectorManager.create();
 CM.addConnector('wsconnector', wsConnector);
 // CM.addConnector('xhrconnector', xhrConnector);
 
-CM.beginUpdateUsing('wsconnector');
+CM.beginUpdateUsing('wsconnector');*/
 
 
 
