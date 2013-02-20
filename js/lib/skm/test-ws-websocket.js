@@ -61,7 +61,8 @@ wsServer.on('request', function(request) {
 
     setTimeout(function() {
         connection.send('will disconnect now!');
-        connection.send('close');
+        connection.close();
+        // connection.send('close');
     }, 10000);
     
     connection.on('close', function(reasonCode, description) {
