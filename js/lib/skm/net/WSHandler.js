@@ -24,7 +24,7 @@ var Logger = SKMLogger.create();
  */
 var WSMessageDelegates = {
   handleOnClose: function(event) {
-    Logger.info('WSMessageDelegates : socket has closed : ', event);
+    Logger.info('WSMessageDelegates.handleOnClose : socket has closed : ', event);
     this.stopTimers();
     // If server sends a close event
     if ( event.wasClean ) {
@@ -158,14 +158,14 @@ var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
   _handleAutoDisconnect: function() {
     Logger.debug('WSHandler auto-disconnected after ' +
       this._timerAutoDisconnect.tickInterval + ' ms');
-    this.fire('autodisconnect');
+    this.fire('connecting:timeout');
   },
   
   _handleAutoReconnect: function() {
     Logger.debug('WSHandler._handleAutoReconnect; attempt #', this._reconnectionAttempt);
     this.stopTimers();
     this.shouldExpectClose(false);
-    this.fire('reconnecting:started');
+    this.fire('reconnecting');
   },
   
   _createTimers: function() {

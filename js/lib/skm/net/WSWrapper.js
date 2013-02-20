@@ -150,7 +150,6 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._timerPing.stop();
       return false;
     }
-    Logger.info('Pinging server...');
     this.send('ping');
     return this;
   },
@@ -228,12 +227,13 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     var connection = this._connectionHandler;
     
     // Timeout/reconnect listeners
-    connection.on('autodisconnect', function() {
+    connection.on('connecting:timeout', function() {
       this._nativeWrapper.destroySocket();
+      this.fire('connecting:timeout');
     }, this)
-    .on('reconnecting:started', function() {
+    .on('reconnecting', function() {
       this._createAndBindWrapper();
-      this.fire('reconnecting:started');
+      this.fire('reconnecting');
     }, this)
     .on('reconnecting:stopped', function() {
       this.fire('reconnecting:stopped');
@@ -251,7 +251,8 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // Custom server messages
     connection.on('server:close', function() {
-      this._handleCloseByServer();
+      // this._handleCloseByServer();
+      this.disconnect();
       this.fire('server:close');
     }, this)
     .on('server:pong', function() {
@@ -262,6 +263,9 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     // Basic message listener
     connection.on('message', function(message) {
       this.fire('message', message);
+    }, this)
+    .on('error', function() {
+      this.fire('error');
     }, this);
   },
 
