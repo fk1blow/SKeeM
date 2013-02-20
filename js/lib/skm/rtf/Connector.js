@@ -24,22 +24,12 @@ var WebSocketConnector = AbstractConnector.extend({
 	},
 
 	/**
-   * Starts the update(sync) between
-   * client(transport object) and server
-   */
-  beginUpdate: function() {
-  	Logger.info('WebSocketConnector.beginUpdate');
-  	this.transport.connect();
-  },
-
-  /**
-   * Closes the update(sync) channel
-   * and disconnects the transport object
-   */
-  terminateUpdate: function() {
-  	Logger.info('WebSocketConnector.terminateUpdate');
-  	this.transport.disconnect();
-  },
+	 * Sends a message to the RTF server
+	 */
+	sendMessage: function(message) {
+		Logger.debug('WebSocketConnector.sendMessage');
+		this.transport.send(message);
+	},
 
   attachTransportListeners: function() {
   	this.transport.on('disconnected', function() {
@@ -49,8 +39,17 @@ var WebSocketConnector = AbstractConnector.extend({
   		cl('transport reconnecting:stopped - disconnected')
   	}, this)
   	.on('message', function(msg) {
-  		cl('transport:message', msg)
+  		this.handleMessage(msg);
   	}, this);
+  },
+
+  /**
+   * Handlers
+   */
+  
+  handleMessage: function(message) {
+  	var message = jQuery.parseJSON(message);
+  	Logger.debug('WebSocketConnect.handleMessage', message);
   }
 });
 
