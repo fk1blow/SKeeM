@@ -61,9 +61,9 @@ wsServer.on('request', function(request) {
 
     setTimeout(function() {
         connection.send('will disconnect now!');
-        connection.close();
-        // connection.send('close');
-    }, 10000);
+        // connection.close();
+        connection.send('server:close');
+    }, 5000);
     
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
