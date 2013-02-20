@@ -18,14 +18,15 @@ console.clear();
 
 
 var wsurls = [
-  'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test',
+  'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
   'ws://10.0.3.98:3000'
 ];
 
 var wsConnector = RTFConnector.WS.create({
 	transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 2, pingServer: false })
 });
-wsConnector.beginUpdate();
+wsConnector.transport.connect();
+// wsConnector.beginUpdate();
 
 // setTimeout(function() {
 //   cl('wsconnector terminates...')
