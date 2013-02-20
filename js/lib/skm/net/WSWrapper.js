@@ -222,7 +222,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
   _handleCloseByServer: function() {
     this._stopAndClose();
-    this.fire('server:disconnected');
+    this.fire('disconnected');
   },
 
   _attachConnectionEvents: function() {
@@ -239,10 +239,10 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._initPingTimer();
       this.fire('connected');
     }, this)
-    .on('message:close', function() {
+    .on('server:close', function() {
       this._handleCloseByServer();
     }, this)
-    .on('message:pong', function() {
+    .on('server:pong', function() {
       this.fire('received:pong');
     }, this)
     .on('message', function(message) {
