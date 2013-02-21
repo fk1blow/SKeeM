@@ -12,16 +12,10 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var CONNECTOR_STATE = {
+var ConnectorState = {
   ACTIVE: 1,
-  INACTIVE: 0
-}
-
-
-var TransportHandlers = {
-  handleOnError: function() {
-    //
-  }
+  INACTIVE: 0,
+  STOPPED: -1
 }
 
 
@@ -39,42 +33,76 @@ var AbstractConnector = SKMObject.extend(Subscribable, {
    * State of the connector template
    * @type {Number}
    */
-  state: CONNECTOR_STATE.INACTIVE,
+  // state: ConnectorState.INACTIVE,
 
   /**
    * @abstract
+   * 
+   * Begins update by opening the transport's connection
+   */
+  beginUpdate: function() {},
+
+  /**
+   * @abstract
+   *
+   * Stops updates for this transport by aborting connection
+   */
+  endUpdate: function() {},
+
+  /**
+   * @abstract
+   * 
+   * Adds a subscription id and sends it to the server
+   * @description should be sent with the first request,
+   * apended as query string 
+   */
+  addSubscription: function() {},
+
+  /**
+   * @abstract
+   * 
    * Sends a message to the RTF server
    */
   sendMessage: function(message) {},
 
   /**
    * @abstract
+   * 
    * Listens to transport events
    */
-  attachTransportListeners: function() {},
+  addTransportListeners: function() {},
+
+  /**
+   * @abstract
+   *
+   * Removes transport listeners
+   */
+  removeTransportListeners: function() {},
 
   /**
    * Changes the state of the connector to Inactive
    */
-  changeToActive: function() {
-    this.state = CONNECTOR_STATE.ACTIVE;
-    this.fire('changed:state', this.state);
-  },
+  // changeToActive: function() {
+  //   this.state = ConnectorState.ACTIVE;
+  //   this.fire('connector:switch', this.state);
+  // },
 
   /**
    * Changes the state of the connector to Active
    */
-  changeToInactive: function() {
-    this.state = CONNECTOR_STATE.INACTIVE;
-    this.fire('changed:state', this.state);
-  },
+  // changeToInactive: function() {
+  //   this.state = ConnectorState.INACTIVE;
+  //   this.fire('changed:state', this.state);
+  // },
 
   /**
-   * Adds the transport object
+   * [changeToStopped description]
+   * @return {[type]} [description]
    */
-  provideTransport: function(transportObject) {
-    this.transport = transportObject;
-  }
+  // changeToStopped: function() {
+  //   this.state = ConnectorState.STOPPED;
+  //   this.fire('changed:state', this.state);
+  // }
 });
 
 
