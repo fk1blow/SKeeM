@@ -9,12 +9,8 @@ require(['skm/net/WSWrapper',
   function(WSWrapper, XHRWrapper, SKMObject, RTFConnectorManager, RTFConnector)
 {
 
-console.clear();
 
-
-
-
-
+console.log('--------------------------------------------------------------------------------------')
 
 
 var wsurls = [
@@ -22,10 +18,21 @@ var wsurls = [
   'ws://10.0.3.98:3000'
 ];
 
-var wsConnector = RTFConnector.WS.create({
-	transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 2, pingServer: false })
+var ws = WSWrapper.create({ url: wsurls[0], reconnectAttempts: 1, pingServer: false });
+var wsConnector = RTFConnector.WS.create({ transport: ws });
+
+wsConnector.on('connector:switch', function(state) {
+  cl('wsConnector connector:switch');
+}).on('server:params:error', function() {
+  cl('wsConnector server:params:error : widget should resend parameters(subscriptionId, matchId, etc)');
 });
-wsConnector.transport.connect();
+
+wsConnector.beginUpdate();
+
+// wsConnector.transport.connect();
+
+
+
 // wsConnector.beginUpdate();
 
 // setTimeout(function() {
