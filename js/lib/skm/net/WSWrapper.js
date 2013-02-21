@@ -244,18 +244,18 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._initPingTimer();
       this.fire('connected');
     }, this)
-    .on('disconnected', function() {
+    .on('disconnected', function(event) {
       this._handleCloseByServer();
-      this.fire('disconnected');
+      this.fire('disconnected', event);
     }, this);
 
     // Custom server messages
-    connection.on('server:close', function() {
-      // this._handleCloseByServer();
-      this.disconnect();
-      this.fire('server:close');
-    }, this)
-    .on('server:pong', function() {
+    // connection.on('server:close', function() {
+    //   // this._handleCloseByServer();
+    //   this.disconnect();
+    //   this.fire('server:close');
+    // }, this)
+    connection.on('server:pong', function() {
       this.fire('server:pong');
     }, this);
 
