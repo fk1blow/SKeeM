@@ -30,7 +30,7 @@ var WSMessageDelegates = {
     if ( event.wasClean ) {
       Logger.info('WSMessageDelegates.handleOnClose : connection closed by server.');
       this._isReconnecting = false;
-      this.fire('disconnected');
+      this.fire('disconnected', event);
     } else {
       if ( this.isCloseExpected() ) {
         Logger.info('Close expected/invoked. Nothing more to do');
@@ -61,9 +61,9 @@ var WSMessageDelegates = {
       case 'server:pong':
         this.fire('server:pong');
         break;
-      case 'server:close':
-        this.fire('server:close');
-        break;
+      // case 'server:close':
+      //   this.fire('server:close');
+      //   break;
       default:
         this.fire('message', data);
     }
