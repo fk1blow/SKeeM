@@ -5,20 +5,29 @@ require(['skm/net/WSWrapper',
 				 'skm/net/XHRWrapper',
 				 'skm/k/Object',
 				 'skm/rtf/ConnectorManager',
-				 'skm/rtf/Connector'],
-  function(WSWrapper, XHRWrapper, SKMObject, RTFConnectorManager, RTFConnector)
+				 'skm/rtf/XHRConnector'],
+  function(WSWrapper, XHRWrapper, SKMObject, RTFConnectorManager, XHRConnector)
 {
 
 
 console.log('--------------------------------------------------------------------------------------')
 
 
+/**
+ * WebSocket Connector
+ * -------------------
+ */
+
+
+/*
 var wsurls = [
   'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
   'ws://10.0.3.98:3000'
 ];
 
-var ws = WSWrapper.create({ url: wsurls[0], reconnectAttempts: 1, pingServer: false });
+var ws = WSWrapper.create({ url: wsurls[1] });
+ws.connect();
+
 var wsConnector = RTFConnector.WS.create({ transport: ws });
 
 wsConnector.on('connector:switch', function(state) {
@@ -28,28 +37,36 @@ wsConnector.on('connector:switch', function(state) {
 });
 
 wsConnector.beginUpdate();
-
-// wsConnector.transport.connect();
-
+*/
 
 
-// wsConnector.beginUpdate();
 
-// setTimeout(function() {
-//   cl('wsconnector terminates...')
-//   wsConnector.terminateUpdate()
-// }, 1000)
 
-/*var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime()
-var xhrConnector = RTFConnector.XHR.create({
-	transport: XHRWrapper.Wrapper.create({ url: xhrUrl })
-});
 
-var CM = RTFConnectorManager.create();
-CM.addConnector('wsconnector', wsConnector);
-// CM.addConnector('xhrconnector', xhrConnector);
 
-CM.beginUpdateUsing('wsconnector');*/
+
+/**
+ * XHR Connector
+ * -------------
+ */
+
+
+var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
+
+var xhrTransport = XHRWrapper.Wrapper.create({ url: xhrUrl });
+var xhrConnector = XHRConnector.create({ transport: xhrTransport });
+
+xhrConnector.on('params:error', function() {
+  cl('params:error', arguments)
+}).on('connection:error', function() {
+  cl('connection:error', arguments)
+})
+
+xhrConnector.beginUpdate();
+
+
+
+
 
 
 
