@@ -30,7 +30,55 @@ var iDevice = function() {
 }
 
 
-var WSWrapper = SKMObject.extend(Subscribable, {
+var HandlerEventDelegates = {
+  _attachConnectionEvents: function() {
+    var connection = this._connectionHandler;
+    
+    // Timeout/reconnect listeners
+    connection.on('connecting:timeout', function() {
+      this._nativeWrapper.destroySocket();
+      this.fire('connecting:timeout');
+    }, this)
+    .on('reconnecting', function() {
+      this._recreateSocketWrapper();
+      this.fire('reconnecting');
+    }, this)
+    .on('reconnecting:stopped', function() {
+      this.fire('reconnecting:stopped');
+    }, this);
+    
+    // Base connection events
+    connection.on('connected', function() {
+      this._initPingTimer();
+      this.fire('connected');
+    }, this)
+    .on('disconnected', function(event) {
+      this._handleCloseByServer();
+      this.fire('disconnected', event);
+    }, this);
+
+    connection.on('server:pong', function() {
+      this.fire('server:pong');
+    }, this);
+
+
+    // Basic message listener
+    connection.on('message', function(message) {
+      this.fire('message', message);
+    }, this)
+    .on('error', function() {
+      this.fire('error');
+    }, this);
+
+    // If no websocket implementation found
+    connection.on('missing:implementation', function() {
+      this.fire('missing:implementation');
+    }, this);
+  }
+}
+
+
+var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   /**
    * URL of the WebSocket server
    * @type {String}
@@ -56,7 +104,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   /**
    * The number of times will attempt to reconnect
    */
-  reconnectAttempts: 5,
+  reconnectAttempts: 1,
 
   /**
    * If will try to ping the server or not
@@ -192,7 +240,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   _stopAndRestart: function() {
     this._connectionHandler.stopTimers();
     this._connectionHandler.shouldExpectClose(false);
-    this._createAndBindWrapper();
+    this._recreateSocketWrapper();
   },
 
   _initPingTimer: function() {
@@ -223,55 +271,14 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     this._stopAndClose();
   },
 
-  _attachConnectionEvents: function() {
-    var connection = this._connectionHandler;
-    
-    // Timeout/reconnect listeners
-    connection.on('connecting:timeout', function() {
-      this._nativeWrapper.destroySocket();
-      this.fire('connecting:timeout');
-    }, this)
-    .on('reconnecting', function() {
-      this._createAndBindWrapper();
-      this.fire('reconnecting');
-    }, this)
-    .on('reconnecting:stopped', function() {
-      this.fire('reconnecting:stopped');
-    }, this);
-    
-    // Base connection events
-    connection.on('connected', function() {
-      this._initPingTimer();
-      this.fire('connected');
-    }, this)
-    .on('disconnected', function(event) {
-      this._handleCloseByServer();
-      this.fire('disconnected', event);
-    }, this);
-
-    // Custom server messages
-    // connection.on('server:close', function() {
-    //   // this._handleCloseByServer();
-    //   this.disconnect();
-    //   this.fire('server:close');
-    // }, this)
-    connection.on('server:pong', function() {
-      this.fire('server:pong');
-    }, this);
-
-
-    // Basic message listener
-    connection.on('message', function(message) {
-      this.fire('message', message);
-    }, this)
-    .on('error', function() {
-      this.fire('error');
-    }, this);
+  // _createAndBindWrapper: function() {
+  _recreateSocketWrapper: function() {
+    this._nativeWrapper.createSocket(this.url, this.protocols);
+    this._attachConnectionListeners();
   },
 
-  _createAndBindWrapper: function() {
-    this._nativeWrapper.createSocket(this.url, this.protocols);
-    this._connectionHandler.listensToConnection(this._nativeWrapper.getSocketObject());
+  _attachConnectionListeners: function() {
+    this._connectionHandler.attachListeners(this._nativeWrapper.getSocketObject());
     this._connectionHandler.restartAutodisconnectTimer();
   }
 });
