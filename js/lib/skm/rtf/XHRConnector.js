@@ -32,19 +32,19 @@ var XHRConnector = AbstractConnector.extend({
 
   beginUpdate: function() {
     Logger.debug('XHRConnector.beginUpdate');
-    this.transport.send();
+    this.transport.sendMessage();
     return this;
   },
 
   endUpdate: function() {
     Logger.debug('XHRConnector.endUpdate');
-    this.transport.disconnect();
+    this.transport.abortRequest();
     return this;
   },
 
   addTransportListeners: function() {
-    // this.transport
-      // .on('disconnected', this.handleDisconnected, this)
+    this.transport
+      .on('error', this.handleError, this);
       // .on('reconnecting:stopped', this.handleReconnectingStopped, this);
     return this;
   },
@@ -52,6 +52,16 @@ var XHRConnector = AbstractConnector.extend({
   removeTransportListeners: function() {
     this.transport.off();
     return this;
+  },
+
+  handleError: function(err) {
+    // If server triggers errors
+    if ( err.status == 405 ) {
+      this.fire('params:error', err.responseText);
+    // handle every other error as a connection issue
+    } else {
+      this.fire('connection:error');
+    }
   }
 });
 
