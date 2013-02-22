@@ -17,6 +17,10 @@ var ErrorMessages = {
 };
 
 
+var NoNativeImplementation = 'No native WebSocket implementation found;'
++ ' WebSocket not available!';
+
+
 var WSNativeWrapper = SKMObject.extend({
   _nativeConstructor: null,
 
@@ -24,8 +28,8 @@ var WSNativeWrapper = SKMObject.extend({
 
   initialize: function() {
     Logger.debug('%cnew WSNativeWrapper', 'color:#A2A2A2');
+    this._nativeConstructor = null;
     this._socket = null;
-    this._nativeConstructor = this.getNativeConstructor();
   },
 
   getProperConstructor: function() {
@@ -42,13 +46,18 @@ var WSNativeWrapper = SKMObject.extend({
     if ( ctor = this._nativeConstructor )
       return ctor;
     ctor = this.getProperConstructor();
-    if ( ctor === null )
-      throw new Error(ErrorMessages.NATIVE_IMPLEMENTATION_MISSING);
+    if ( ctor === null ) {
+      Logger.info('WSNativeWrapper.getNativeConstructor : '
+        + NoNativeImplementation);
+    }
     return ctor;
   },
 
   createSocket: function(url, protocols) {
     var c = this.getNativeConstructor();
+    // If no native implementation found, screw IE
+    if ( c == null )
+      return c;
     if ( !arguments.length )
       throw new TypeError(ErrorMessages.MISSSING_URL);
     this._socket = (protocols) ? new c(url, protocols) : new c(url);
