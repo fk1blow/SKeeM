@@ -82,7 +82,7 @@ var WebSocketConnector = AbstractConnector.extend({
       cl('WebSocketConnector.handleErrors : ready message list to big;', err[idx])
     }
     this.transport.disconnect();
-    this.fire('server:params:error');
+    this.fire('params:error');
   }
 });
 
