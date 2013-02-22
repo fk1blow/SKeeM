@@ -22,13 +22,13 @@ var Logger = SKMLogger.create();
  * as a mixin Object.
  * @type {Object}
  */
-var WSMessageDelegates = {
+var WrapperMessageDelegates = {
   handleOnClose: function(event) {
-    Logger.info('WSMessageDelegates.handleOnClose : socket has closed : ', event);
+    Logger.info('WrapperMessageDelegates.handleOnClose : socket has closed : ', event);
     this.stopTimers();
     // If server sends a close event
     if ( event.wasClean ) {
-      Logger.info('WSMessageDelegates.handleOnClose : connection closed by server.');
+      Logger.info('WrapperMessageDelegates.handleOnClose : connection closed by server.');
       this._isReconnecting = false;
       this.fire('disconnected', event);
     } else {
@@ -44,14 +44,14 @@ var WSMessageDelegates = {
   },
 
   handleOnOpen: function() {
-    Logger.info('WSMessageDelegates connection opened');
+    Logger.info('WrapperMessageDelegates connection opened');
     this.fire('connected');
     this.stopTimers();
     this._reconnectionAttempt = 0;
   },
 
   handleOnError: function(event) {
-    Logger.info('WSMessageDelegates : Socket error');
+    Logger.info('WrapperMessageDelegates : Socket error');
     this.fire('error', event);
   },
  
@@ -74,7 +74,7 @@ var WSMessageDelegates = {
 /**
  * Object that handle a WebSocket connection's events and state
  */
-var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
+var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   connectionTimeout: 1500,
 
   reconnectDelay: 3000,
@@ -99,22 +99,27 @@ var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
 
   /**
    * Attaches the socket events to a handler
-   *
    * @param  {WebSoclet} connection WebSocket connection reference
    */
-  listensToConnection: function(connection) {
+  attachListeners: function(connection) {
     var that = this;
-    connection.onopen = function() {
-      that.handleOnOpen.apply(that, arguments);
-    }
-    connection.onerror = function() {
-      that.handleOnError.apply(that, arguments);
-    }
-    connection.onclose = function() {
-      that.handleOnClose.apply(that, arguments);
-    }
-    connection.onmessage = function() {
-      that.handleOnMessage.apply(that, arguments);
+    // If connection (somehow) is null 
+    // or native implementation missing
+    if ( connection == null ) {
+      this.fire('missing:implementation');
+    } else {
+      connection.onopen = function() {
+        that.handleOnOpen.apply(that, arguments);
+      }
+      connection.onerror = function() {
+        that.handleOnError.apply(that, arguments);
+      }
+      connection.onclose = function() {
+        that.handleOnClose.apply(that, arguments);
+      }
+      connection.onmessage = function() {
+        that.handleOnMessage.apply(that, arguments);
+      }
     }
   },
 
@@ -156,7 +161,7 @@ var WSHandler = SKMObject.extend(Subscribable, WSMessageDelegates, {
    */
   
   _handleAutoDisconnect: function() {
-    Logger.debug('WSHandler auto-disconnected after ' +
+    Logger.debug('WSHandler._handleAutoDisconnect auto-disconnected after ' +
       this._timerAutoDisconnect.tickInterval + ' ms');
     this.fire('connecting:timeout');
   },
