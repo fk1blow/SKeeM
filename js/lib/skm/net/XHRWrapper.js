@@ -41,7 +41,7 @@ var XHRMessageDelegates = {
 	handleOnError: function(err) {
 		if ( this._expectedClose )
 			return;
-		Logger.info('XHRWrapper.handleOnError', err)
+		Logger.info('XHRWrapper.handleOnError')
 		this._expectedClose = false;
 		this.fire('error', err);
 	}
@@ -87,9 +87,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * using default method type - 'GET'
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	send: function(messageObj) {
+	sendMessage: function(messageObj) {
 		Logger.info('XHRWrapper.send');
-		this._doAjaxRequest({ data: messageObj });
+		this._doRequest({ message: messageObj });
 		return this;
 	},
 
@@ -99,7 +99,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	sendGetRequest: function(messageObj) {
 		Logger.info('XHRWrapper.sendGetRequest');
-		this._doAjaxRequest({ type: 'GET', data: messageObj });
+		this._doRequest({ type: 'GET', message: messageObj });
 		return this;
 	},
 
@@ -109,14 +109,21 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	sendPostRequest: function(messageObj) {
 		Logger.info('XHRWrapper.sendPostRequest');
-		this._doAjaxRequest({ type: 'POST', data: messageObj });
+		this._doRequest({ type: 'POST', message: messageObj });
 		return this;
 	},
 
+	/**
+	 * Aborts a in-progress request
+	 * @param  {Boolean} triggersError Should trigger error
+	 * callback or not - [this._expectedClose]
+	 */
 	abortRequest: function(triggersError) {
-		if ( !triggersError )
+		if ( triggersError === false )
 			this._expectedClose = true;
-		this._request.abort();
+		// abort only if request is not null
+		if ( this._request )
+			this._request.abort();
 	},
 
 	/**
@@ -124,11 +131,13 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * @param  {Object} options an object used for
 	 * AJAX setting(method, url, type, etc)
 	 */
-	_doAjaxRequest: function(options) {
+	_doRequest: function(options) {
 		var opt = options || {};
 		var methodType = opt.type || this.defaults.type;
 		var dataType = opt.dataType || this.defaults.dataType;
+		var messageData = opt.message || {};
 
+		// Abort the request if there is one in progress
 		this.abortRequest();
 
 		this._request = this._wrapper.ajax({
@@ -138,7 +147,11 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 			type: methodType,
 
+			// The type of data that you're expecting back from the server
 			dataType: dataType,
+
+			// Data to be sent to the server
+			data: messageData,
 
 			error: function (err) {
 				this.handleOnError(err);
