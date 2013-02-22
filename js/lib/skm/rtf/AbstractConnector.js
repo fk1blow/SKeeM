@@ -19,6 +19,28 @@ var ConnectorState = {
 }
 
 
+
+/**
+ * Additional methods should be added to a delegated object.
+ * Methods like [addSubscription] aren't actually part of
+ * the connector responsabilities...
+ */
+
+
+/**
+ * @abstract
+ * 
+ * Adds a subscription id and sends it to the server
+ * @description should be sent with the first request,
+ * apended as query string 
+ */
+  // addSubscription: function() {},
+
+
+
+
+
+
 /**
  * Abstract connector
  */
@@ -48,15 +70,6 @@ var AbstractConnector = SKMObject.extend(Subscribable, {
    * Stops updates for this transport by aborting connection
    */
   endUpdate: function() {},
-
-  /**
-   * @abstract
-   * 
-   * Adds a subscription id and sends it to the server
-   * @description should be sent with the first request,
-   * apended as query string 
-   */
-  addSubscription: function() {},
 
   /**
    * @abstract
