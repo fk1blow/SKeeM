@@ -86,14 +86,10 @@ var HandlerEventDelegates = {
 
 
     /**
-     * Missing implementation and error handler
+     * Error handler
      */
 
-    // If no websocket implementation found
-    connection.on('missing:implementation', function() {
-      this.fire('missing:implementation');
-    }, this)
-    .on('error', function() {
+    connection.on('error', function() {
       this.fire('error');
     }, this);
   }
