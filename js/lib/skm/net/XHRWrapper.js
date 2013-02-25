@@ -39,11 +39,10 @@ var XHRMessageDelegates = {
 	},
 
 	handleOnError: function(err) {
-		if ( this._expectedClose )
-			return;
-		Logger.info('XHRWrapper.handleOnError')
-		this._expectedClose = false;
-		this.fire('error', err);
+		if ( this._expectedClose === false ) {
+			Logger.info('XHRWrapper.handleOnError');
+			this.fire('error', err);
+		}
 	}
 }
 
@@ -119,7 +118,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * callback or not - [this._expectedClose]
 	 */
 	abortRequest: function(triggersError) {
-		if ( triggersError === false )
+		if ( triggersError === true )
 			this._expectedClose = true;
 		// abort only if request is not null
 		if ( this._request )

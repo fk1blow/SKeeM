@@ -45,24 +45,28 @@ wsConnector.beginUpdate();
 
 
 
+
 /**
  * XHR Connector
  * -------------
  */
 
+var sub = 1361797970194;
+var sub2 = (new Date).getTime();
+var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
 
-/*var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
-
-var xhrTransport = XHRWrapper.Wrapper.create({ url: xhrUrl });
-var xhrConnector = XHRConnector.create({ transport: xhrTransport });
-
+var xhr = XHRWrapper.Wrapper.create({ url: xhrUrl });
+var xhrConnector = XHRConnector.create({ transport: xhr });
 xhrConnector.on('params:error', function() {
   cl('params:error', arguments)
 }).on('connection:error', function() {
   cl('connection:error', arguments)
 })
 
-xhrConnector.beginUpdate();*/
+xhrConnector.beginUpdate();
+
+
+
 
 
 
@@ -78,7 +82,7 @@ xhrConnector.beginUpdate();*/
 
 /*var wsUrls = [
   'ws://localhost:8080/WebSocketServletTest/websk',
-  'ws://10.0.3.98:3000'
+  // 'ws://10.0.3.98:3000'
 ];
 
 
