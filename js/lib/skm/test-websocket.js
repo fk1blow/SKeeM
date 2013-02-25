@@ -5,8 +5,9 @@ require(['skm/net/WSWrapper',
 				 'skm/net/XHRWrapper',
 				 'skm/k/Object',
 				 'skm/rtf/ConnectorManager',
-				 'skm/rtf/XHRConnector'],
-  function(WSWrapper, XHRWrapper, SKMObject, RTFConnectorManager, XHRConnector)
+				 'skm/rtf/XHRConnector',
+         'skm/rtf/WSConnector'],
+  function(WSWrapper, XHRWrapper, SKMObject, ConnectorManager, XHRConnector, WSConnector)
 {
 
 
@@ -19,7 +20,7 @@ console.log('-------------------------------------------------------------------
  */
 
 
-/*
+
 var wsurls = [
   'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
   'ws://10.0.3.98:3000'
@@ -28,16 +29,17 @@ var wsurls = [
 var ws = WSWrapper.create({ url: wsurls[1] });
 ws.connect();
 
-var wsConnector = RTFConnector.WS.create({ transport: ws });
+var wsConnector = WSConnector.create({ transport: ws });
 
-wsConnector.on('connector:switch', function(state) {
-  cl('wsConnector connector:switch');
-}).on('server:params:error', function() {
-  cl('wsConnector server:params:error : widget should resend parameters(subscriptionId, matchId, etc)');
+wsConnector.on('connector:deactivated', function(state) {
+  cl('wsConnector connector:deactivated');
+})
+.on('params:error', function() {
+  cl('wsConnector params:error : widget should resend parameters(subscriptionId, matchId, etc)');
 });
 
 wsConnector.beginUpdate();
-*/
+
 
 
 
@@ -51,19 +53,21 @@ wsConnector.beginUpdate();
  * -------------
  */
 
-var sub = 1361797970194;
+/*var sub = 1361797970194;
 var sub2 = (new Date).getTime();
 var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
 
 var xhr = XHRWrapper.Wrapper.create({ url: xhrUrl });
 var xhrConnector = XHRConnector.create({ transport: xhr });
+
 xhrConnector.on('params:error', function() {
   cl('params:error', arguments)
-}).on('connection:error', function() {
-  cl('connection:error', arguments)
+})
+.on('connector:deactivated', function() {
+  cl('connector:deactivated', arguments)
 })
 
-xhrConnector.beginUpdate();
+xhrConnector.beginUpdate();*/
 
 
 
