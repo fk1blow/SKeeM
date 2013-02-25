@@ -24,34 +24,36 @@ var Logger = SKMLogger.create();
  */
 var WrapperMessageDelegates = {
   handleOnClose: function(event) {
-    Logger.info('WrapperMessageDelegates.handleOnClose : socket has closed : ', event);
-    this.stopTimers();
-    // If server sends a close event
+    Logger.info('WrapperMessageDelegates.handleOnClose');
+    Logger.debug('socket has closed :', event.wasClean, event.code, event.reason);
+    // stop all timers
+    this._stopTimers();
+    // If  socket connection is closed by the server
     if ( event.wasClean ) {
-      Logger.info('WrapperMessageDelegates.handleOnClose : connection closed by server.');
       this._isReconnecting = false;
-      this.fire('disconnected', event);
+      this.fire('link:closed', event);
     } else {
-      if ( this.isCloseExpected() ) {
+      if ( this._closeExpected ) {
         Logger.info('Close expected/invoked. Nothing more to do');
         // should inform the DelegatesHandler about this state change
         this._isReconnecting = false;
       } else {
         this._makeReconnectAttempt();
       }
+      this.fire('connecting:stopped');
     }
-    this.shouldExpectClose(false);
+    this._closeExpected = false;
   },
 
   handleOnOpen: function() {
     Logger.info('WrapperMessageDelegates connection opened');
-    this.fire('connected');
-    this.stopTimers();
+    this._stopTimers();
     this._reconnectionAttempt = 0;
+    this.fire('link:opened');
   },
 
   handleOnError: function(event) {
-    Logger.info('WrapperMessageDelegates : Socket error');
+    // Logger.info('WrapperMessageDelegates : Socket error');
     this.fire('error', event);
   },
  
@@ -101,26 +103,21 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
    * Attaches the socket events to a handler
    * @param  {WebSoclet} connection WebSocket connection reference
    */
-  attachListeners: function(connection) {
+  attachListenersTo: function(connection) {
     var that = this;
-    // If connection (somehow) is null 
-    // or native implementation missing
-    if ( connection == null ) {
-      this.fire('missing:implementation');
-    } else {
-      connection.onopen = function() {
-        that.handleOnOpen.apply(that, arguments);
-      }
-      connection.onerror = function() {
-        that.handleOnError.apply(that, arguments);
-      }
-      connection.onclose = function() {
-        that.handleOnClose.apply(that, arguments);
-      }
-      connection.onmessage = function() {
-        that.handleOnMessage.apply(that, arguments);
-      }
+    connection.onopen = function() {
+      that.handleOnOpen.apply(that, arguments);
     }
+    connection.onerror = function() {
+      that.handleOnError.apply(that, arguments);
+    }
+    connection.onclose = function() {
+      that.handleOnClose.apply(that, arguments);
+    }
+    connection.onmessage = function() {
+      that.handleOnMessage.apply(that, arguments);
+    }
+    return this;
   },
 
   /**
@@ -131,29 +128,34 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
     return this._isReconnecting;
   },
 
-  shouldExpectClose: function(closeExpected) {
-    if ( typeof closeExpected !== 'boolean' ) {
-      throw new TypeError('WebSocketHandler.shouldExpectClose : invalid' + 
-        ' [closeExpected] param type. Expected boolean.');
-    }
-    this._closeExpected = closeExpected;
+  startConnectingAttempt: function() {
+    Logger.info('WSHandler.startConnectingAttempt');
+    this._timerAutoDisconnect.start();
+    this._closeExpected = false;
+    return this;
   },
 
-  isCloseExpected: function() {
-    return this._closeExpected;
+  stopConnectingAttempt: function() {
+    Logger.info('WSHandler.stopConnectingAttempt');
+    this._stopTimers();
+    this._closeExpected = true;
+    return this;
   },
 
-  stopTimers: function() {
+  holdConnectingAttempt: function() {
+    Logger.info('WSHandler.holdConnectingAttempt');
+    this._stopTimers();
+    this._closeExpected = false;
+    return this;
+  },
+
+  /**
+   * Timers handlers
+   */
+
+  _stopTimers: function() {
     this._timerAutoDisconnect.stop();
     this._timerAutoReconnect.stop();
-  },
-
-  restartAutodisconnectTimer: function() {
-    this._timerAutoDisconnect.start();
-  },
-
-  restartAutoreconnectTimer: function() {
-    this._timerAutoReconnect.start();
   },
 
   /**
@@ -161,16 +163,16 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
    */
   
   _handleAutoDisconnect: function() {
-    Logger.debug('WSHandler._handleAutoDisconnect auto-disconnected after ' +
+    Logger.debug('auto-disconnected after ' +
       this._timerAutoDisconnect.tickInterval + ' ms');
     this.fire('connecting:timeout');
   },
   
   _handleAutoReconnect: function() {
-    Logger.debug('WSHandler._handleAutoReconnect; attempt #', this._reconnectionAttempt);
-    this.stopTimers();
-    this.shouldExpectClose(false);
-    this.fire('reconnecting');
+    Logger.debug('autoreconnect attempt #', this._reconnectionAttempt);
+    this._stopTimers();
+    this._closeExpected = false;
+    this.fire('reconnecting:started');
   },
   
   _createTimers: function() {
@@ -178,6 +180,7 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
     this._timerAutoDisconnect = SKMTimer.create({
       tickInterval: this.connectionTimeout
     }).on('tick', this._handleAutoDisconnect, this);
+
     // Tries to reconnect after a specified delay
     this._timerAutoReconnect = SKMTimer.create({
       tickInterval: this.reconnectDelay
@@ -186,16 +189,16 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
 
   _makeReconnectAttempt: function() {
     if ( this._reconnectionAttempt > this.maxReconnectAttempts - 1 ) {
-      Logger.debug('WebSocketHandler Max reconnection attempts reached');
+      Logger.info('WebSocketHandler Max reconnection attempts reached');
       this._reconnectionAttempt = 0;
       this._isReconnecting = false;
       this.fire('reconnecting:stopped');
     } else {
-      Logger.debug('WebSocketHandler will try to reconnect in ' + 
+      Logger.info('WebSocketHandler will try to reconnect in ' + 
         this._timerAutoReconnect.tickInterval + ' ms');
       this._isReconnecting = true;
       this._reconnectionAttempt++;
-      this.restartAutoreconnectTimer();
+      this._timerAutoReconnect.start();
     }
   }
 });
