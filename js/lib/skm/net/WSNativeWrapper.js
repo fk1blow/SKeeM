@@ -54,8 +54,9 @@ var WSNativeWrapper = SKMObject.extend({
   },
 
   createSocket: function(url, protocols) {
+    Logger.info('WSNativeWrapper.createSocket');
     var c = this.getNativeConstructor();
-    // If no native implementation found, screw IE
+    // If no native implementation found, return null
     if ( c == null )
       return c;
     if ( !arguments.length )
@@ -65,6 +66,7 @@ var WSNativeWrapper = SKMObject.extend({
   },
 
   destroySocket: function() {
+    Logger.info('WSNativeWrapper.destroySocket');
     if ( !this._socket )
       return false;
     this._socket.close();
