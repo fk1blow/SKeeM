@@ -31,21 +31,22 @@ var WebSocketConnector = AbstractConnector.extend({
   },
 
   beginUpdate: function() {
-    Logger.debug('WebSocketConnector.beginUpdate');
+    Logger.info('WebSocketConnector.beginUpdate');
     this.transport.connect();
     return this;
   },
 
   endUpdate: function() {
-    Logger.debug('WebSocketConnector.endUpdate');
+    Logger.info('WebSocketConnector.endUpdate');
     this.transport.disconnect();
     return this;
   },
 
   addTransportListeners: function() {
     this.transport
-      .on('disconnected', this.handleDisconnected, this)
-      .on('reconnecting:stopped', this.handleReconnectingStopped, this);
+      .on('link:closed', this.hanleLinkClosed, this)
+      .on('reconnecting:stopped', this.handleReconnectingStopped, this)
+      .on('missing:implementation', this.handleReconnectingStopped, this)
     return this;
   },
 
@@ -59,30 +60,20 @@ var WebSocketConnector = AbstractConnector.extend({
    */
   
   handleReconnectingStopped: function() {
-    Logger.debug('WebSocketConnector.handleReconnectingStopped');
-    this.fire('connector:switch');
+    Logger.info('WebSocketConnector.handleReconnectingStopped');
+    this.fire('connector:deactivated');
   },
   
-  handleDisconnected: function(message) {
+  hanleLinkClosed: function(message) {
     var error, reason = jQuery.parseJSON(message.reason);
-    Logger.debug('WebSocketConnector.handleDisconnected');
+    Logger.info('WebSocketConnector.hanleLinkClosed');
     if ( error = reason.error )
       this._handleParametersErrors(reason.error);
   },
 
   _handleParametersErrors: function(errorArr) {
-    var idx, err = errorArr;
-    if ( (idx = err.indexOf(ConnectorErrors.INACTIVE)) > -1 ) {
-      cl('WebSocketConnector.handleErrors : connection inactive; ', err[idx])
-    }
-    if ( (idx = err.indexOf(ConnectorErrors.LIST_TO_BIG)) > -1 ) {
-      cl('WebSocketConnector.handleErrors : confirmation list to big;', err[idx])
-    }
-    if ( (idx = err.indexOf(ConnectorErrors.READY_LIST_TO_BIG)) > -1 ) {
-      cl('WebSocketConnector.handleErrors : ready message list to big;', err[idx])
-    }
     this.transport.disconnect();
-    this.fire('params:error');
+    this.fire('params:error', errorArr);
   }
 });
 
