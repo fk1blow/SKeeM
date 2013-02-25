@@ -58,7 +58,6 @@ var XHRConnector = AbstractConnector.extend({
     // If server triggers errors
     if ( err.status == 405 ) {
       this.fire('params:error', err.responseText);
-    // handle every other error as a connection issue
     } else {
       this.fire('connection:error');
     }
