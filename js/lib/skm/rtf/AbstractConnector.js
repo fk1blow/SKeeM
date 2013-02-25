@@ -37,10 +37,6 @@ var ConnectorState = {
   // addSubscription: function() {},
 
 
-
-
-
-
 /**
  * Abstract connector
  */
@@ -50,12 +46,6 @@ var AbstractConnector = SKMObject.extend(Subscribable, {
    * @type {WSWrapper, XHRWrapper} an instance of a Transport type
    */
   transport: null,
-
-  /**
-   * State of the connector template
-   * @type {Number}
-   */
-  // state: ConnectorState.INACTIVE,
 
   /**
    * @abstract
@@ -90,32 +80,7 @@ var AbstractConnector = SKMObject.extend(Subscribable, {
    *
    * Removes transport listeners
    */
-  removeTransportListeners: function() {},
-
-  /**
-   * Changes the state of the connector to Inactive
-   */
-  // changeToActive: function() {
-  //   this.state = ConnectorState.ACTIVE;
-  //   this.fire('connector:switch', this.state);
-  // },
-
-  /**
-   * Changes the state of the connector to Active
-   */
-  // changeToInactive: function() {
-  //   this.state = ConnectorState.INACTIVE;
-  //   this.fire('changed:state', this.state);
-  // },
-
-  /**
-   * [changeToStopped description]
-   * @return {[type]} [description]
-   */
-  // changeToStopped: function() {
-  //   this.state = ConnectorState.STOPPED;
-  //   this.fire('changed:state', this.state);
-  // }
+  removeTransportListeners: function() {}
 });
 
 
