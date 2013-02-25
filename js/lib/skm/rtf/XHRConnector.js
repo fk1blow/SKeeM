@@ -59,7 +59,7 @@ var XHRConnector = AbstractConnector.extend({
     if ( err.status == 405 ) {
       this.fire('params:error', err.responseText);
     } else {
-      this.fire('connection:error');
+      this.fire('connector:deactivated');
     }
   }
 });
