@@ -51,7 +51,7 @@ wsConnector.beginUpdate();
  */
 
 
-var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
+/*var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
 
 var xhrTransport = XHRWrapper.Wrapper.create({ url: xhrUrl });
 var xhrConnector = XHRConnector.create({ transport: xhrTransport });
@@ -62,7 +62,7 @@ xhrConnector.on('params:error', function() {
   cl('connection:error', arguments)
 })
 
-xhrConnector.beginUpdate();
+xhrConnector.beginUpdate();*/
 
 
 
@@ -76,41 +76,22 @@ xhrConnector.beginUpdate();
 
 // return;
 
-// var wsUrls = [
-//   'ws://localhost:8080/WebSocketServletTest/websk',
-//   'ws://10.0.3.98:3000'
-// ];
+/*var wsUrls = [
+  'ws://localhost:8080/WebSocketServletTest/websk',
+  'ws://10.0.3.98:3000'
+];
 
 
-// var ws = WSWrapper.create({ url: wsUrls[1], pingServer: true, pingInterval: 1000, reconnectAttempts: 2 });
+var ws = WSWrapper.create({
+  url: wsUrls[1],
+  reconnectDelay: 3000,
+  pingServer: false,
+  pingInterval: 1000,
+  reconnectAttempts: 5,
+  timeout: 1000
+});
 
-// ws.on('disconnected', function() {
-//   cl('ws.disconnected')
-// })
-// .on('connected', function() {
-//   cl('ws.connected')
-// })
-// .on('error', function() {
-//   cl('ws.error')
-// })
-// .on('server:close', function() {
-//   cl('ws.server:close')
-// })
-// .on('message', function(message) {
-//   cl('ws.message:', message)
-// })
-
-// .on('connecting:timeout', function() {
-//   cl('ws.connecting:timeout')
-// })
-// .on('reconnecting', function() {
-//   cl('ws.reconnecting')
-// })
-// .on('reconnecting:stopped', function() {
-//   cl('ws.reconnecting:stopped')
-// })
-
-// ws.connect();
+ws.connect();*/
 
 
 });

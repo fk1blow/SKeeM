@@ -60,9 +60,9 @@ wsServer.on('request', function(request) {
     // }, 3000);
 
     setTimeout(function() {
-        connection.send('will disconnect now!');
-        // connection.close();
-        connection.send('server:close');
+        connection.send('client will disconnect now!');
+        connection.close();
+        // connection.send('server:close');
     }, 5000);
     
     connection.on('close', function(reasonCode, description) {
