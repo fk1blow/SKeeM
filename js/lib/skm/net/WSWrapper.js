@@ -55,7 +55,7 @@ var HandlerEventDelegates = {
       this.fire('reconnecting:started');
     }, this);
 
-    // When all reconnecting attempts are stopped
+    // When maximum reconnecting attempts reached
     connection.on('reconnecting:stopped', function() {
       this._stopConnecting();
       this.fire('reconnecting:stopped');
