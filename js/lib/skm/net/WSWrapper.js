@@ -33,46 +33,68 @@ var iDevice = function() {
 var HandlerEventDelegates = {
   _attachConnectionEvents: function() {
     var connection = this._connectionHandler;
+
+    /**
+     * Connecting handlers
+     */
     
-    // Timeout/reconnect listeners
+    // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      this._nativeWrapper.destroySocket();
+      this._startReconnecting();
       this.fire('connecting:timeout');
-    }, this)
-    .on('reconnecting', function() {
-      this._recreateSocketWrapper();
-      this.fire('reconnecting');
-    }, this)
-    .on('reconnecting:stopped', function() {
-      this.fire('reconnecting:stopped');
-    }, this);
-    
-    // Base connection events
-    connection.on('connected', function() {
-      this._initPingTimer();
-      this.fire('connected');
-    }, this)
-    .on('disconnected', function(event) {
-      this._handleCloseByServer();
-      this.fire('disconnected', event);
     }, this);
 
-    connection.on('server:pong', function() {
+    // A connecting attempt stopped
+    connection.on('connecting:stopped', function() {
+      this.fire('connecting:stopped');
+    }, this);
+
+    // One reconnecting cycle started
+    connection.on('reconnecting:started', function() {
+      this._startConnecting();
+      this.fire('reconnecting:started');
+    }, this);
+
+    // When all reconnecting attempts are stopped
+    connection.on('reconnecting:stopped', function() {
+      this._stopConnecting();
+      this.fire('reconnecting:stopped');
+    }, this);
+
+    /**
+     * Link handlers
+     */
+
+    connection.on('link:opened', function() {
+      this.fire('link:opened');
+    }, this)
+    .on('link:closed', function() {
+      this._stopConnecting();
+      this.fire('link:closed');
+    }, this);
+
+    /**
+     * Message and pong listeners
+     */
+
+    connection.on('message', function(message) {
+      this.fire('message', message);
+    }, this)
+    .on('server:pong', function() {
       this.fire('server:pong');
     }, this);
 
 
-    // Basic message listener
-    connection.on('message', function(message) {
-      this.fire('message', message);
-    }, this)
-    .on('error', function() {
-      this.fire('error');
-    }, this);
+    /**
+     * Missing implementation and error handler
+     */
 
     // If no websocket implementation found
     connection.on('missing:implementation', function() {
       this.fire('missing:implementation');
+    }, this)
+    .on('error', function() {
+      this.fire('error');
     }, this);
   }
 }
@@ -161,13 +183,13 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
       Logger.error('WebSocket already trying to reconnect.');
       return false;
     }
-    this._stopAndRestart();
+    this._startConnecting();
     return this;
   },
 
   disconnect: function() {
     Logger.info('WebSocket disconnect.');
-    this._stopAndClose();
+    this._stopConnecting();
   },
 
   send: function(message) {
@@ -230,17 +252,23 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
    * Private
    */
   
-  _stopAndClose: function() {
-    this._timerPing.stop();
-    this._connectionHandler.stopTimers();
-    this._connectionHandler.shouldExpectClose(true);
+  _startConnecting: function() {
+    var socket = this._nativeWrapper.createSocket(this.url, this.protocols);
+    if ( socket == null )
+      this.fire('missing:implementation')._stopConnecting();
+    else
+      this._connectionHandler.attachListenersTo(socket)
+          .startConnectingAttempt();
+  },
+
+  _stopConnecting: function() {
+    this._connectionHandler.stopConnectingAttempt();
     this._nativeWrapper.destroySocket();
   },
-  
-  _stopAndRestart: function() {
-    this._connectionHandler.stopTimers();
-    this._connectionHandler.shouldExpectClose(false);
-    this._recreateSocketWrapper();
+
+  _startReconnecting: function() {
+    this._connectionHandler.holdConnectingAttempt();
+    this._nativeWrapper.destroySocket();
   },
 
   _initPingTimer: function() {
@@ -265,21 +293,6 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     });
     // Disconnect and auto reconnect bindings
     this._attachConnectionEvents();
-  },
-
-  _handleCloseByServer: function() {
-    this._stopAndClose();
-  },
-
-  // _createAndBindWrapper: function() {
-  _recreateSocketWrapper: function() {
-    this._nativeWrapper.createSocket(this.url, this.protocols);
-    this._attachConnectionListeners();
-  },
-
-  _attachConnectionListeners: function() {
-    this._connectionHandler.attachListeners(this._nativeWrapper.getSocketObject());
-    this._connectionHandler.restartAutodisconnectTimer();
   }
 });
 
