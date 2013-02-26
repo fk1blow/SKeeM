@@ -25,7 +25,8 @@ var Logger = SKMLogger.create();
 var WrapperMessageDelegates = {
   handleOnClose: function(event) {
     Logger.info('WrapperMessageDelegates.handleOnClose');
-    Logger.debug('socket has closed :', event.wasClean, event.code, event.reason);
+    Logger.debug('wasClean, code, reason : ', event.wasClean, event.code, event.reason);
+
     // stop all timers
     this._stopTimers();
     // If  socket connection is closed by the server
@@ -46,7 +47,7 @@ var WrapperMessageDelegates = {
   },
 
   handleOnOpen: function() {
-    Logger.info('WrapperMessageDelegates connection opened');
+    Logger.info('WrapperMessageDelegates.handleOnOpen');
     this._stopTimers();
     this._reconnectionAttempt = 0;
     this.fire('link:opened');
@@ -150,17 +151,13 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   },
 
   /**
-   * Timers handlers
+   * Private
    */
-
+  
   _stopTimers: function() {
     this._timerAutoDisconnect.stop();
     this._timerAutoReconnect.stop();
   },
-
-  /**
-   * Private
-   */
   
   _handleAutoDisconnect: function() {
     Logger.debug('auto-disconnected after ' +
