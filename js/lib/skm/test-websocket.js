@@ -26,17 +26,16 @@ var wsurls = [
   'ws://10.0.3.98:3000'
 ];
 
-var ws = WSWrapper.create({ url: wsurls[1] });
-ws.connect();
+var ws = WSWrapper.create({ url: wsurls[0] });
 
 var wsConnector = WSConnector.create({ transport: ws });
 
-wsConnector.on('connector:deactivated', function(state) {
-  cl('wsConnector connector:deactivated');
-})
-.on('params:error', function() {
-  cl('wsConnector params:error : widget should resend parameters(subscriptionId, matchId, etc)');
-});
+// wsConnector.on('connector:deactivated', function(state) {
+//   cl('wsConnector connector:deactivated');
+// })
+// .on('params:error', function() {
+//   cl('wsConnector params:error : widget should resend parameters(subscriptionId, matchId, etc)');
+// });
 
 wsConnector.beginUpdate();
 
@@ -84,22 +83,22 @@ xhrConnector.beginUpdate();*/
 
 // return;
 
-/*var wsUrls = [
-  'ws://localhost:8080/WebSocketServletTest/websk',
-  // 'ws://10.0.3.98:3000'
-];
+// var wsUrls = [
+//   'ws://localhost:8080/WebSocketServletTest/websk',
+//   'ws://10.0.3.98:3000'
+// ];
 
 
-var ws = WSWrapper.create({
-  url: wsUrls[1],
-  reconnectDelay: 3000,
-  pingServer: false,
-  pingInterval: 1000,
-  reconnectAttempts: 5,
-  timeout: 1000
-});
+// var ws = WSWrapper.create({
+//   url: wsUrls[1],
+//   reconnectDelay: 3000,
+//   pingServer: false,
+//   pingInterval: 1000,
+//   // reconnectAttempts: 5,
+//   timeout: 1000
+// });
 
-ws.connect();*/
+// ws.connect();
 
 
 });
