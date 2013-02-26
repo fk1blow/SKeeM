@@ -43,9 +43,7 @@ var XHRConnector = AbstractConnector.extend({
   },
 
   addTransportListeners: function() {
-    this.transport
-      .on('error', this.handleError, this);
-      // .on('reconnecting:stopped', this.handleReconnectingStopped, this);
+    this.transport.on('error', this.handleError, this);
     return this;
   },
 
@@ -53,6 +51,10 @@ var XHRConnector = AbstractConnector.extend({
     this.transport.off();
     return this;
   },
+
+  /**
+   * Handlers
+   */
 
   handleError: function(err) {
     // If server triggers errors
