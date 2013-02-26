@@ -22,13 +22,10 @@ var NoNativeImplementation = 'No native WebSocket implementation found;'
 
 
 var WSNativeWrapper = SKMObject.extend({
-  _nativeConstructor: null,
-
   _socket: null,
 
   initialize: function() {
     Logger.debug('%cnew WSNativeWrapper', 'color:#A2A2A2');
-    this._nativeConstructor = null;
     this._socket = null;
   },
 
@@ -42,19 +39,16 @@ var WSNativeWrapper = SKMObject.extend({
   },
 
   getNativeConstructor: function() {
-    var ctor = null;
-    if ( ctor = this._nativeConstructor )
-      return ctor;
-    ctor = this.getProperConstructor();
+    var ctor = this.getProperConstructor();
     if ( ctor === null ) {
-      Logger.info('WSNativeWrapper.getNativeConstructor : '
-        + NoNativeImplementation);
+      Logger.debug('%cWSNativeWrapper.getNativeConstructor : '
+        + NoNativeImplementation, 'red');
     }
     return ctor;
   },
 
   createSocket: function(url, protocols) {
-    Logger.info('WSNativeWrapper.createSocket');
+    // Logger.info('WSNativeWrapper.createSocket');
     var c = this.getNativeConstructor();
     // If no native implementation found, return null
     if ( c == null )
@@ -66,7 +60,7 @@ var WSNativeWrapper = SKMObject.extend({
   },
 
   destroySocket: function() {
-    Logger.info('WSNativeWrapper.destroySocket');
+    // Logger.info('WSNativeWrapper.destroySocket');
     if ( !this._socket )
       return false;
     this._socket.close();
