@@ -65,14 +65,17 @@ var WebSocketConnector = AbstractConnector.extend({
   },
   
   hanleLinkClosed: function(message) {
-    var error, reason = jQuery.parseJSON(message.reason);
-    Logger.info('WebSocketConnector.hanleLinkClosed');
-    if ( error = reason.error )
-      this._handleParametersErrors(reason.error);
+    var error, reason;
+    if ( message ) {
+      reason = jQuery.parseJSON(message.reason)
+      Logger.info('WebSocketConnector.hanleLinkClosed');
+      if ( error = reason.error )
+        this._handleParametersErrors(reason.error);
+    }
   },
 
   _handleParametersErrors: function(errorArr) {
-    this.transport.disconnect();
+    cl('_handleParametersErrors')
     this.fire('params:error', errorArr);
   }
 });
