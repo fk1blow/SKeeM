@@ -68,9 +68,9 @@ var HandlerEventDelegates = {
     connection.on('link:opened', function() {
       this.fire('link:opened');
     }, this)
-    .on('link:closed', function() {
+    .on('link:closed', function(evt) {
       this._stopConnecting();
-      this.fire('link:closed');
+      this.fire('link:closed', evt);
     }, this);
 
     /**
@@ -170,7 +170,6 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
    */
 
   connect: function() {
-    Logger.info('WebSocket connect.');
     if ( this.isOpened() ) {
       Logger.error('WebSocket already open.');
       return false;
