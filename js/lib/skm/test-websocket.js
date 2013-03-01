@@ -4,14 +4,67 @@
 require(['skm/net/WSWrapper',
 				 'skm/net/XHRWrapper',
 				 'skm/k/Object',
-				 'skm/rtf/ConnectorManager',
-				 'skm/rtf/XHRConnector',
+         'skm/rtf/RTFManager',
+         'skm/rtf/XHRConnector',
          'skm/rtf/WSConnector'],
-  function(WSWrapper, XHRWrapper, SKMObject, ConnectorManager, XHRConnector, WSConnector)
+  function(WSWrapper, XHRWrapper, SKMObject, RTFManager, XHRConnector, WSConnector)
 {
 
 
 console.log('--------------------------------------------------------------------------------------')
+
+
+
+
+
+/**
+ * RTF Manager
+ */
+
+var wsurls = [
+  'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
+  'ws://10.0.3.98:3000'
+];
+
+var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + ((new Date).getTime());
+
+
+
+
+
+var rtf = RTFManager.create({
+  sequence: [ 'WebSocket', 'XHR' ]
+});
+
+
+/*rtf.setConnectorParameters({
+  subscribeId: 'nextMatchesWidget',
+  clientId: (new Date().getTime())// similar cu session id
+});*/
+
+
+rtf.registerConnector('WebSocket', WSConnector.create({
+  transport: WSWrapper.create({ url: wsurls[0] })
+}));
+
+
+rtf.registerConnector('XHR', XHRConnector.create({
+  transport: XHRWrapper.create({ url: xhrUrl })
+}));
+
+// rtf.on('update', function() {
+//   cl('event :: update', arguments)
+// })
+
+rtf.startConnectors();
+
+
+
+
+
+
+
+
 
 
 /**
@@ -21,7 +74,7 @@ console.log('-------------------------------------------------------------------
 
 
 
-var wsurls = [
+/*var wsurls = [
   'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
   'ws://10.0.3.98:3000'
 ];
@@ -37,7 +90,7 @@ var wsConnector = WSConnector.create({ transport: ws });
 //   cl('wsConnector params:error : widget should resend parameters(subscriptionId, matchId, etc)');
 // });
 
-wsConnector.beginUpdate();
+wsConnector.beginUpdate();*/
 
 
 
