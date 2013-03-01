@@ -176,10 +176,16 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 });
 
 
-return {
-	Config: LibraryConfig,
-	Wrapper: XHRWrapper
-};
+// return {
+// 	Config: LibraryConfig,
+// 	Wrapper: XHRWrapper
+// };
+
+
+/**
+ * Temporarely hardcoded
+ */
+return XHRWrapper;
 
 
 });
