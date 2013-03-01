@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head> 
+       
+        <title>Widget test</title>
+     
+        <script src="js/jquery-1.9.0.min.js"></script>
+        <script src="js/underscore.js"></script>
+        <script src="js/backbone.js"></script>
+        <script src="ext-all.js"></script>
+        <style>
+        .playback_buttons {list-style:none; width:400px; margin:0 auto; }
+        #top_frame {width:600px; }
+        .playback_buttons li {float:left; margin-left:20px; }
+        .playback_buttons a {display:block; width:20px; height:20px; text-decoration:none; }
+            #display_wrapper { background-color:#cdc3ee; width:600px; height:600px; }
+        </style>
+    </head>
+    <body>
+
+        <div id="player_frame">
+            <div id="top_frame">
+                <ul class="playback_buttons"> 
+                    <li><a href="#">&lt;&lt;]</a></li> 
+                    <li><a href="#" id="stop">[]</a></li>
+                    <li><a href="#" id="pause">||</a></li>
+                    <li><a href="#" id="play">[></a></li>
+                    <li><a href="#">[&gt;&gt;</a></li>
+                    <li><a href="#" id="getState">?</a></li>
+                </ul>
+            </div> <br> <br>
+        </div>
+           <!--   <div id="playlist_frame">
+              <ul class="playlist_items">
+                    <li id="1">Song no.1</li>
+                    <li id="2">Song no.2</li>
+                    <li id="3">Song no.3</li>
+                </ul>
+            </div>
+            <br/>
+
+            <div id="timer_placeholder">
+                <span id="tm">00</span>:<span id="ts">00</span>
+            </div>
+            -->
+
+            <div id="display_wrapper">
+            
+            </div>
+        
+
+        <script src="js/main.js"></script>
+
+    </body>
+</html>
