@@ -1,4 +1,13 @@
 
+/**
+ * La fiecare update/send de date, trebuie creata o noua conexiune.
+ * Conexiunea veche trebuie sa ramana activa, fiind distrusa la "complete" sau "error".
+ *
+ * Cand se adauga un nou subscriptiondId, se face un nou request ajax si se 
+ * apendeaza subscribtionId-ul ca si query string, in url. 
+ * 
+ */
+
 // RTF XHR Connector implementation
 
 define(['skm/k/Object',
