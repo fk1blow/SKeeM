@@ -46,7 +46,7 @@ var WebSocketConnector = AbstractConnector.extend({
     this.transport
       .on('link:closed', this.hanleLinkClosed, this)
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
-      .on('missing:implementation', this.handleReconnectingStopped, this)
+      .on('implementation:missing', this.handleReconnectingStopped, this)
       .on('message', this.handleUpdateMessage, this);
     return this;
   },
@@ -61,7 +61,8 @@ var WebSocketConnector = AbstractConnector.extend({
    */
   
   handleUpdateMessage: function(message) {
-    this.fire('message:update', message);
+    Logger.info('WebSocketConnector.handleUpdateMessage');
+    this.fire('update', message);
   },
   
   handleReconnectingStopped: function() {
