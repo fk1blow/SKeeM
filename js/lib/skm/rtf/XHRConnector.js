@@ -52,7 +52,9 @@ var XHRConnector = AbstractConnector.extend({
   },
 
   addTransportListeners: function() {
-    this.transport.on('error', this.handleError, this);
+    this.transport
+      .on('error', this.handleError, this)
+      .on('success', this.handleUpdateMessage, this);
     return this;
   },
 
@@ -64,8 +66,14 @@ var XHRConnector = AbstractConnector.extend({
   /**
    * Handlers
    */
+  
+  handleUpdateMessage: function(message) {
+    Logger.info('XHRConnector.handleUpdateMessage');
+    this.fire('update', message);
+  },
 
   handleError: function(err) {
+    Logger.info('XHRConnector.handleError');
     // If server triggers errors
     if ( err.status == 405 ) {
       this.fire('params:error', err.responseText);
