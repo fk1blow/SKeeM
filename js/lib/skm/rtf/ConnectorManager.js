@@ -15,11 +15,6 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var Subscriber = SKMObject.extend({
-  //
-});
-
-
 var Manager = SKMObject.extend(Subscribable, {
   /**
    * List of connector object instances
@@ -160,9 +155,8 @@ var Manager = SKMObject.extend(Subscribable, {
       Logger.debug('%cConnector params:error', 'color:red');
     });
 
-    connector.on('message:update', function() {
-      Logger.debug('%cConnector message:update', 'color:red', arguments);
-      // this.fire('update', )
+    connector.on('update', function() {
+      Logger.debug('%cConnector message update', 'color:red', arguments);
     });
 
     // Begin update connector
