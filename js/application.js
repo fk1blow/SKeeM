@@ -13,6 +13,6 @@ requirejs.config({
 
 
 require(['console', 'skm/skm'], function() {
-  var testFile = require(['skm/test-websocket']);
+  var testFile = require(['skm/test-rtf']);
   console.log('Required :: application.js');
 });
