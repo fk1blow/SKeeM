@@ -3,9 +3,8 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Subscribable',
   'skm/rtf/AbstractConnector'],
-  function(SKMObject, SKMLogger, Subscribable, AbstractConnector)
+  function(SKMObject, SKMLogger, AbstractConnector)
 {
 'use strict';
 
