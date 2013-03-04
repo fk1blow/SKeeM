@@ -4,7 +4,7 @@
 require(['skm/net/WSWrapper',
 				 'skm/net/XHRWrapper',
 				 'skm/k/Object',
-         'skm/rtf/RTFManager',
+         'skm/rtf/ConnectorManager',
          'skm/rtf/XHRConnector',
          'skm/rtf/WSConnector'],
   function(WSWrapper, XHRWrapper, SKMObject, RTFManager, XHRConnector, WSConnector)
