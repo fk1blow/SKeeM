@@ -250,7 +250,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   _startConnecting: function() {
     var socket = this._nativeWrapper.createSocket(this.url, this.protocols);
     if ( socket == null )
-      this.fire('missing:implementation')._stopConnecting();
+      this.fire('implementation:missing')._stopConnecting();
     else
       this._connectionHandler.attachListenersTo(socket)
           .startConnectingAttempt();
