@@ -19,13 +19,10 @@ var Widget = Backbone.View.extend({
         _subviews: null,
     /*  Initialization logic. */ 
         initialize: function(){
-          
             this._registerOptions();
-            if(this.options.register && this.options.register.UIManager)  console.log('Initialize ====>',this._type,' UI manager', this.options.register.UIManager);
             this._initTemplate();
             this._initSubviews(this._UIManager);
-
-           
+            
         },
     /* @function 
      * - Composite template object { _$ } is passed to all subviews (appending templates to it) and finally appended to DOM as a composite structure */
@@ -33,41 +30,56 @@ var Widget = Backbone.View.extend({
             var _$ = _$ || this.$el;
             this.el = this._template;
             this.$el = $(this._template);
+            // console.log('Render Template for ', this._type, this.el);
             if( this._delegateToSubviews(this.$el)) { _$.append(this.$el); } 
-            else { _$.append(this.el); }      // append(this._template)
+            else { _$.append(this.$el); }      // append(this._template)
+            if (this.events) {
+                // console.log('^^^^^^^^EVENTS^^^^^^',this.events, 'Attached on parent View\'s $el', this.$el);
+                this.delegateEvents();
+            } 
         },
     
     /* @function
      * - Removes $el DOM node for parrent view */
         remove: function(){
-            console.log('Remove delegated from ', this);
+            // console.log('Remove delegated from ', this);
+            this.off();
+            this.$el.off();
+            this.undelegateEvents();
+            
             for (var i = 0; i < this._subviews.length; i++){
                 // this._subviews[i].off();
                 this._subviews[i].remove();
             }
-            this.unbind();
-            // this.model.unbind('changed', this.render, this)
             this._subviews.splice(0,this._subviews.length);
+
             this.$el.remove();
+            
+
+            // this.off();
+            // this.model.unbind('changed', this.render, this)
+            
             delete this.$el;
             delete this.el;
-            console.log('Removed', this);
+            
         },
     /* @function 
      * - Called uppon initialization. Registeres any functions passed inside [register] property to this instance */
         _registerOptions: function(){
-            if (this.options) {
+            if (this.options.type) {
+// /******/                console.log('<===== this ====>', this);
                 this._type = this.options.type;
                 if (this.options.register) {
                     for (var prop in this.options.register) {
                         if (prop == 'UIManager') {
                          this._UIManager = this.options.register[prop]; 
-                         console.log('Creating UIManager:', this.options.register[prop]);
+                         console.log('Initializing ====>',this._type,' UI manager', this.options.register.UIManager);
                      }
                         else { this[prop] = this.options.register[prop]; }
                     }  
                  }
-            }
+                 return true;
+            } else return false; 
         },    
     /* @function - Underscore Templating Engine
      * - Compiles the template property from the templateString and dataObject provided */
@@ -93,22 +105,27 @@ var Widget = Backbone.View.extend({
             console.log('InitSubviews for ====>',this._type);
     /* Initialize subviews as empty array */
             this._subviews = [];
+            
             var subviewItems = this.options.subviews || [];
             for (var i = 0; i < subviewItems.length; i++){
+
+                if ( subviewItems[i].type ) {
     /* Check for a UIManager property passed to the register object as this.options  */
-                if (subviewItems[i].register && subviewItems[i].register.UIManager) {
-                    console.log('subview manager found. _UIManager = ',subviewItems[i].register.UIManager);
-                } else {
-                    console.log('subview manager not found.. Using parrents _UIManager = ', pUIM);
-                    _.extend(subviewItems[i], { register : { UIManager: pUIM}});
-                }
+                    if ( subviewItems[i].register && subviewItems[i].register.UIManager) {
+                        // console.log('subview manager found. _UIManager = ',subviewItems[i].register.UIManager);
+                    } else {
+                        // console.log('subview manager not found.. Using parrents _UIManager = ', pUIM);
+                        _.extend(subviewItems[i], { register : { UIManager: pUIM}});
+                    }
     /* Create subwidget based on the type if found by WidgetFactory method of the UIManager object */
-                if (subviewItems[i].type in this._UIManager.Components) {
-                    console.log('Object type found in factory: Creating new ', subviewItems[i].type);
-                    this._subviews.push(this._UIManager.WidgetFactory(subviewItems[i].type, subviewItems[i]));
-                } else {
-                    console.log('Object type not in factory, creating Generic Widget:', subviewItems[i].type);
-                    this._subviews.push(new Widget(subviewItems[i]));
+                    if (subviewItems[i].type in this._UIManager.Components) {
+                        // console.log('-$-$-$-$- Object type found in factory: Creating new ', subviewItems[i].type);
+ // /***/                       console.log('{{{{{{ +_+_+_+_+_+_+_+_+_+_+ }}}}}}', subviewItems[i]);
+                        this._subviews.push(this._UIManager.WidgetFactory(subviewItems[i].type, subviewItems[i]));
+                    } else {        
+                            // console.log('Object type not in factory, creating Generic Widget:', subviewItems[i].type);
+                            this._subviews.push(new Widget(subviewItems[i]));
+                    }
                 }
             }
         },
@@ -192,8 +209,8 @@ var testWidget = new Widget({
      events: {
             "click #del": function(evt){
                 var x = $(evt.currentTarget);
-                this.remove();
-                console.log(this);
+                // this.remove();
+                console.log('Event initiated by' ,x);
             }
         },
     register:{ 
@@ -203,13 +220,20 @@ var testWidget = new Widget({
         templateString:'<div id="panel">',
         dataObject:{}
     },
+    // // subviews:[{}]
     subviews:[
         { 
-            type:'Container',
-            // template: {
-            //     templateString:'<div id="mydiv"> ',
-            //     dataObject:{}
-            // },
+            type:'Containerr',
+            template: {
+                 templateString:'<div id="container"> ',
+                 dataObject:{}
+            },
+            el: $('#panel'),
+            events: {
+                "click #del2" : function(){
+                        alert('Clicked Fake');
+                }
+            },
             register:{ 
                 name: 'txtlabel',
                 UIManager: UI2
@@ -218,17 +242,25 @@ var testWidget = new Widget({
             subviews:[
                 {
                     type:'Label',
+
                     template: {
                         templateString: '<b> this is my </b> <span> LABEL </span>',
                         dataObject: {}
-                    }
+                    },
+                    subviews: [{},{}]
                 },
                 {
                     type:'Label',
+                    //                     events: {
+                    //     "click #the_label": function(){
+                    //         console.log('Tapped the Label');
+                    //     }
+                    // },
                     template: {
-                        templateString: '<button id="del2"> fake Delete </button><button id="del"> Delete </button>',
+                        templateString: '<div id="the_label" ><button id="del2"> fake Delete </button><button id="del"> Delete </button></div>',
                         dataObject: {}
-                    }
+                    },
+                    subviews: [{},{},{}]
                 }
             ]
         }
@@ -259,9 +291,70 @@ function createiosTestWidget(args){
     return new testWidget(args);
 }
 
+   ////////////////////////////////////////////////////////////////////////////////////////
 
 
 
+var Registry = function(){};
+
+Registry.prototype = {
+    init:function(){
+        this._subscribers = [];
+    },
+
+    add:function(subscriber){
+        if(this._subscribers.indexOf(subscriber) >= 0){
+            // Already registered so bail out
+            return;
+        }
+        this._subscribers.push(subscriber);
+    },
+
+    remove:function(subscriber){
+        if(this._subscribers.indexOf(subscriber) < 0){
+            // Not currently registered so bail out
+            return;
+        }
+              this._subscribers.splice(
+                  this._subscribers.indexOf(subscriber), 1
+              );
+    }
+};
+
+var Leaker = function(){};
+Leaker.prototype = {
+    init:function(name, parent, registry){
+        this._name = name;
+        this._registry = registry;
+        this._parent = parent;
+        this._child = null;
+        this.createChildren();
+        this.registerCallback();
+    },
+
+    createChildren:function(){
+        if(this._parent !== null){
+            // Only create child if this is the root
+            return;
+        }
+        this._child = new Leaker();
+        this._child.init("leaker 2", this, this._registry);
+    },
+
+    registerCallback:function(){
+        this._registry.add(this);
+    },
+
+    destroy: function(){
+        if(this._child !== null){
+            this._child.destroy();            
+        }
+        this._registry.remove(this);
+    }
+};
+
+
+var leak;
 
 
 function test() {
@@ -276,36 +369,47 @@ function test() {
 // init
 
     for (var i = 0; i < n; i++){
-    /* @function to test */
+    /* @function to test */        
 
-     // iOS View Method
-
-       // var playbackWidget = createiosTestWidget();
-       // playbackWidget.render('<div id="hey">');
-       // var playbacksubWidget = createiosTestWidget({});
-       // playbackWidget.createSubview(playbacksubWidget);
-       // playbacksubWidget.render('<div id="mecca">');
-       // var playbacksubWidget2 = createiosTestWidget({});
-       // playbackWidget.createSubview(playbacksubWidget2);
-       // playbacksubWidget2.render('meccatron');
-       // console.log(playbacksubWidget);
-  
-     // My Widget method
-
-        
-        
-    }
+        /////////////
+    } // end For loop
+    $('#display_wrapper').html($('<button id="start"> Create </button> <br> <button id="del"> Delete </button>'));
     
-    $('#display_wrapper').html($('<button id="start"> Create </button>'));
-    $('#start').click(function(){
+    function handleRemove(){
 
-        var playbackWidget = createTestWidget();
-        playbackWidget.render();
-        console.log(playbackWidget);
+        leak.remove();
+        leak.off();
+        leak = null;
+    }
+
+    $('#start').click(function(){
+    
+
+        var leakExists = !(
+            window["leak"] === null || window["leak"] === undefined
+        );
+        
+        if(leakExists){
+           console.log('cant create new leak view');
+            return;
+        }
+        
+        leak = createTestWidget();
+        leak.undelegateEvents();
+        leak.render();
+
+
+        // console.log();
+
     });
 
+    $('#del').click(function(){
+       handleRemove();
+    });
 
-    console.log(playbackWidget);
+// registry = new Registry();
+// registry.init();
+
 // clear
 /* After Test */
 
