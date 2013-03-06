@@ -62,15 +62,34 @@ var XHRConnector = BaseConnector.extend({
     return this;
   },
 
-  /**
-   * Handlers
-   */
   
+  /*
+    Handlers
+  */
+  
+
+  /**
+   * Handles a message received from server api
+   *
+   * @description handles the server's update message
+   * and passes it to the subscribers/clients of rtf api
+   * 
+   * @param  {Object} message JSON message send by rtf server api
+   */
   handleUpdateMessage: function(message) {
     Logger.info('XHRConnector.handleUpdateMessage');
     this.fire('api:update', message);
   },
 
+  /**
+   * Handles xhr connection error
+   *
+   * @description triggered when the transport cannot
+   * connect to the host url or when the server
+   * closes a connection giving a reason as the "405" status code
+   * 
+   * @param  {[type]} err JSON message representing the reason
+   */
   handleError: function(err) {
     Logger.info('XHRConnector.handleError');
     // If server triggers errors
