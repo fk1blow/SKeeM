@@ -12,8 +12,8 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/rtf/AbstractConnector'],
-  function(SKMObject, SKMLogger, AbstractConnector)
+  'skm/rtf/BaseConnector'],
+  function(SKMObject, SKMLogger, BaseConnector)
 {
 'use strict';
 
@@ -32,7 +32,7 @@ var ConnectorErrors = {
  * [XHRConnector description]
  * @type {[type]}
  */
-var XHRConnector = AbstractConnector.extend({
+var XHRConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew XHRConnector', 'color:#A2A2A2');
     this.addTransportListeners();
@@ -68,14 +68,14 @@ var XHRConnector = AbstractConnector.extend({
   
   handleUpdateMessage: function(message) {
     Logger.info('XHRConnector.handleUpdateMessage');
-    this.fire('update', message);
+    this.fire('api:update', message);
   },
 
   handleError: function(err) {
     Logger.info('XHRConnector.handleError');
     // If server triggers errors
     if ( err.status == 405 ) {
-      this.fire('params:error', err.responseText);
+      this.fire('api:error', err.responseText);
     } else {
       this.fire('connector:deactivated');
     }

@@ -3,8 +3,8 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/rtf/AbstractConnector'],
-  function(SKMObject, SKMLogger, AbstractConnector)
+  'skm/rtf/BaseConnector'],
+  function(SKMObject, SKMLogger, BaseConnector)
 {
 'use strict';
 
@@ -23,20 +23,20 @@ var ConnectorErrors = {
  * [WSConnector description]
  * @type {[type]}
  */
-var WebSocketConnector = AbstractConnector.extend({
+var WebSocketConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
     this.addTransportListeners();
   },
 
   beginUpdate: function() {
-    Logger.info('WebSocketConnector.beginUpdate');
+    Logger.debug('WebSocketConnector.beginUpdate');
     this.transport.connect();
     return this;
   },
 
   endUpdate: function() {
-    Logger.info('WebSocketConnector.endUpdate');
+    Logger.debug('WebSocketConnector.endUpdate');
     this.transport.disconnect();
     return this;
   },
@@ -44,9 +44,12 @@ var WebSocketConnector = AbstractConnector.extend({
   addTransportListeners: function() {
     this.transport
       .on('link:closed', this.hanleLinkClosed, this)
-      .on('reconnecting:stopped', this.handleReconnectingStopped, this)
-      .on('implementation:missing', this.handleReconnectingStopped, this)
       .on('message', this.handleUpdateMessage, this);
+
+    this.transport
+      .on('reconnecting:stopped', this.handleReconnectingStopped, this)
+      .on('implementation:missing', this.handleReconnectingStopped, this);
+
     return this;
   },
 
@@ -61,7 +64,7 @@ var WebSocketConnector = AbstractConnector.extend({
   
   handleUpdateMessage: function(message) {
     Logger.info('WebSocketConnector.handleUpdateMessage');
-    this.fire('update', message);
+    this.fire('api:update', message);
   },
   
   handleReconnectingStopped: function() {
@@ -69,19 +72,25 @@ var WebSocketConnector = AbstractConnector.extend({
     this.fire('connector:deactivated');
   },
   
+  /**
+   * Handles ws connector link:closed
+   *
+   * @description if server api closes the link, it send a message
+   * describing the reason for the close.
+   * Usually, the server api will close the link because of a problem
+   * involving protocols or for network issues.
+   * Anything else is not interpreted!
+   * 
+   * @param  {Object} message JSON message sent by rtf server api
+   */
   hanleLinkClosed: function(message) {
-    var error, reason;
+    var reason;
+    Logger.info('WebSocketConnector.hanleLinkClosed');
     if ( message ) {
-      reason = jQuery.parseJSON(message.reason)
-      Logger.info('WebSocketConnector.hanleLinkClosed');
-      if ( error = reason.error )
-        this._handleParametersErrors(reason.error);
+      reason = jQuery.parseJSON(message.reason);
+      if ( reason.error )
+        this.fire('api:error', reason.error);
     }
-  },
-
-  _handleParametersErrors: function(errorArr) {
-    cl('_handleParametersErrors')
-    this.fire('params:error', errorArr);
   }
 });
 
