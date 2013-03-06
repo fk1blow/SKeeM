@@ -1,13 +1,14 @@
 
 
 
-require(['skm/net/WSWrapper',
+require(['skm/k/Object',
+         'skm/net/WSWrapper',
 				 'skm/net/XHRWrapper',
-				 'skm/k/Object',
          'skm/rtf/ConnectorManager',
          'skm/rtf/XHRConnector',
-         'skm/rtf/WSConnector'],
-  function(WSWrapper, XHRWrapper, SKMObject, ConnectorManager, XHRConnector, WSConnector)
+         'skm/rtf/WSConnector',
+         'skm/rtf/RTFApi'],
+  function(SKMObject, WSWrapper, XHRWrapper, ConnectorManager, XHRConnector, WSConnector)
 {
 
 
@@ -17,9 +18,8 @@ console.log('-------------------------------------------------------------------
 
 
 
-/**
- * RTF Manager
- */
+
+
 
 var wsurls = [
   'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
@@ -44,7 +44,7 @@ var cm = ConnectorManager.create({
 
 
 cm.registerConnector('WebSocket', WSConnector.create({
-  transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 3 })
+  transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 0 })
 }));
 
 
