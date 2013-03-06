@@ -91,7 +91,7 @@ var Manager = SKMObject.extend(Subscribable, {
   registerConnector: function(type, connector) {
     if ( type in this._connectors ) {
       throw new Error('Manager.registerConnector :: '
-        + ' connector type already registered : ' + type);
+        + ' connector already registered : ' + type);
     }
     this._connectors[type] = connector;
   },
@@ -117,6 +117,8 @@ var Manager = SKMObject.extend(Subscribable, {
    * and starts the update
    */
   _startNextSequence: function() {
+    Logger.debug('%cstarting next sequence', 'color:green');
+
     this._activeSequenceIdx = this._getNextSequence();
     this._activeConnector = this._connectors[this._activeSequenceIdx];
     if ( this._activeConnector != undefined ) {
@@ -130,7 +132,7 @@ var Manager = SKMObject.extend(Subscribable, {
    * Stops the current sequence and end update
    */
   _stopCurrentSequence: function() {
-    Logger.debug('%cstopping current sequence', 'color:red');
+    Logger.debug('%cstopping current sequence', 'color:green');
     // Remove events and end update
     this._activeConnector.off().endUpdate();
   },
@@ -151,12 +153,12 @@ var Manager = SKMObject.extend(Subscribable, {
     }, this);
 
     // Stop and clean current connector
-    connector.on('params:error', function() {
-      Logger.debug('%cConnector params:error', 'color:red');
+    connector.on('api:error', function(error) {
+      Logger.debug('%cConnector api:error', 'color:red', error);
     });
 
-    connector.on('update', function() {
-      Logger.debug('%cConnector message update', 'color:red', arguments);
+    connector.on('api:update', function() {
+      Logger.debug('%cConnector message api:update', 'color:red', arguments);
     });
 
     // Begin update connector
