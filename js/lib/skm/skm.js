@@ -72,8 +72,8 @@ SK.ui = {
   components: null
 };
 
-cl('ADAPT: in a ui env, the delegates of an object can also be his parent.')
-cl('REMOVE: SK.manager!');
+// cl('ADAPT: in a ui env, the delegates of an object can also be his parent.')
+// cl('REMOVE: SK.manager!');
 
 // SK.manager = null;
 
@@ -81,7 +81,7 @@ SK.util = null;
 
 SK.model = null;
 
-cl('CHANGE: change ns from gstures to SK.ui.events.touch')
+// cl('CHANGE: change ns from gstures to SK.ui.events.touch')
 var Gsture = SK.ui.events.touch = {};
 
 }('SKM'));
