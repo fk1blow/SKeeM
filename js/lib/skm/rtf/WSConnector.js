@@ -19,10 +19,6 @@ var ConnectorErrors = {
 }
 
 
-/**
- * [WSConnector description]
- * @type {[type]}
- */
 var WebSocketConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
@@ -42,14 +38,14 @@ var WebSocketConnector = BaseConnector.extend({
   },
 
   addTransportListeners: function() {
-    this.transport
-      .on('link:closed', this.hanleLinkClosed, this)
-      .on('message', this.handleUpdateMessage, this);
-
+    // connection dropped
+    this.transport.on('link:closed', this.hanleLinkClosed, this);
+    // handles connection message event - rtf server api update
+    this.transport.on('message', this.handleUpdateMessage, this);
+    // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
       .on('implementation:missing', this.handleReconnectingStopped, this);
-
     return this;
   },
 
@@ -58,22 +54,41 @@ var WebSocketConnector = BaseConnector.extend({
     return this;
   },
 
-  /**
-   * Handlers
-   */
   
+  /*
+    Handlers
+  */
+  
+
+  /**
+   * Handles a message received from server api
+   *
+   * @description handles the server's update message
+   * and passes it to the subscribers/clients of rtf api
+   * 
+   * @param  {Object} message JSON message send by rtf server api
+   */
   handleUpdateMessage: function(message) {
     Logger.info('WebSocketConnector.handleUpdateMessage');
     this.fire('api:update', message);
   },
   
+  /**
+   * Handles ws re/connection attempt
+   *
+   * @description handles the event where a connection
+   * is being closed after a reconnecting attempt or the
+   * transport cannot be initialized.
+   * After this, usually, the connector manager should 
+   * swtich to the next available connector, if any.
+   */
   handleReconnectingStopped: function() {
     Logger.info('WebSocketConnector.handleReconnectingStopped');
     this.fire('connector:deactivated');
   },
   
   /**
-   * Handles ws connector link:closed
+   * Handles ws link:closed
    *
    * @description if server api closes the link, it sends a message
    * describing the reason for the close.
