@@ -3,10 +3,7 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Subscribable',
-  /*'skm/rtf/XHRConnector',
-  'skm/rtf/WSConnector'*/], 
-  // function(SKMObject, SKMLogger, Subscribable, XHRConnector, WSConnector)
+  'skm/util/Subscribable'],
   function(SKMObject, SKMLogger, Subscribable)
 {
 'use strict';
