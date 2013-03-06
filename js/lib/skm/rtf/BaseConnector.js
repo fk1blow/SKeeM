@@ -1,5 +1,5 @@
 
-// RTF Connector implementation
+// Base Connector implementation
 
 define(['skm/k/Object',
   'skm/util/Logger',
@@ -40,7 +40,7 @@ var ConnectorState = {
 /**
  * Abstract connector
  */
-var AbstractConnector = SKMObject.extend(Subscribable, {
+var Connector = SKMObject.extend(Subscribable, {
   /**
    * Transport type object
    * @type {WSWrapper, XHRWrapper} an instance of a Transport type
@@ -84,7 +84,7 @@ var AbstractConnector = SKMObject.extend(Subscribable, {
 });
 
 
-return AbstractConnector;
+return Connector;
 
 
 });
