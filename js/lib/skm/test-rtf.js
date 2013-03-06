@@ -31,27 +31,28 @@ var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + ((new Date).
 
 
 
-// var cm = ConnectorManager.create({
-//   sequence: [ 'WebSocket', 'XHR' ]
-// });
+var cm = ConnectorManager.create({
+  // sequence: [ 'WebSocket', 'XHR' ]
+  sequence: [ 'XHR', 'WebSocket' ]
+});
 
 
-// /*cm.setConnectorParameters({
-//   subscribeId: 'nextMatchesWidget',
-//   clientId: (new Date().getTime())// similar cu session id
-// });*/
+/*cm.setConnectorParameters({
+  subscribeId: 'nextMatchesWidget',
+  clientId: (new Date().getTime())// similar cu session id
+});*/
 
 
-// cm.registerConnector('WebSocket', WSConnector.create({
-//   transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 0 })
-// }));
+cm.registerConnector('WebSocket', WSConnector.create({
+  transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 3 })
+}));
 
 
-// cm.registerConnector('XHR', XHRConnector.create({
-//   transport: XHRWrapper.create({ url: xhrUrl })
-// }));
+cm.registerConnector('XHR', XHRConnector.create({
+  transport: XHRWrapper.create({ url: xhrUrl })
+}));
 
-// cm.startConnectors();
+cm.startConnectors();
 
 
 
@@ -100,7 +101,7 @@ wsConnector.beginUpdate();*/
  * -------------
  */
 
-var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
+/*var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
 
 var xhrConnUpdate = XHRConnector.create({
   transport: XHRWrapper.create({ url: xhrUrl })
@@ -113,11 +114,7 @@ xhrConnUpdate.on('params:error', function() {
   cl('connector:deactivated', arguments)
 });
 
-xhrConnUpdate.beginUpdate();
-
-// setTimeout(function() {
-//   xhrConnUpdate.endUpdate();
-// }, 1500)
+xhrConnUpdate.beginUpdate();*/
 
 
 
@@ -134,22 +131,29 @@ xhrConnUpdate.beginUpdate();
 
 // return;
 
-// var wsUrls = [
-//   'ws://localhost:8080/WebSocketServletTest/websk',
-//   'ws://10.0.3.98:3000'
-// ];
+/*var wsUrls = [
+  'ws://localhost:8080/WebSocketServletTest/websk',
+  'ws://10.0.3.98:3000'
+];
 
 
-// var ws = WSWrapper.create({
-//   url: wsUrls[1],
+var ws = WSWrapper.create({
+  url: wsUrls[1],
 //   reconnectDelay: 3000,
 //   pingServer: false,
 //   pingInterval: 1000,
-//   // reconnectAttempts: 5,
+  reconnectAttempts: 0,
 //   timeout: 1000
-// });
+});
 
-// ws.connect();
+ws.on('link:closed', function() {
+  cl('link:closed')
+});
+ws.on('reconnecting:stopped', function() {
+  cl('reconnecting:stopped')
+});
+
+ws.connect();*/
 
 
 });
