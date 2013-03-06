@@ -75,7 +75,7 @@ var WebSocketConnector = BaseConnector.extend({
   /**
    * Handles ws connector link:closed
    *
-   * @description if server api closes the link, it send a message
+   * @description if server api closes the link, it sends a message
    * describing the reason for the close.
    * Usually, the server api will close the link because of a problem
    * involving protocols or for network issues.
