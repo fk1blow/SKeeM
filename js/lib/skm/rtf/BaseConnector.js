@@ -19,33 +19,51 @@ var ConnectorState = {
 }
 
 
+var Parameterizer = {
+  _urlParams: null,
 
-/**
- * Additional methods should be added to a delegated object.
- * Methods like [addSubscription] aren't actually part of
- * the connector responsabilities...
- */
+  concatParams: function(concatStr) {
+    var part, params = this._urlParams, qs = '';
+    for ( part in params ) {
+      if ( qs.length < 1 ) {
+        qs += '?';
+      } else {
+        qs += concatStr;
+      }
+      qs += (part + '=' + params[part]);
+    }
+    return qs;
+  },
 
+  addParameter: function(name, value) {
+    this._urlParams = this._urlParams || {};
+    this._urlParams[name] = value;
+    return this;
+  },
 
-/**
- * @abstract
- * 
- * Adds a subscription id and sends it to the server
- * @description should be sent with the first request,
- * apended as query string 
- */
-  // addSubscription: function() {},
+  removeParameter: function(name) {
+    if ( name in this._urlParams )
+      delete this._urlParams[name];
+    return this;
+  }
+};
 
 
 /**
  * Abstract connector
  */
-var Connector = SKMObject.extend(Subscribable, {
+var Connector = SKMObject.extend(Subscribable, Parameterizer, {
   /**
    * Transport type object
    * @type {WSWrapper, XHRWrapper} an instance of a Transport type
    */
   transport: null,
+
+  /**
+   * Base url for the given transport
+   * @type {String}
+   */
+  baseUrl: null,
 
   /**
    * @abstract
@@ -80,7 +98,29 @@ var Connector = SKMObject.extend(Subscribable, {
    *
    * Removes transport listeners
    */
-  removeTransportListeners: function() {}
+  removeTransportListeners: function() {},
+
+  /**
+   * Adds a transport type object
+   * instance of Transport type
+   */
+  addTransport: function() {},
+
+  /**
+   * Returns the base url for the given transport
+   * @return {String}
+   */
+  getBaseUrl: function() {
+    return this.baseUrl;
+  },
+
+  /**
+   * Sets the base url for the given transport
+   * @param {String} url
+   */
+  setBaseUrl: function(url) {
+    this.baseUrl = url;
+  }
 });
 
 
