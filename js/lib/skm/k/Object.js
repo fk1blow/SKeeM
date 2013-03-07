@@ -112,12 +112,11 @@ SKMObject.extend = function(mixins) {
  * @return {Object}
  */
 SKMObject.create = function(options) {
-  // Create the actual "instance"
+  // Create the instance object of 'this' constructor
   var instance = new this();
 
-  // Check every argument if it's a SKM.Mixin or plain object
-  // If it's an Object, add it to the target instance
-  // If it's a Mixin, use Mixin.injectTo and add it to the instance object
+  // Takes the object passed at create
+  // and adds it, directly to the instance
   if ( arguments.length ) {
     extend(instance, options);
   }
