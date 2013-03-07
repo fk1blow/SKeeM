@@ -28,13 +28,14 @@ var ConnectorErrors = {
 }
 
 
-/**
- * [XHRConnector description]
- * @type {[type]}
- */
 var XHRConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew XHRConnector', 'color:#A2A2A2');
+    // this.addTransportListeners();
+  },
+
+  addTransport: function(transportObject) {
+    this.transport = transportObject;
     this.addTransportListeners();
   },
 
@@ -46,7 +47,8 @@ var XHRConnector = BaseConnector.extend({
 
   endUpdate: function() {
     Logger.debug('XHRConnector.endUpdate');
-    this.transport.abortRequest();
+    // disconnect and remove events
+    this.transport.abortRequest().off();
     return this;
   },
 

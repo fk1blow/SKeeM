@@ -22,6 +22,11 @@ var ConnectorErrors = {
 var WebSocketConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
+    // this.addTransportListeners();
+  },
+
+  addTransport: function(transportObject) {
+    this.transport = transportObject;
     this.addTransportListeners();
   },
 
@@ -33,7 +38,8 @@ var WebSocketConnector = BaseConnector.extend({
 
   endUpdate: function() {
     Logger.debug('WebSocketConnector.endUpdate');
-    this.transport.disconnect();
+    // disconnect and remove events
+    this.transport.disconnect().off();
     return this;
   },
 
@@ -106,6 +112,10 @@ var WebSocketConnector = BaseConnector.extend({
       if ( reason.error )
         this.fire('api:error', reason.error);
     }
+  },
+
+  setBaseUrl: function() {
+
   }
 });
 
