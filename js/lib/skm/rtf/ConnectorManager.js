@@ -152,11 +152,12 @@ var Manager = SKMObject.extend(Subscribable, {
     // Stop and clean current connector
     connector.on('api:error', function(error) {
       Logger.debug('%cConnector api:error', 'color:red', error);
-    });
+    }, this);
 
-    connector.on('api:update', function() {
+    connector.on('api:update', function(message) {
       Logger.debug('%cConnector message api:update', 'color:red', arguments);
-    });
+      this.fire('update', message);
+    }, this);
 
     // Begin update connector
     connector.beginUpdate();
