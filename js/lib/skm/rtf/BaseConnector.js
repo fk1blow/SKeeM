@@ -28,7 +28,7 @@ var Parameterizer = {
       if ( qs.length < 1 ) {
         qs += '?';
       } else {
-        qs += concatStr;
+        qs += concatStr || '&';
       }
       qs += (part + '=' + params[part]);
     }
