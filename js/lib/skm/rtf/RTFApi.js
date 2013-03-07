@@ -18,7 +18,7 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-
+var clientId, batchId = 0;
 
 
 
@@ -107,6 +107,34 @@ var Api = {
   stopUpdates: function() {
     Logger.debug('%cApi.stop', 'color:green');
   },
+
+
+  /*
+    Client/session, batch
+   */
+
+
+  /**
+   * Sets the client/session id
+   * @param {String} id the session id of the client
+   */
+  setCliendId: function(id) {
+    clientId = id;
+  },
+
+  /**
+   * Increments batch id
+   * @return {Number}
+   */
+  getNewBatchId: function() {
+    return ++batchId;
+  },
+
+
+  /*
+    Subscriptions
+   */
+
 
   /**
    * Adds a new subscription
