@@ -55,17 +55,11 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	url: null,
 
 	/**
-	 * Type of request to be made
-	 * @type {String}
-	 */
-	type: 'GET',
-
-	/**
 	 * Default configuration
 	 * @type {Object}
 	 */
 	defaults: {
-		type: 'POST',
+		type: 'GET',
 		dataType: 'JSON'
 	},
 
