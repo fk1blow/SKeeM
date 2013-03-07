@@ -8,11 +8,19 @@ require(['skm/k/Object',
          'skm/rtf/XHRConnector',
          'skm/rtf/WSConnector',
          'skm/rtf/RTFApi'],
-  function(SKMObject, WSWrapper, XHRWrapper, ConnectorManager, XHRConnector, WSConnector)
+  function(SKMObject, WSWrapper, XHRWrapper, ConnectorManager, XHRConnector, WSConnector, RTFApi)
 {
 
 
-console.log('--------------------------------------------------------------------------------------')
+console.log('________________________________________________________________')
+
+
+RTFApi.Api.addSubscription('test');
+// RTFApi.addSubscription('beta');
+// RTFApi.addSubscription('gamma');
+
+
+RTFApi.Api.startUpdates();
 
 
 
@@ -21,15 +29,20 @@ console.log('-------------------------------------------------------------------
 
 
 
-var wsurls = [
+
+
+
+
+
+
+
+
+
+/*var wsurls = [
   'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
   'ws://10.0.3.98:3000'
 ];
 var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + ((new Date).getTime());
-
-
-
-
 
 var cm = ConnectorManager.create({
   // sequence: [ 'WebSocket', 'XHR' ]
@@ -37,10 +50,10 @@ var cm = ConnectorManager.create({
 });
 
 
-/*cm.setConnectorParameters({
-  subscribeId: 'nextMatchesWidget',
-  clientId: (new Date().getTime())// similar cu session id
-});*/
+//cm.setConnectorParameters({
+  // subscribeId: 'nextMatchesWidget',
+  // clientId: (new Date().getTime())// similar cu session id
+//});
 
 
 cm.registerConnector('WebSocket', WSConnector.create({
@@ -52,7 +65,7 @@ cm.registerConnector('XHR', XHRConnector.create({
   transport: XHRWrapper.create({ url: xhrUrl })
 }));
 
-cm.startConnectors();
+cm.startConnectors();*/
 
 
 
