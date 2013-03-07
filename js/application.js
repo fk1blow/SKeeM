@@ -1,5 +1,5 @@
 requirejs.config({
-  baseUrl: 'js/lib',
+  baseUrl: 'http://10.0.3.98:82/SKeeM/js/lib',
   paths: {
     "jquery": "jquery-1.7.2.min",
     "underscore": "underscore-min",
