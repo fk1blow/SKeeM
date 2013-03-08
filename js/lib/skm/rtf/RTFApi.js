@@ -136,148 +136,146 @@ var paramCollection = {
 };
 
 
+function getIncrementedBatchId() {
+  return batchId++;
+}
+
+function addConnectorsTransports() {
+  // add WS transport
+  connectorManager.getConnector('WebSocket')
+    .setBaseUrl(Config.baseUrl.ws)
+    .addTransport( WSWrapper.create({
+        url: Config.baseUrl.ws + paramCollection.concatParams(),
+        reconnectAttempts: 3
+    }));
+  // add XHR transport
+  connectorManager.getConnector('XHR')
+    .setBaseUrl(Config.baseUrl.xhr)
+    .addTransport( XHRWrapper.create({
+        url: Config.baseUrl.xhr + paramCollection.concatParams()
+    }));
+}
+
+function prepareDefaultParams() {
+  paramCollection.addParameter('batchId', getIncrementedBatchId());
+  paramCollection.addParameter('clientId', this.getClientId());
+}
+
+function handleUpdateConfirmation() {
+  connectorManager.on('update', function(message) {
+      paramCollection.alterParameter('batchId', getIncrementedBatchId());
+      if ( 'message' in message || 'reconfirmation' in message ) {
+        connectorManager.getActiveConnector()
+          .sendBatchId(paramCollection);
+      }
+    }, this);
+}
+
+
 // REFACTOR
 // RTFApi implementation
-var Api = (function() {
-  function getIncrementedBatchId() {
-    return batchId++;
-  }
+var Api = {
+  startUpdates: function() {
+    Logger.debug('%cApi.startUpdates', 'color:green');
 
-  function addConnectorsTransports() {
-    // add WS transport
-    connectorManager.getConnector('WebSocket')
-      .setBaseUrl(Config.baseUrl.ws)
-      .addTransport( WSWrapper.create({
-          url: Config.baseUrl.ws + paramCollection.concatParams(),
-          reconnectAttempts: 3
-      }));
-    // add XHR transport
-    connectorManager.getConnector('XHR')
-      .setBaseUrl(Config.baseUrl.xhr)
-      .addTransport( XHRWrapper.create({
-          url: Config.baseUrl.xhr + paramCollection.concatParams()
-      }));
-  }
+    // prepares batchId and clientId
+    prepareDefaultParams();
 
-  function prepareDefaultParams() {
-    paramCollection.addParameter('batchId', getIncrementedBatchId());
-    paramCollection.addParameter('clientId', this.getClientId());
-  }
+    // build the available connectors
+    addConnectorsTransports();
 
-  function handleUpdateConfirmation() {
-    connectorManager.on('update', function(message) {
-        paramCollection.alterParameter('batchId', getIncrementedBatchId());
-        if ( 'message' in message || 'reconfirmation' in message ) {
-          connectorManager.getActiveConnector()
-            .sendBatchId(paramCollection);
-        }
-      }, this);
-  }
+    // listens to connector 'update' message
+    // and sends a confirmation back to server api
+    handleUpdateConfirmation();
+
+    // ...and start the connectors, if any
+    // also, check if there are connectors available
+    connectorManager.startConnectors();
+  },
+
+  stopUpdates: function() {
+    Logger.debug('%cApi.stopUpdates', 'color:green');
+  },
 
 
-  return {
-    startUpdates: function() {
-      Logger.debug('%cApi.startUpdates', 'color:green');
-
-      // prepares batchId and clientId
-      prepareDefaultParams();
-
-      // build the available connectors
-      addConnectorsTransports();
-
-      // listens to connector 'update' message
-      // and sends a confirmation back to server api
-      handleUpdateConfirmation();
-
-      // ...and start the connectors, if any
-      // also, check if there are connectors available
-      connectorManager.startConnectors();
-    },
-
-    stopUpdates: function() {
-      Logger.debug('%cApi.stopUpdates', 'color:green');
-    },
+  /*
+    Subscriptions
+   */
 
 
-    /*
-      Subscriptions
-     */
-
-
-    /**
-     * Adds a new subscription
-     *
-     * @description creates a new Subscription object
-     * and ties it to the connector's "api:update" event
-     * @param {String} name subscription name
-     */
-    addSubscription: function(name) {
-      var subscription;
-      if ( subscriptionList.has(name) ) {
-        Logger.info('Api.addSubscription :: ' + name +
-          ' subscription already registered!'); 
-      }
-      // Create the new subscription and add it to the list
-      subscription = subscriptionList.add( name,
-        Subscription.create({ name: name }) );
-      // subscription = subscriptionList.get(name);
-      
-      // Tie the subscription to the manager's updates
-      // connectorManager.on('update', subscription.handleUpdate, subscription);
-      // Tell the connector to notify server api
-      // connectorManager.getActiveConnector().sendNewSubscription(name);
-      
-      // Add it to the paramCollection
-      paramCollection.addParameter('subscribe', name);
-      return subscription;
-    },
-
-    /**
-     * Removes a subscription
-     *
-     * @description destroys the instance and
-     * removes the callbacks on connector "api:update" event
-     * @param  {String} name subscription name
-     */
-    removeSubscription: function(name) {
-      var subscription = subscriptionList.get(name);
-      connectorManager.off('update', subscription.handleUpdate);
-      subscriptionList.remove(name);
-      subscription.destroy();
-      paramCollection.removeParameter('subscribe');
-    },
-
-    /**
-     * Returns a subscription
-     * @param  {String} name the name of the subscription
-     */
-    getSubscription: function(name) {
-      return subscriptionList.get(name);
-    },
-
-
-    /*
-      Client/session, batch
-     */
-
-
-    /**
-     * Returens the clientId
-     * @return {String} clientId string of session/client 
-     */
-    getClientId: function() {
-      return clientId;
-    },
-
-    /**
-     * Sets the client/session id
-     * @param {String} id the session id of the client
-     */
-    setCliendId: function(id) {
-      clientId = id;
+  /**
+   * Adds a new subscription
+   *
+   * @description creates a new Subscription object
+   * and ties it to the connector's "api:update" event
+   * @param {String} name subscription name
+   */
+  addSubscription: function(name) {
+    var subscription;
+    if ( subscriptionList.has(name) ) {
+      Logger.info('Api.addSubscription :: ' + name +
+        ' subscription already registered!'); 
     }
+    // Create the new subscription and add it to the list
+    subscription = subscriptionList.add( name,
+      Subscription.create({ name: name }) );
+    // subscription = subscriptionList.get(name);
+    
+    // Tie the subscription to the manager's updates
+    // connectorManager.on('update', subscription.handleUpdate, subscription);
+    // Tell the connector to notify server api
+    // connectorManager.getActiveConnector().sendNewSubscription(name);
+    
+    // Add it to the paramCollection
+    paramCollection.addParameter('subscribe', name);
+    return subscription;
+  },
+
+  /**
+   * Removes a subscription
+   *
+   * @description destroys the instance and
+   * removes the callbacks on connector "api:update" event
+   * @param  {String} name subscription name
+   */
+  removeSubscription: function(name) {
+    var subscription = subscriptionList.get(name);
+    connectorManager.off('update', subscription.handleUpdate);
+    subscriptionList.remove(name);
+    subscription.destroy();
+    paramCollection.removeParameter('subscribe');
+  },
+
+  /**
+   * Returns a subscription
+   * @param  {String} name the name of the subscription
+   */
+  getSubscription: function(name) {
+    return subscriptionList.get(name);
+  },
+
+
+  /*
+    Client/session, batch
+   */
+
+
+  /**
+   * Returens the clientId
+   * @return {String} clientId string of session/client 
+   */
+  getClientId: function() {
+    return clientId;
+  },
+
+  /**
+   * Sets the client/session id
+   * @param {String} id the session id of the client
+   */
+  setCliendId: function(id) {
+    clientId = id;
   }
-}());
+};
 
 
 return {
