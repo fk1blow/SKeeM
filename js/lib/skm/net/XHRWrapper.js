@@ -114,9 +114,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	abortRequest: function(triggersError) {
 		if ( triggersError === true )
 			this._expectedClose = true;
-		// abort only if request is not null
-		if ( this._request )
+		if ( this._request != null )
 			this._request.abort();
+		this._resetRequestObject();
 	},
 
 	/**
@@ -151,8 +151,8 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 			},
 
 			complete: function(msg) {
-				this.handleOnComplete(msg);
 				this._resetRequestObject();
+				this.handleOnComplete(msg);
 			},
 
 			success: function(msg) {
@@ -162,10 +162,8 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	},
 
 	_resetRequestObject: function() {
-		if ( this._request !== null ) {
-			this._request.abort();
+		if ( this._request !== null )
 			this._request = null;
-		}
 	}
 });
 
