@@ -16,13 +16,16 @@ console.log('________________________________________________________________')
 
 
 RTFApi.Api.addSubscription('test');
-// RTFApi.Api.addSubscription('beta');
-// RTFApi.Api.addSubscription('gamma');
-// RTFApi.Api.addSubscription('theta');
+RTFApi.Api.addSubscription('detail');
 
 RTFApi.Api.setCliendId((new Date).getTime());
 
 RTFApi.Api.startUpdates();
+
+
+// setTimeout(function() {
+  // RTFApi.Api.addSubscription('detail');
+// }, 5000)
 
 
 
