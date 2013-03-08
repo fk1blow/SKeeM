@@ -74,7 +74,7 @@ var WebSocketConnector = BaseConnector.extend({
   },
 
   sendNewSubscription: function(name, subscription) {
-    //
+    cl('sendNewSubscription')
   },
 
   
