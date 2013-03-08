@@ -18,42 +18,24 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var clientId, batchId = 0;
-
-
-
 var Config = {
   baseUrl: {
-    ws: 'ws://localhost:8080',
+    ws: 'ws://localhost:8080/testws',
     xhr: 'http://localhost:8080/testajax'
   },
 
-  useConnectors: ['WebSocket', 'XHR']
+  connectorSequence: ['WebSocket', 'XHR'].reverse()
 };
 
 
-
-
-
-
-var wsurls = [
-  'ws://localhost:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
-  'ws://10.0.3.98:3000'
-];
-var xhrUrl = 'http://localhost:8080/testajax?subscribe=test&clientId=' + ((new Date).getTime()) + '&batchId=1';
+var clientId = null, batchId = 1;
 
 
 var connectorManager = ConnectorManager.create({
-  sequence: Config.useConnectors
+  sequence: Config.connectorSequence
 });
-
-/*connectorManager.registerConnector('WebSocket', WSConnector.create({
-  transport: WSWrapper.create({ url: wsurls[0], reconnectAttempts: 0 })
-}));
-
-connectorManager.registerConnector('XHR', XHRConnector.create({
-  transport: XHRWrapper.create({ url: xhrUrl })
-}));*/
+connectorManager.registerConnector('WebSocket', WSConnector.create());
+connectorManager.registerConnector('XHR', XHRConnector.create());
 
 
 var subscriptionList = {
@@ -62,7 +44,7 @@ var subscriptionList = {
   add: function(name, subscription) {
     if ( ! this._subscriptions )
       this._subscriptions = {};
-    this._subscriptions[name] = subscription;
+    return this._subscriptions[name] = subscription;
   },
 
   remove: function(name) {
@@ -97,15 +79,101 @@ var Subscription = SKMObject.extend({
 });
 
 
+var paramCollection = {
+  _parameterizerList: null,
+
+  getParamList: function() {
+    return this._parameterizerList;
+  },
+
+  getParamByName: function(name) {
+    return this._parameterizerList[name];
+  },
+
+  concatParams: function(concatStr) {
+    var i = 0, qs = '', part, segment, params = this._parameterizerList;
+    var concatWith = concatStr || '&';
+    for ( part in params ) {
+      i = 0, segment = params[part];
+      // If at first part
+      if ( qs.length < 1 ) {
+        qs += '?';
+      } else {
+        qs += concatWith;
+      }
+      // for each part, there will be a segment array
+      for ( ; i < segment.length; i++ ) {
+        if ( i > 0 )
+          qs += concatWith;
+        qs += (part + '=' + segment[i]);
+      }
+    }
+    return qs;
+  },
+
+  addParameter: function(name, value) {
+    var list = this._parameterizerList = this._parameterizerList || {};
+    if ( list[name] ) {
+      list[name].push(value);
+    } else {
+      list[name] = [value];
+    }
+    return this;
+  },
+
+  removeParameter: function(name) {
+    if ( name in this._parameterizerList )
+      delete this._parameterizerList[name];
+    return this;
+  },
+
+  alterParameter: function(name, newValue) {
+    var param = this._parameterizerList[name];
+    if ( param ) {
+      this._parameterizerList[name] = [newValue];
+    }
+  }
+};
+
+
+// REFACTOR
 // RTFApi implementation
 var Api = {
   startUpdates: function() {
-    Logger.debug('%cApi.start', 'color:green');
+    Logger.debug('%cApi.startUpdates', 'color:green');
+
+    paramCollection.addParameter('batchId', this.getNewBatchId());
+    paramCollection.addParameter('clientId', this.getClientId());
+
+    // REFACTOR
+    connectorManager.getConnector('WebSocket')
+      .setBaseUrl(Config.baseUrl.ws)
+      .addTransport( WSWrapper.create({
+          url: Config.baseUrl.ws + paramCollection.concatParams(),
+          reconnectAttempts: 3
+      }));
+
+    connectorManager.getConnector('XHR')
+      .setBaseUrl(Config.baseUrl.xhr)
+      .addTransport( XHRWrapper.create({
+          url: Config.baseUrl.xhr + paramCollection.concatParams()
+      }));
+
+
+    // REFACTOR
+    connectorManager.on('update', function(message) {
+      paramCollection.alterParameter('batchId', this.getNewBatchId());
+      if ( 'message' in message || 'reconfirmation' in message ) {
+        connectorManager.getActiveConnector()
+          .sendBatchId(paramCollection);
+      }
+    }, this);
+
     connectorManager.startConnectors();
   },
 
   stopUpdates: function() {
-    Logger.debug('%cApi.stop', 'color:green');
+    Logger.debug('%cApi.stopUpdates', 'color:green');
   },
 
 
@@ -113,6 +181,14 @@ var Api = {
     Client/session, batch
    */
 
+
+  /**
+   * Returens the clientId
+   * @return {String} clientId string of session/client 
+   */
+  getClientId: function() {
+    return clientId;
+  },
 
   /**
    * Sets the client/session id
@@ -127,7 +203,7 @@ var Api = {
    * @return {Number}
    */
   getNewBatchId: function() {
-    return ++batchId;
+    return batchId++;
   },
 
 
@@ -144,17 +220,18 @@ var Api = {
    * @param {String} name subscription name
    */
   addSubscription: function(name) {
+    var subscription;
     if ( subscriptionList.has(name) ) {
       Logger.info('Api.addSubscription :: ' + name +
         ' subscription already registered!'); 
     }
-    var subscription = subscriptionList[name] = Subscription.create({
-      name: name
-    });
-    // Adds the subscription to the collection
-    subscriptionList.add(name, subscription);
+    // Create the new subscription and add it to the list
+    subscriptionList.add( name, Subscription.create({ name: name }) );
+    subscription = subscriptionList.get(name);
     // Tie the subscription to the manager's updates
     connectorManager.on('update', subscription.handleUpdate, subscription);
+    // Add it to the paramCollection
+    paramCollection.addParameter('subscribe', name);
     return subscription;
   },
 
@@ -170,6 +247,7 @@ var Api = {
     connectorManager.off('update', subscription.handleUpdate);
     subscriptionList.remove(name);
     subscription.destroy();
+    paramCollection.removeParameter('subscribe');
   },
 
   /**
