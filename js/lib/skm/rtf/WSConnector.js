@@ -39,7 +39,8 @@ var WebSocketConnector = BaseConnector.extend({
   endUpdate: function() {
     Logger.debug('WebSocketConnector.endUpdate');
     // disconnect and remove events
-    this.transport.disconnect().off();
+    this.transport.disconnect();
+    this.transport.off();
     return this;
   },
 
@@ -47,7 +48,7 @@ var WebSocketConnector = BaseConnector.extend({
     // connection dropped
     this.transport.on('link:closed', this.hanleLinkClosed, this);
     // handles connection message event - rtf server api update
-    this.transport.on('message', this.handleUpdateMessage, this);
+    this.transport.on('message', this.handleMessage, this);
     // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
@@ -58,6 +59,22 @@ var WebSocketConnector = BaseConnector.extend({
   removeTransportListeners: function() {
     this.transport.off();
     return this;
+  },
+
+
+  /*
+    Message senders
+   */
+
+
+  sendBatchId: function(paramCollection) {
+    var batchId = paramCollection.getParamByName('batchId');
+    Logger.debug('WebSocketConnector.sendBachtId', batchId);
+    this.transport.send('batchId{' + batchId + '}');
+  },
+
+  sendNewSubscription: function(name, subscription) {
+    //
   },
 
   
@@ -74,9 +91,9 @@ var WebSocketConnector = BaseConnector.extend({
    * 
    * @param  {Object} message JSON message send by rtf server api
    */
-  handleUpdateMessage: function(message) {
-    Logger.info('WebSocketConnector.handleUpdateMessage');
-    this.fire('api:update', message);
+  handleMessage: function(message) {
+    Logger.info('WebSocketConnector.handleMessage');
+    this.fire('api:update', JSON.parse(message));
   },
   
   /**
@@ -112,10 +129,6 @@ var WebSocketConnector = BaseConnector.extend({
       if ( reason.error )
         this.fire('api:error', reason.error);
     }
-  },
-
-  setBaseUrl: function() {
-
   }
 });
 
