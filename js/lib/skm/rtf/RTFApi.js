@@ -222,7 +222,7 @@ var Api = {
     // subscription = subscriptionList.get(name);
     
     // Tie the subscription to the manager's updates
-    // connectorManager.on('update', subscription.handleUpdate, subscription);
+    connectorManager.on('update', subscription.handleUpdate, subscription);
     // Tell the connector to notify server api
     // connectorManager.getActiveConnector().sendNewSubscription(name);
     
