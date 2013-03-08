@@ -15,13 +15,12 @@ require(['skm/k/Object',
 console.log('________________________________________________________________')
 
 
-RTFApi.Api.£('test');
-// RTFApi.addSubscription('beta');
-// RTFApi.addSubscription('gamma');
-
+RTFApi.Api.addSubscription('test');
+// RTFApi.Api.addSubscription('beta');
+// RTFApi.Api.addSubscription('gamma');
+// RTFApi.Api.addSubscription('theta');
 
 RTFApi.Api.setCliendId((new Date).getTime());
-
 
 RTFApi.Api.startUpdates();
 

@@ -1,13 +1,4 @@
 
-/**
- * La fiecare update/send de date, trebuie creata o noua conexiune.
- * Conexiunea veche trebuie sa ramana activa, fiind distrusa la "complete" sau "error".
- *
- * Cand se adauga un nou subscriptiondId, se face un nou request ajax si se 
- * apendeaza subscribtionId-ul ca si query string, in url. 
- * 
- */
-
 // RTF XHR Connector implementation
 
 define(['skm/k/Object',
@@ -48,20 +39,38 @@ var XHRConnector = BaseConnector.extend({
   endUpdate: function() {
     Logger.debug('XHRConnector.endUpdate');
     // disconnect and remove events
-    this.transport.abortRequest().off();
+    this.transport.abortRequest();
+    this.transport.off();
     return this;
   },
 
   addTransportListeners: function() {
     this.transport
       .on('error', this.handleError, this)
-      .on('success', this.handleUpdateMessage, this);
+      .on('success', this.handleMessage, this);
     return this;
   },
 
   removeTransportListeners: function() {
     this.transport.off();
     return this;
+  },
+
+
+  /*
+    Message senders
+   */
+
+
+  sendBatchId: function(paramCollection) {
+    Logger.debug('XHRConnector.sendBachtId',
+      paramCollection.getParamByName('batchId'));
+    this.transport.url = this.getBaseUrl() + paramCollection.concatParams();
+    this.transport.sendMessage();
+  },
+
+  sendNewSubscription: function() {
+    //
   },
 
   
@@ -78,8 +87,8 @@ var XHRConnector = BaseConnector.extend({
    * 
    * @param  {Object} message JSON message send by rtf server api
    */
-  handleUpdateMessage: function(message) {
-    Logger.info('XHRConnector.handleUpdateMessage');
+  handleMessage: function(message) {
+    Logger.info('XHRConnector.handleMessage');
     this.fire('api:update', message);
   },
 
