@@ -19,40 +19,10 @@ var ConnectorState = {
 }
 
 
-var Parameterizer = {
-  _urlParams: null,
-
-  concatParams: function(concatStr) {
-    var part, params = this._urlParams, qs = '';
-    for ( part in params ) {
-      if ( qs.length < 1 ) {
-        qs += '?';
-      } else {
-        qs += concatStr || '&';
-      }
-      qs += (part + '=' + params[part]);
-    }
-    return qs;
-  },
-
-  addParameter: function(name, value) {
-    this._urlParams = this._urlParams || {};
-    this._urlParams[name] = value;
-    return this;
-  },
-
-  removeParameter: function(name) {
-    if ( name in this._urlParams )
-      delete this._urlParams[name];
-    return this;
-  }
-};
-
-
 /**
  * Abstract connector
  */
-var Connector = SKMObject.extend(Subscribable, Parameterizer, {
+var Connector = SKMObject.extend(Subscribable, {
   /**
    * Transport type object
    * @type {WSWrapper, XHRWrapper} an instance of a Transport type
@@ -120,6 +90,7 @@ var Connector = SKMObject.extend(Subscribable, Parameterizer, {
    */
   setBaseUrl: function(url) {
     this.baseUrl = url;
+    return this;
   }
 });
 
