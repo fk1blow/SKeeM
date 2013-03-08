@@ -34,12 +34,6 @@ var Manager = SKMObject.extend(Subscribable, {
   _activeSequenceIdx: 0,
 
   /**
-   * Incremented counter
-   * @type {Number}
-   */
-  _batchId: 0,
-
-  /**
    * State of the rtf
    * @type {Boolean}
    */
@@ -78,6 +72,23 @@ var Manager = SKMObject.extend(Subscribable, {
   stopConnectors: function() {
     Logger.debug('Manager.stopConnectors');
     this.started = false;
+  },
+
+  /**
+   * Returns the active connector
+   * @return {Object} connector instance
+   */
+  getActiveConnector: function() {
+    return this._activeConnector;
+  },
+
+  /**
+   * Returns a connector from the connectors list
+   * @param  {String} type name of the connector
+   * @return {Object}      connector instance
+   */
+  getConnector: function(type) {
+    return this._connectors[type];
   },
 
   /**
@@ -155,16 +166,12 @@ var Manager = SKMObject.extend(Subscribable, {
     }, this);
 
     connector.on('api:update', function(message) {
-      Logger.debug('%cConnector message api:update', 'color:red', arguments);
+      Logger.debug('%cConnector message api:update', 'color:green', arguments);
       this.fire('update', message);
     }, this);
 
     // Begin update connector
     connector.beginUpdate();
-  },
-
-  _getNextBatchId: function() {
-    return ++this._batchId;
   }
 });
 
