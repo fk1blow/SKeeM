@@ -168,24 +168,21 @@ var rtfParamList = {
 
 // Create the connector manager
 var connectorManager = ConnectorManager.create({
-  sequence: Config.connectorSequence,
-  parameterizer: rtfParamList
+  sequence: Config.connectorSequence
 });
 
 // Add default connectors to the manager
-var wsconnector = connectorManager.registerConnector('WebSocket',
-    WSConnector.create({
+connectorManager.registerConnector('WebSocket', WSConnector.create({
       urlBase: Config.baseUrl.ws,
-      urlParamModel: connectorManager.parameterizer
-    }));
-wsconnector.addTransport(WSWrapper.create());
+      urlParamModel: rtfParamList
+    })
+  ).addTransport(WSWrapper.create());
 
-var xhrconnector = connectorManager.registerConnector('XHR',
-    XHRConnector.create({
+connectorManager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.baseUrl.xhr,
-      urlParamModel: connectorManager.parameterizer
-    }));
-xhrconnector.addTransport(XHRWrapper.create());
+      urlParamModel: rtfParamList
+    })
+  ).addTransport(XHRWrapper.create());
 
 
 /**
@@ -200,10 +197,9 @@ var RTFApi = SKMObject.extend({
 
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
-    
+
     // Prepare batchId and add it to the parameterizer
-    connectorManager.parameterizer
-      .addParameter('batchId', this._getIncrementedBatchId())
+    rtfParamList.addParameter('batchId', this._getIncrementedBatchId());
     
     // Resends a confirmation back to server api
     connectorManager.on('update', this.handleReconfirmation, this);
@@ -236,7 +232,6 @@ var RTFApi = SKMObject.extend({
 
   switchToNextConnector: function() {
     Logger.debug('%cRTFApi.switchToNextConnector', 'color:green');
-    // this._setConnectorsDefaultUrlParams();
     connectorManager.switchToNextConnector();
   },
 
@@ -252,9 +247,7 @@ var RTFApi = SKMObject.extend({
     if ( cid !== null ) {
       throw new Error('RTFApi.setClientId : clientId already set!');
     }
-    // rtfParamList.addParameter('clientId', this._clientId = id);
-    connectorManager.parameterizer
-      .addParameter('clientId', this._clientId = id);
+    rtfParamList.addParameter('clientId', this._clientId = id);
   },
 
 
@@ -278,7 +271,7 @@ var RTFApi = SKMObject.extend({
     if ( 'message' in message || 'reconfirmation' in message ) {
       batchId = this._getIncrementedBatchId();
       // Alter batchId parameter
-      connectorManager.parameterizer.alterParameter('batchId', batchId);
+      rtfParamList.alterParameter('batchId', batchId);
       // ...and send the new batch id
       connectorManager.sendMessage('batchId{' + batchId + '}');
     }
@@ -321,7 +314,7 @@ var RTFApi = SKMObject.extend({
 
     // Add it to the rtfParamList
     // rtfParamList.addParameter('subscribe', name);
-    connectorManager.parameterizer.addParameter('subscribe', name);
+    rtfParamList.addParameter('subscribe', name);
 
     // Tell the connector to notify server api
     connectorManager.sendMessage('subscribe{' + name + '}');
@@ -349,7 +342,7 @@ var RTFApi = SKMObject.extend({
     subscription.destroy();
     
     // rtfParamList.removeParameter('subscribe');
-    connectorManager.parameterizer.removeParameter('subscribe');
+    rtfParamList.removeParameter('subscribe');
   },
 
 
