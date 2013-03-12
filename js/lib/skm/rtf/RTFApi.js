@@ -1,4 +1,3 @@
-
 // RTF Api Manager implementation
 
 define(['skm/k/Object',
@@ -43,7 +42,7 @@ var Config = {
 
 
 var Subscription = SKMObject.extend({
-  name: '',
+  name: undefined,
 
   initialize: function() {
     Logger.debug('%cnew Subscription', 'color:#A2A2A2', this.name);
