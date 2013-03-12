@@ -18,24 +18,28 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
+/*
+  Config - urls, connector sequence, etc
+ */
+
+
 var Config = {
   baseUrl: {
     ws: 'ws://localhost:8080/testws',
     xhr: 'http://localhost:8080/testajax'
   },
 
-  connectorSequence: ['WebSocket', 'XHR']/*.reverse()*/
+  clientId: null,
+
+  connectorSequence: ['WebSocket', 'XHR'].reverse()
+  // connectorSequence: ['WebSocket']
+  // connectorSequence: ['XHR']
 };
 
 
-var clientId = null, batchId = 1;
-
-
-var connectorManager = ConnectorManager.create({
-  sequence: Config.connectorSequence
-});
-connectorManager.registerConnector('WebSocket', WSConnector.create());
-connectorManager.registerConnector('XHR', XHRConnector.create());
+/*
+  Subscriptions and Param lists
+ */
 
 
 var Subscription = SKMObject.extend({
@@ -46,8 +50,8 @@ var Subscription = SKMObject.extend({
   },
 
   handleUpdate: function(message) {
-    Logger.debug('%cSubscription.handleUpdate :: ', 'color:green',
-      'subscription : ' + this.name, ', message : ', message);
+    Logger.debug('%cSubscription.handleUpdate :: ', 'color:blue',
+      'subscription : ' + this.name, ', message : ', message['message']);
   },
 
   destroy: function() {
@@ -56,7 +60,7 @@ var Subscription = SKMObject.extend({
 });
 
 
-var subscriptionList = {
+var rtfSubscriptionList = {
   _subscriptions: null,
 
   add: function(name, subscription) {
@@ -66,20 +70,41 @@ var subscriptionList = {
   },
 
   remove: function(name) {
-    delete this._subscriptions[name];
+    if ( name in this._subscriptions )
+      delete this._subscriptions[name];
+    return true;
   },
 
   get: function(name) {
     return this._subscriptions[name];
   },
 
+  eachSubscription: function(callback, context) {
+    var subscription, list = this._subscriptions;
+    for ( subscription in list ) {
+      callback.call(context || this, list[subscription]);
+    }
+  },
+
   has: function(subscription) {
     return this._subscriptions && (subscription in this._subscriptions);
+  },
+
+  isNullOrEmpty: function() {
+    var counter = 0, sub;
+    if ( this._subscriptions !== null ) {
+      for (sub in this._subscriptions) {
+        counter++;
+      }
+      if (counter > 0)
+        return false;
+    }
+    return true;
   }
 };
 
 
-var paramCollection = {
+var rtfParamList = {
   _parameterizerList: null,
 
   getParamList: function() {
@@ -90,7 +115,7 @@ var paramCollection = {
     return this._parameterizerList[name];
   },
 
-  concatParams: function(concatStr) {
+  toQueryString: function(concatStr) {
     var i = 0, qs = '', part, segment, params = this._parameterizerList;
     var concatWith = concatStr || '&';
     for ( part in params ) {
@@ -136,72 +161,143 @@ var paramCollection = {
 };
 
 
-function getIncrementedBatchId() {
-  return batchId++;
-}
+/*
+  Connector Manager
+ */
 
-function addConnectorsTransports() {
-  // add WS transport
-  connectorManager.getConnector('WebSocket')
-    .setBaseUrl(Config.baseUrl.ws)
-    .addTransport( WSWrapper.create({
-        url: Config.baseUrl.ws + paramCollection.concatParams(),
-        reconnectAttempts: 3
+
+// Create the connector manager
+var connectorManager = ConnectorManager.create({
+  sequence: Config.connectorSequence,
+  parameterizer: rtfParamList
+});
+
+// Add default connectors to the manager
+var wsconnector = connectorManager.registerConnector('WebSocket',
+    WSConnector.create({
+      urlBase: Config.baseUrl.ws,
+      urlParamModel: connectorManager.parameterizer
     }));
-  // add XHR transport
-  connectorManager.getConnector('XHR')
-    .setBaseUrl(Config.baseUrl.xhr)
-    .addTransport( XHRWrapper.create({
-        url: Config.baseUrl.xhr + paramCollection.concatParams()
+wsconnector.addTransport(WSWrapper.create());
+
+var xhrconnector = connectorManager.registerConnector('XHR',
+    XHRConnector.create({
+      urlBase: Config.baseUrl.xhr,
+      urlParamModel: connectorManager.parameterizer
     }));
-}
-
-function prepareDefaultParams() {
-  paramCollection.addParameter('batchId', getIncrementedBatchId());
-  paramCollection.addParameter('clientId', this.getClientId());
-}
-
-function handleUpdateConfirmation() {
-  connectorManager.on('update', function(message) {
-      paramCollection.alterParameter('batchId', getIncrementedBatchId());
-      if ( 'message' in message || 'reconfirmation' in message ) {
-        connectorManager.getActiveConnector()
-          .sendBatchId(paramCollection);
-      }
-    }, this);
-}
+xhrconnector.addTransport(XHRWrapper.create());
 
 
-// REFACTOR
-// RTFApi implementation
-var Api = {
+/**
+ * API
+ */
+
+
+var RTFApi = SKMObject.extend({
+  _clientId:  null,
+
+  _batchId: 1,
+
+  initialize: function() {
+    Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
+    
+    // Prepare batchId and add it to the parameterizer
+    connectorManager.parameterizer
+      .addParameter('batchId', this._getIncrementedBatchId())
+    
+    // Resends a confirmation back to server api
+    connectorManager.on('update', this.handleReconfirmation, this);
+  },
+
+
+  /*
+    Commands
+   */
+
+
   startUpdates: function() {
-    Logger.debug('%cApi.startUpdates', 'color:green');
+    Logger.debug('%cRTFApi.startUpdates', 'color:green');
+    
+    // Validate clientId presence
+    this._validateCliendIdAdded();
+    
+    // Validates the presence of subscriptions
+    this._validateSubscriptionsAdded();
 
-    // prepares batchId and clientId
-    prepareDefaultParams();
-
-    // build the available connectors
-    addConnectorsTransports();
-
-    // listens to connector 'update' message
-    // and sends a confirmation back to server api
-    handleUpdateConfirmation();
-
-    // ...and start the connectors, if any
-    // also, check if there are connectors available
+    // Start the connectors, if any available.
     connectorManager.startConnectors();
   },
 
   stopUpdates: function() {
-    Logger.debug('%cApi.stopUpdates', 'color:green');
+    Logger.debug('%cRTFApi.stopUpdates', 'color:green');
+    // stop all connectors
+    connectorManager.stopConnectors();
+  },
+
+  switchToNextConnector: function() {
+    Logger.debug('%cRTFApi.switchToNextConnector', 'color:green');
+    // this._setConnectorsDefaultUrlParams();
+    connectorManager.switchToNextConnector();
+  },
+
+  /**
+   * Sets the clientId of the rtf client
+   *
+   * @description same as session id though can be left out
+   * and the value implicitly retrieved/set by server api
+   * @param {String} id cliend/sessions id string
+   */
+  setClientId: function(id) {
+    var cid = this._clientId;
+    if ( cid !== null ) {
+      throw new Error('RTFApi.setClientId : clientId already set!');
+    }
+    // rtfParamList.addParameter('clientId', this._clientId = id);
+    connectorManager.parameterizer
+      .addParameter('clientId', this._clientId = id);
+  },
+
+
+  /*
+    Handlers
+   */
+
+
+  /**
+   * Confirms receiving a message(update) from server api
+   * 
+   * @description basically, it sends a message back to the server,
+   * confirming that he(the client) has received the update message 
+   */
+  handleReconfirmation: function(message) {
+    var batchId;
+    
+    Logger.debug('RTFApi.handleReconfirmation', 'color:red');
+
+    // sends batch id only if 'message' or 'reconfirmation'
+    if ( 'message' in message || 'reconfirmation' in message ) {
+      batchId = this._getIncrementedBatchId();
+      // Alter batchId parameter
+      connectorManager.parameterizer.alterParameter('batchId', batchId);
+      // ...and send the new batch id
+      connectorManager.sendMessage('batchId{' + batchId + '}');
+    }
   },
 
 
   /*
     Subscriptions
    */
+  
 
+  /**
+   * Returns a subscription
+   * 
+   * @param  {String} name the name identifier of the subscription
+   */
+  getSubscription: function(name) {
+    return rtfSubscriptionList.get(name);
+  },
 
   /**
    * Adds a new subscription
@@ -211,23 +307,25 @@ var Api = {
    * @param {String} name subscription name
    */
   addSubscription: function(name) {
-    var subscription;
-    if ( subscriptionList.has(name) ) {
-      Logger.info('Api.addSubscription :: ' + name +
+    var subscription, activeConnector;
+    if ( rtfSubscriptionList.has(name) ) {
+      Logger.info('RTFApi.addSubscription :: ' + name +
         ' subscription already registered!'); 
     }
     // Create the new subscription and add it to the list
-    subscription = subscriptionList.add( name,
+    subscription = rtfSubscriptionList.add( name,
       Subscription.create({ name: name }) );
-    // subscription = subscriptionList.get(name);
     
     // Tie the subscription to the manager's updates
     connectorManager.on('update', subscription.handleUpdate, subscription);
+
+    // Add it to the rtfParamList
+    // rtfParamList.addParameter('subscribe', name);
+    connectorManager.parameterizer.addParameter('subscribe', name);
+
     // Tell the connector to notify server api
-    // connectorManager.getActiveConnector().sendNewSubscription(name);
-    
-    // Add it to the paramCollection
-    paramCollection.addParameter('subscribe', name);
+    connectorManager.sendMessage('subscribe{' + name + '}');
+
     return subscription;
   },
 
@@ -239,47 +337,52 @@ var Api = {
    * @param  {String} name subscription name
    */
   removeSubscription: function(name) {
-    var subscription = subscriptionList.get(name);
-    connectorManager.off('update', subscription.handleUpdate);
-    subscriptionList.remove(name);
-    subscription.destroy();
-    paramCollection.removeParameter('subscribe');
-  },
+    var subscription = rtfSubscriptionList.get(name);
 
-  /**
-   * Returns a subscription
-   * @param  {String} name the name of the subscription
-   */
-  getSubscription: function(name) {
-    return subscriptionList.get(name);
+    // Dettach update event
+    connectorManager.off('update', subscription.handleUpdate, subscription);
+    
+    // Remove from subscription list
+    rtfSubscriptionList.remove(name);
+
+    // Destroy subscription
+    subscription.destroy();
+    
+    // rtfParamList.removeParameter('subscribe');
+    connectorManager.parameterizer.removeParameter('subscribe');
   },
 
 
   /*
-    Client/session, batch
+    Privates
    */
 
 
-  /**
-   * Returens the clientId
-   * @return {String} clientId string of session/client 
-   */
-  getClientId: function() {
-    return clientId;
+  _getIncrementedBatchId: function() {
+    var bid = this._batchId++
+    return bid;
   },
 
-  /**
-   * Sets the client/session id
-   * @param {String} id the session id of the client
-   */
-  setCliendId: function(id) {
-    clientId = id;
+  _validateCliendIdAdded: function() {
+    var cid = this._clientId;
+    if ( cid  === null || typeof cid === 'undefined'
+        || cid.length < 1 ) {
+      Logger.info('%cRTFApi : ' + 
+        'invalid clientId or clientId not set : ', 'color:red', cid);
+    }
+  },
+
+  _validateSubscriptionsAdded: function() {
+    if ( rtfSubscriptionList.isNullOrEmpty() ) {
+      Logger.info('%cRTFApi : ' + 
+        'subscription list is empty or null', 'color:red');
+    }
   }
-};
+});
 
 
 return {
-  Api: Api,
+  Api: RTFApi.create(),
   Config: Config
 }
 
