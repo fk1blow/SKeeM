@@ -1,12 +1,8 @@
 
 
 
-define(['skm/skm', 'skm/k/Object'], function(skm, SKMObject) {
+define(['skm/k/Object'], function(SKMObject) {
 
-
-var SKM = window.SKM || {};
-
-SKM.util = SKM.util || {};
 
 /**
  * Logger singleton object
