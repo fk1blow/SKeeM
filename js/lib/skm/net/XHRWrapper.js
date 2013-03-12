@@ -29,7 +29,7 @@ var LibraryConfig = {
 var XHRMessageDelegates = {
 	handleOnComplete: function() {
 		Logger.info('XHRWrapper.handleOnComplete');
-		this._expectedClose = false;
+		this._expectedClose = true;
 		this.fire('complete');
 	},
 
@@ -67,7 +67,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 	_request: null,
 
-	_expectedClose: false,
+	_expectedClose: true,
 
 	initialize: function() {
 		Logger.debug('%cnew XHRWrapper', 'color:#A2A2A2');
@@ -113,7 +113,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	abortRequest: function(triggersError) {
 		if ( triggersError === true )
-			this._expectedClose = true;
+			this._expectedClose = false;
 		if ( this._request != null )
 			this._request.abort();
 		this._resetRequestObject();
