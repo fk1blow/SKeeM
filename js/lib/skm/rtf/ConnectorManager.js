@@ -1,4 +1,3 @@
-
 // Connector Manager implementation
 
 define(['skm/k/Object',
@@ -136,6 +135,10 @@ var Manager = SKMObject.extend(Subscribable, {
     var connector;
     if ( connector = this.getActiveConnector() )
       connector.sendMessage(message);
+    else {
+      throw new TypeError('Manager.sendMessage : invalid connector type' + 
+        ' or connector is null.');
+    }
     return this;
   },
 
@@ -178,6 +181,7 @@ var Manager = SKMObject.extend(Subscribable, {
       this._startConnector(this._activeConnector);
     } else {
       Logger.debug('%ccConnectorManager : sequence complete!', 'color:red');
+      this._activeConnector = null;
       this.started = false;
     }
   },
