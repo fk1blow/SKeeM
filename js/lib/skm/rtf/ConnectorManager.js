@@ -72,6 +72,7 @@ var Manager = SKMObject.extend(Subscribable, {
   stopConnectors: function() {
     Logger.info('ConnectorManager.stopConnectors');
     this._stopCurrentSequence();
+    this._activeConnector = null;
     this.started = false;
   },
 
