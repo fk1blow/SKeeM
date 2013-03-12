@@ -22,16 +22,17 @@ var ConnectorErrors = {
 var WebSocketConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
-    // this.addTransportListeners();
   },
 
   addTransport: function(transportObject) {
     this.transport = transportObject;
     this.addTransportListeners();
+    return this;
   },
 
   beginUpdate: function() {
-    Logger.debug('WebSocketConnector.beginUpdate');
+    this.buildTransportUrl();
+    Logger.debug('WebSocketConnector.beginUpdate\n', this.transport.url);
     this.transport.connect();
     return this;
   },
@@ -48,7 +49,7 @@ var WebSocketConnector = BaseConnector.extend({
     // connection dropped
     this.transport.on('link:closed', this.hanleLinkClosed, this);
     // handles connection message event - rtf server api update
-    this.transport.on('message', this.handleMessage, this);
+    this.transport.on('message', this.handleReceivedMessage, this);
     // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
@@ -65,16 +66,10 @@ var WebSocketConnector = BaseConnector.extend({
   /*
     Message senders
    */
-
-
-  sendBatchId: function(paramCollection) {
-    var batchId = paramCollection.getParamByName('batchId');
-    Logger.debug('WebSocketConnector.sendBachtId', batchId);
-    this.transport.send('batchId{' + batchId + '}');
-  },
-
-  sendNewSubscription: function(name, subscription) {
-    cl('sendNewSubscription')
+  
+  sendMessage: function(msg) {
+    Logger.debug('%cWebSocketConnector.sendMessage : ', 'color:red', msg);
+    this.transport.send(msg);
   },
 
   
@@ -91,8 +86,8 @@ var WebSocketConnector = BaseConnector.extend({
    * 
    * @param  {Object} message JSON message send by rtf server api
    */
-  handleMessage: function(message) {
-    Logger.info('WebSocketConnector.handleMessage');
+  handleReceivedMessage: function(message) {
+    Logger.info('WebSocketConnector.handleReceivedMessage');
     this.fire('api:update', JSON.parse(message));
   },
   
