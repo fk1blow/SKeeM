@@ -74,6 +74,18 @@ var Manager = SKMObject.extend(Subscribable, {
     this._stopCurrentSequence();
     this.started = false;
   },
+
+  /**
+  * Pauses the sequence and doesn't
+  * modify sequence index
+  */
+  pauseConnectors: function() {},
+
+  /**
+  * Resumes the sequence, not altered
+  * since the pause
+  */
+  resumeConnectors: function() {},
   
   switchToNextConnector: function() {
     Logger.info('ConnectorManager.switchToNextConnector');
