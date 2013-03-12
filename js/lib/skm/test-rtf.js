@@ -8,24 +8,49 @@ require(['skm/k/Object',
          'skm/rtf/XHRConnector',
          'skm/rtf/WSConnector',
          'skm/rtf/RTFApi'],
-  function(SKMObject, WSWrapper, XHRWrapper, ConnectorManager, XHRConnector, WSConnector, RTFApi)
+  function(SKMObject, WSWrapper, XHRWrapper, ConnectorManager, XHRConnector, WSConnector, RTF)
 {
 
 
 console.log('________________________________________________________________')
 
 
-RTFApi.Api.addSubscription('test');
-RTFApi.Api.addSubscription('detail');
+window.RTFApi = RTF.Api;
 
-RTFApi.Api.setCliendId((new Date).getTime());
+RTF.Api.setClientId((new Date).getTime());
 
-RTFApi.Api.startUpdates();
+RTF.Api.addSubscription('test');
+// RTF.Api.addSubscription('detail');
+
+RTF.Api.startUpdates();
 
 
 // setTimeout(function() {
-  // RTFApi.Api.addSubscription('detail');
-// }, 5000)
+  // RTF.Api.switchToNextConnector();
+  // RTF.Api.addSubscription('detail');
+// }, 15000);
+
+
+
+// setTimeout(function() {
+//   cl('switch to next connector')
+//   RTF.Api.switchToNextConnector();
+
+//   // cl('add detail sub')
+//   // RTF.Api.addSubscription('detail');
+  
+//   // setTimeout(function() {
+//     // cl('stop rtf')
+//     // RTF.Api.stopUpdates();
+    
+//     // setTimeout(function() {
+//     //   cl('restart api')
+//     //   RTF.Api.startUpdates();
+//     // }, 10000)
+//   // }, 10000);
+// }, 10000);
+
+
 
 
 
