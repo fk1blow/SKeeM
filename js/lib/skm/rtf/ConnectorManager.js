@@ -34,14 +34,6 @@ var Manager = SKMObject.extend(Subscribable, {
   _activeSequenceIdx: 0,
 
   /**
-   * The list containing the params
-   * used to build the connector's url
-   * 
-   * @type {Object}
-   */
-  _paramList: null,
-
-  /**
    * State of the rtf
    * @type {Boolean}
    */
@@ -59,7 +51,6 @@ var Manager = SKMObject.extend(Subscribable, {
   initialize: function() {
     this._connectors = null;
     this._activeConnector = null;
-    this._paramList = null;
   },
 
 
@@ -136,10 +127,16 @@ var Manager = SKMObject.extend(Subscribable, {
     }
   },
 
+  /**
+   * Sends a message through a connector
+   * @param  {Mixed} message a string or plain json of
+   * the message sent to the server
+   */
   sendMessage: function(message) {
     var connector;
     if ( connector = this.getActiveConnector() )
       connector.sendMessage(message);
+    return this;
   },
 
 
@@ -217,8 +214,8 @@ var Manager = SKMObject.extend(Subscribable, {
     }, this);
 
     connector.on('api:update', function(message) {
-      // Logger.debug('%cConnectorManager message api:update',
-        // 'color:green', arguments);
+      Logger.debug('%cConnectorManager message api:update',
+        'color:green', arguments);
       this.fire('update', message);
     }, this);
 
