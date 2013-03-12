@@ -22,7 +22,7 @@ RTF.Api.setClientId((new Date).getTime());
 RTF.Api.addSubscription('test');
 // RTF.Api.addSubscription('detail');
 
-RTF.Api.startUpdates();
+// RTF.Api.startUpdates();
 
 
 // setTimeout(function() {
