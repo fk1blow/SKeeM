@@ -22,16 +22,17 @@ var ConnectorErrors = {
 var XHRConnector = BaseConnector.extend({
   initialize: function() {
     Logger.debug('%cnew XHRConnector', 'color:#A2A2A2');
-    // this.addTransportListeners();
   },
 
   addTransport: function(transportObject) {
     this.transport = transportObject;
     this.addTransportListeners();
+    return this;
   },
 
   beginUpdate: function() {
-    Logger.debug('XHRConnector.beginUpdate');
+    this.buildTransportUrl();
+    Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
     this.transport.sendMessage();
     return this;
   },
@@ -47,7 +48,7 @@ var XHRConnector = BaseConnector.extend({
   addTransportListeners: function() {
     this.transport
       .on('error', this.handleError, this)
-      .on('success', this.handleMessage, this);
+      .on('success', this.handleReceivedMessage, this);
     return this;
   },
 
@@ -60,17 +61,12 @@ var XHRConnector = BaseConnector.extend({
   /*
     Message senders
    */
+  
 
-
-  sendBatchId: function(paramCollection) {
-    Logger.debug('XHRConnector.sendBachtId',
-      paramCollection.getParamByName('batchId'));
-    this.transport.url = this.getBaseUrl() + paramCollection.concatParams();
+  sendMessage: function(msg) {
+    Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', msg);
+    this.buildTransportUrl();
     this.transport.sendMessage();
-  },
-
-  sendNewSubscription: function() {
-    //
   },
 
   
@@ -87,8 +83,8 @@ var XHRConnector = BaseConnector.extend({
    * 
    * @param  {Object} message JSON message send by rtf server api
    */
-  handleMessage: function(message) {
-    Logger.info('XHRConnector.handleMessage');
+  handleReceivedMessage: function(message) {
+    Logger.info('XHRConnector.handleReceivedMessage');
     this.fire('api:update', message);
   },
 
