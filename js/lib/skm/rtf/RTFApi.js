@@ -171,17 +171,17 @@ var connectorManager = ConnectorManager.create({
 });
 
 // Add default connectors to the manager
-connectorManager.registerConnector('WebSocket', WSConnector.create({
+var wsconnector = connectorManager.registerConnector('WebSocket', WSConnector.create({
       urlBase: Config.baseUrl.ws,
       urlParamModel: rtfParamList
-    })
-  ).addTransport(WSWrapper.create());
+    }));
+wsconnector.addTransport(WSWrapper.create());
 
-connectorManager.registerConnector('XHR', XHRConnector.create({
+var xhrconnector = connectorManager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.baseUrl.xhr,
       urlParamModel: rtfParamList
-    })
-  ).addTransport(XHRWrapper.create());
+    }));
+xhrconnector.addTransport(XHRWrapper.create());
 
 
 /**
@@ -197,11 +197,18 @@ var RTFApi = SKMObject.extend({
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
 
+    this._clientId = null;
+
     // Prepare batchId and add it to the parameterizer
     rtfParamList.addParameter('batchId', this._getIncrementedBatchId());
     
     // Resends a confirmation back to server api
-    connectorManager.on('update', this.handleReconfirmation, this);
+    connectorManager.on('update',
+      this.handleReconfirmation, this);
+
+    // Removes 'subscribe' from rtfParamList when a connector has stopped
+    connectorManager.on('stopped',
+      this.handleManagerSequenceStopped, this);
   },
 
 
@@ -274,6 +281,15 @@ var RTFApi = SKMObject.extend({
       // ...and send the new batch id
       connectorManager.sendMessage('batchId{' + batchId + '}');
     }
+  },
+
+  /**
+   * Resets the "subscribe" parameter when
+   * a connector sequence is closed
+   */
+  handleManagerSequenceStopped: function() {
+    // probably, the [rtfSubscriptionList] should be handled as well
+    rtfParamList.removeParameter('subscribe');
   },
 
 
