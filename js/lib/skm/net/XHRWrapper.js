@@ -29,18 +29,20 @@ var LibraryConfig = {
 var XHRMessageDelegates = {
 	handleOnComplete: function() {
 		Logger.info('XHRWrapper.handleOnComplete');
-		this._expectedClose = true;
+		this._expectedClose = false;
 		this.fire('complete');
 	},
 
 	handleOnSuccess: function(msg) {
 		Logger.info('XHRWrapper.handleOnSuccess', msg);
+		this._expectedClose = false;
 		this.fire('success', msg);
 	},
 
 	handleOnError: function(err) {
-		if ( this._expectedClose === false ) {
+		if ( ! this._expectedClose ) {
 			Logger.info('XHRWrapper.handleOnError');
+			this._expectedClose = false;
 			this.fire('error', err);
 		}
 	}
@@ -67,7 +69,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 	_request: null,
 
-	_expectedClose: true,
+	_expectedClose: false,
 
 	initialize: function() {
 		Logger.debug('%cnew XHRWrapper', 'color:#A2A2A2');
@@ -112,10 +114,15 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * callback or not - [this._expectedClose]
 	 */
 	abortRequest: function(triggersError) {
+		// if triggers error is true, it will trigger the error event
 		if ( triggersError === true )
 			this._expectedClose = false;
-		if ( this._request != null )
+		// Set expected close, only it aborts the connection
+		if ( this._request != null ) {
+			this._expectedClose = true;
 			this._request.abort();
+		}
+		// nullifies the request object
 		this._resetRequestObject();
 	},
 
