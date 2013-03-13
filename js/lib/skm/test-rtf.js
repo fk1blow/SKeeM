@@ -20,12 +20,12 @@ window.RTFApi = RTF.Api;
 RTF.Api.setClientId((new Date).getTime());
 
 RTF.Api.addSubscription('test');
-// RTF.Api.addSubscription('detail');
+// // RTF.Api.addSubscription('detail');
 
 // RTF.Api.startUpdates();
 
 
-// setTimeout(function() {
+// setTimeout(function() {  
   // RTF.Api.switchToNextConnector();
   // RTF.Api.addSubscription('detail');
 // }, 15000);
@@ -144,20 +144,34 @@ wsConnector.beginUpdate();*/
  * -------------
  */
 
-/*var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + (new Date).getTime();
 
-var xhrConnUpdate = XHRConnector.create({
-  transport: XHRWrapper.create({ url: xhrUrl })
-});
 
-xhrConnUpdate.on('params:error', function() {
-  cl('params:error', arguments)
-})
-.on('connector:deactivated', function() {
-  cl('connector:deactivated', arguments)
-});
+// window.XHRWrapper = XHRWrapper;
 
-xhrConnUpdate.beginUpdate();*/
+// var xhrUrl = 'http://localhost:8080/testajax?subscribe=test&clientId=' + (new Date).getTime();
+
+// var xrx = XHRWrapper.create({ url: xhrUrl });
+
+// xrx.on('success', function() {
+//   cl('success')
+// }).on('error', function() {
+//   cl('error')
+// })
+
+// xrx.sendMessage()
+
+// var xhrConnUpdate = XHRConnector.create({
+//   transport: XHRWrapper.create({ url: xhrUrl })
+// });
+
+// xhrConnUpdate.on('params:error', function() {
+//   cl('params:error', arguments)
+// })
+// .on('connector:deactivated', function() {
+//   cl('connector:deactivated', arguments)
+// });
+
+// xhrConnUpdate.beginUpdate();
 
 
 
