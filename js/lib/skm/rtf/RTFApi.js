@@ -30,7 +30,7 @@ var Config = {
 
   clientId: null,
 
-  connectorSequence: ['WebSocket', 'XHR'].reverse()
+  connectorSequence: ['WebSocket', 'XHR']//.reverse()
   // connectorSequence: ['WebSocket']
   // connectorSequence: ['XHR']
 };
@@ -288,7 +288,7 @@ var RTFApi = SKMObject.extend({
    * a connector sequence is closed
    */
   handleManagerSequenceStopped: function() {
-    // probably, the [rtfSubscriptionList] should be handled as well
+    // probably, the [rtfSubscriptionList] should be handled as
     rtfParamList.removeParameter('subscribe');
   },
 
