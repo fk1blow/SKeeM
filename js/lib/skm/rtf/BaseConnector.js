@@ -75,13 +75,36 @@ var Connector = SKMObject.extend(Subscribable, {
    *
    * Removes transport listeners
    */
-  removeTransportListeners: function() {},
+  removeTransportListeners: function() {
+    this.transport.off();
+    return this;
+  },
 
   /**
    * Adds a transport type object
    * instance of Transport type
    */
-  addTransport: function() {},
+  addTransport: function(transportObject) {
+    if ( this.transport == null ) {
+      this.transport = transportObject;
+      this.addTransportListeners();
+    } else {
+      throw new Error('Connector.addTransport : ' + 
+        'transport object already exists');
+    }
+    return this;
+  },
+
+  /**
+   * Destroys the object
+   * @description nullifies every field
+   * and removes any events bound to that particular field
+   */
+  destroy: function() {
+    this.removeTransportListeners();
+    this.transport = null;
+    this.urlParamModel = null;
+  }
 
   /**
    * Builds the transport utl, based on
