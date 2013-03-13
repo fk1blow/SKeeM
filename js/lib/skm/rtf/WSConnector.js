@@ -24,15 +24,10 @@ var WebSocketConnector = BaseConnector.extend({
     Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
   },
 
-  addTransport: function(transportObject) {
-    this.transport = transportObject;
-    this.addTransportListeners();
-    return this;
-  },
-
   beginUpdate: function() {
     this.buildTransportUrl();
     Logger.debug('WebSocketConnector.beginUpdate\n', this.transport.url);
+    // this.addTransportListeners();
     this.transport.connect();
     return this;
   },
@@ -41,7 +36,7 @@ var WebSocketConnector = BaseConnector.extend({
     Logger.debug('WebSocketConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
-    this.transport.off();
+    // this.removeTransportListeners();
     return this;
   },
 
@@ -54,11 +49,6 @@ var WebSocketConnector = BaseConnector.extend({
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
       .on('implementation:missing', this.handleReconnectingStopped, this);
-    return this;
-  },
-
-  removeTransportListeners: function() {
-    this.transport.off();
     return this;
   },
 

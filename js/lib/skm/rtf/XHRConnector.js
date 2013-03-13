@@ -24,15 +24,10 @@ var XHRConnector = BaseConnector.extend({
     Logger.debug('%cnew XHRConnector', 'color:#A2A2A2');
   },
 
-  addTransport: function(transportObject) {
-    this.transport = transportObject;
-    this.addTransportListeners();
-    return this;
-  },
-
   beginUpdate: function() {
     this.buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
+    // this.addTransportListeners();
     this.transport.sendMessage();
     return this;
   },
@@ -41,7 +36,7 @@ var XHRConnector = BaseConnector.extend({
     Logger.debug('XHRConnector.endUpdate');
     // disconnect and remove events
     this.transport.abortRequest();
-    this.transport.off();
+    // this.removeTransportListeners();
     return this;
   },
 
@@ -49,11 +44,6 @@ var XHRConnector = BaseConnector.extend({
     this.transport
       .on('error', this.handleError, this)
       .on('success', this.handleReceivedMessage, this);
-    return this;
-  },
-
-  removeTransportListeners: function() {
-    this.transport.off();
     return this;
   },
 
