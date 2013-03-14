@@ -82,7 +82,8 @@ var Connector = SKMObject.extend(Subscribable, {
 
   /**
    * Adds a transport type object
-   * instance of Transport type
+   * instance of Transport type and listens
+   * to various events
    */
   addTransport: function(transportObject) {
     if ( this.transport == null ) {
