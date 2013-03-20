@@ -105,7 +105,7 @@ var Connector = SKMObject.extend(Subscribable, {
     this.removeTransportListeners();
     this.transport = null;
     this.urlParamModel = null;
-  }
+  },
 
   /**
    * Builds the transport utl, based on
