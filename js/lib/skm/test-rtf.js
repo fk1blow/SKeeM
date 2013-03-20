@@ -17,10 +17,14 @@ console.log('________________________________________________________________')
 
 window.RTFApi = RTF.Api;
 
-RTF.Api.setClientId((new Date).getTime());
+RTF.Config.setWSUrl('http://radu.betbrain.com/rtfws');
+RTF.Config.setXHRUrl('http://radu.betbrain.com/rtfajax');
 
-RTF.Api.addSubscription('test');
-// // RTF.Api.addSubscription('detail');
+RTF.Api.get().setClientId((new Date).getTime());
+
+
+// RTF.Api.addSubscription('test');
+// RTF.Api.addSubscription('detail');
 
 // RTF.Api.startUpdates();
 
