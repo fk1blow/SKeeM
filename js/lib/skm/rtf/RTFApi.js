@@ -22,18 +22,57 @@ var Logger = SKMLogger.create();
  */
 
 
-var Config = {
-  baseUrl: {
+var Config = (function(){
+  var transportsURLs = {
     ws: 'ws://localhost:8080/testws',
     xhr: 'http://localhost:8080/testajax'
-  },
+  };
 
-  clientId: null,
+  var defaultURLs = {
+    ws: 'ws://localhost:8080/testws',
+    xhr: 'http://localhost:8080/testajax'
+  };
 
-  connectorSequence: ['WebSocket', 'XHR']//.reverse()
-  // connectorSequence: ['WebSocket']
-  // connectorSequence: ['XHR']
-};
+  var connectorSequence = ['WebSocket', 'XHR'];
+
+  return {
+    getSequence: function() {
+      return connectorSequence;
+    },
+
+    setSequence: function(sequence) {
+      connectorSequence = sequence;
+    },
+
+    getWSUrl: function() {
+      var url = null;
+      if ( ! (url = transportsURLs.ws) ) {
+        url = defaultURLs.ws;
+        Logger.info('%cConfig.getWSUrl : ws url is null - '
+          + ' returning default url', 'color:red');
+      }
+      return transportsURLs.ws;
+    },
+
+    setWSUrl: function(url) {
+      transportsURLs.ws = url;
+    },
+
+    getXHRUrl: function() {
+      var url = null;
+      if ( ! (url = transportsURLs.xhr) ) {
+        url = defaultURLs.xhr;
+        Logger.info('%cConfig.getXHRUrl : xhr url is null - '
+          + ' returning default url', 'color:red');
+      }
+      return transportsURLs.xhr;
+    },
+
+    setXHRUrl: function(url) {
+      transportsURLs.xhr = url;
+    }
+  }
+}());
 
 
 /*
@@ -165,23 +204,41 @@ var rtfParamList = {
  */
 
 
-// Create the connector manager
-var connectorManager = ConnectorManager.create({
-  sequence: Config.connectorSequence
-});
+var connectorManagerInstance = (function() {
+  // Create the connector manager
+  var connectorManager = null;
 
-// Add default connectors to the manager
-var wsconnector = connectorManager.registerConnector('WebSocket', WSConnector.create({
-      urlBase: Config.baseUrl.ws,
-      urlParamModel: rtfParamList
-    }));
-wsconnector.addTransport(WSWrapper.create());
+  // Register defaul connectors and their transports
+  function registerDefaultConnectors() {
+    var wsconnector, xhrconnector;
+    if ( connectorManager ) {
+      wsconnector = connectorManager.registerConnector('WebSocket', WSConnector.create({
+        urlBase: Config.getWSUrl(),
+        urlParamModel: rtfParamList
+      }));
+      wsconnector.addTransport(WSWrapper.create());
 
-var xhrconnector = connectorManager.registerConnector('XHR', XHRConnector.create({
-      urlBase: Config.baseUrl.xhr,
-      urlParamModel: rtfParamList
-    }));
-xhrconnector.addTransport(XHRWrapper.create());
+      xhrconnector = connectorManager.registerConnector('XHR', XHRConnector.create({
+        urlBase: Config.getXHRUrl(),
+        urlParamModel: rtfParamList
+      }));
+      xhrconnector.addTransport(XHRWrapper.create());
+    }
+  }
+
+  return {
+    get: function() {
+      if ( connectorManager == null ) {
+        connectorManager = ConnectorManager.create({
+          sequence: Config.getSequence()
+        });
+        registerDefaultConnectors();
+      }
+      return connectorManager;
+    }
+  }
+}());
+
 
 
 /**
@@ -203,11 +260,11 @@ var RTFApi = SKMObject.extend({
     rtfParamList.addParameter('batchId', this._getIncrementedBatchId());
     
     // Resends a confirmation back to server api
-    connectorManager.on('update',
+    connectorManagerInstance.get().on('update',
       this.handleReconfirmation, this);
 
     // Removes 'subscribe' from rtfParamList when a connector has stopped
-    connectorManager.on('stopped',
+    connectorManagerInstance.get().on('stopped',
       this.handleManagerSequenceStopped, this);
   },
 
@@ -227,18 +284,18 @@ var RTFApi = SKMObject.extend({
     this._validateSubscriptionsAdded();
 
     // Start the connectors, if any available.
-    connectorManager.startConnectors();
+    connectorManagerInstance.get().startConnectors();
   },
 
   stopUpdates: function() {
     Logger.debug('%cRTFApi.stopUpdates', 'color:green');
     // stop all connectors
-    connectorManager.stopConnectors();
+    connectorManagerInstance.get().stopConnectors();
   },
 
   switchToNextConnector: function() {
     Logger.debug('%cRTFApi.switchToNextConnector', 'color:green');
-    connectorManager.switchToNextConnector();
+    connectorManagerInstance.get().switchToNextConnector();
   },
 
   /**
@@ -279,7 +336,7 @@ var RTFApi = SKMObject.extend({
       // Alter batchId parameter
       rtfParamList.alterParameter('batchId', batchId);
       // ...and send the new batch id
-      connectorManager.sendMessage('batchId{' + batchId + '}');
+      connectorManagerInstance.get().sendMessage('batchId{' + batchId + '}');
     }
   },
 
@@ -325,14 +382,14 @@ var RTFApi = SKMObject.extend({
       Subscription.create({ name: name }) );
     
     // Tie the subscription to the manager's updates
-    connectorManager.on('update', subscription.handleUpdate, subscription);
+    connectorManagerInstance.get().on('update', subscription.handleUpdate, subscription);
 
     // Add it to the rtfParamList
     // rtfParamList.addParameter('subscribe', name);
     rtfParamList.addParameter('subscribe', name);
 
     // Tell the connector to notify server api
-    connectorManager.sendMessage('subscribe{' + name + '}');
+    connectorManagerInstance.get().sendMessage('subscribe{' + name + '}');
 
     return subscription;
   },
@@ -348,7 +405,7 @@ var RTFApi = SKMObject.extend({
     var subscription = rtfSubscriptionList.get(name);
 
     // Dettach update event
-    connectorManager.off('update', subscription.handleUpdate, subscription);
+    connectorManagerInstance.get().off('update', subscription.handleUpdate, subscription);
     
     // Remove from subscription list
     rtfSubscriptionList.remove(name);
@@ -389,10 +446,24 @@ var RTFApi = SKMObject.extend({
 });
 
 
+var ApiInstance = (function() {
+  var instance = null;
+
+  return {
+    get: function() {
+      if ( instance == null ) {
+        instance = RTFApi.create();
+      }
+      return instance;
+    }
+  }
+}());
+
+
 return {
-  Api: RTFApi.create(),
-  Config: Config
-}
+  Config: Config,
+  Api: ApiInstance
+};
 
 
 });
