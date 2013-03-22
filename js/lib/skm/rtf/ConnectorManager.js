@@ -155,8 +155,8 @@ var Manager = SKMObject.extend(Subscribable, {
     if ( connector = this.getActiveConnector() )
       connector.sendMessage(message);
     else {
-      Logger.info('%cConnectorManager.sendMessage : invalid connector type' + 
-        ' or connector is null', 'color:red');
+      Logger.info('ConnectorManager.sendMessage : invalid connector type' + 
+        ' or connector is null');
     }
     return this;
   },
@@ -243,7 +243,7 @@ var Manager = SKMObject.extend(Subscribable, {
 
     connector.on('api:update', function(message) {
       Logger.debug('%cConnectorManager message api:update',
-        'color:green', arguments);
+        'color:green', message);
       this.fire('update', message);
     }, this);
 
