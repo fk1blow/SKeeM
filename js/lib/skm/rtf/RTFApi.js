@@ -80,7 +80,7 @@ var Config = (function(){
  */
 
 
-var Subscription = SKMObject.extend({
+var Subscription = SKMObject.extend(Subscribable, {
   name: undefined,
 
   initialize: function() {
@@ -88,12 +88,11 @@ var Subscription = SKMObject.extend({
   },
 
   handleUpdate: function(message) {
-    Logger.debug('%cSubscription.handleUpdate :: ', 'color:blue',
-      'subscription : ' + this.name, ', message : ', message['message']);
+    this.fire('update', message);
   },
 
   destroy: function() {
-    Logger.debug('%cSubscription.destroy', 'color:green');
+    this.fire('destroy');
   }
 });
 
@@ -327,15 +326,17 @@ var RTFApi = SKMObject.extend({
    */
   handleReconfirmation: function(message) {
     var batchId;
-    
-    Logger.debug('RTFApi.handleReconfirmation', 'color:red');
-
     // sends batch id only if 'message' or 'reconfirmation'
     if ( 'message' in message || 'reconfirmation' in message ) {
       batchId = this._getIncrementedBatchId();
+      // Logger.debug('%cRTFApi.handleReconfirmation : ', 'color:green', batchId);
       // Alter batchId parameter
       rtfParamList.alterParameter('batchId', batchId);
+      rtfParamList.removeParameter('subscribe');
       // ...and send the new batch id
+      connectorManagerInstance.get().sendMessage('batchId{' + batchId + '}');
+    } else if ('noupdates' in message) {
+      batchId = this._batchId;
       connectorManagerInstance.get().sendMessage('batchId{' + batchId + '}');
     }
   },
@@ -343,9 +344,12 @@ var RTFApi = SKMObject.extend({
   /**
    * Resets the "subscribe" parameter when
    * a connector sequence is closed
+   *
+   * @todo the api should notify the Subscriptions
+   * that an error has occurred
    */
   handleManagerSequenceStopped: function() {
-    // probably, the [rtfSubscriptionList] should be handled as
+    // ...and notify the subscriptions that something wrong has happened
     rtfParamList.removeParameter('subscribe');
   },
 
@@ -446,7 +450,7 @@ var RTFApi = SKMObject.extend({
 });
 
 
-var ApiInstance = (function() {
+var apiInstance = (function() {
   var instance = null;
 
   return {
@@ -462,7 +466,7 @@ var ApiInstance = (function() {
 
 return {
   Config: Config,
-  Api: ApiInstance
+  Api: apiInstance
 };
 
 
