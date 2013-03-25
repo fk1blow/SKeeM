@@ -1,3 +1,4 @@
+
 // RTF Api Manager implementation
 
 define(['skm/k/Object',
@@ -141,15 +142,20 @@ var rtfSubscriptionList = {
 };
 
 
-var rtfParamList = {
+var ParamsModel = SKMObject.extend(Subscribable, {
   _parameterizerList: null,
 
-  getParamList: function() {
+  getList: function() {
     return this._parameterizerList;
   },
 
-  getParamByName: function(name) {
+  getByName: function(name) {
     return this._parameterizerList[name];
+  },
+
+  toUrl: function() {
+    var list = this._parameterizerList;
+    return encodeURIComponent(JSON.stringify(list).toString());
   },
 
   toQueryString: function(concatStr) {
@@ -173,51 +179,60 @@ var rtfParamList = {
     return qs;
   },
 
-  addParameter: function(name, value) {
+  add: function(name, value) {
     var list = this._parameterizerList = this._parameterizerList || {};
     if ( list[name] ) {
       list[name].push(value);
     } else {
       list[name] = [value];
     }
+    this.fire('changed');
     return this;
   },
 
-  removeParameter: function(name) {
+  remove: function(name) {
     if ( name in this._parameterizerList )
       delete this._parameterizerList[name];
+    this.fire('changed');
     return this;
   },
 
-  alterParameter: function(name, newValue) {
+  alter: function(name, newValue) {
     var param = this._parameterizerList[name];
     if ( param ) {
       this._parameterizerList[name] = [newValue];
     }
+    this.fire('changed');
+    return this;
   }
-};
+});
+
+
+var rtfParamList = ParamsModel.create();
 
 
 /*
   Connector Manager
+
+  @todo REFACTOR
  */
 
 
-var connectorManagerInstance = (function() {
+var connectorManager = (function() {
   // Create the connector manager
-  var connectorManager = null;
+  var manager = null;
 
   // Register defaul connectors and their transports
   function registerDefaultConnectors() {
     var wsconnector, xhrconnector;
-    if ( connectorManager ) {
-      wsconnector = connectorManager.registerConnector('WebSocket', WSConnector.create({
+    if ( manager ) {
+      wsconnector = manager.registerConnector('WebSocket', WSConnector.create({
         urlBase: Config.getWSUrl(),
         urlParamModel: rtfParamList
       }));
       wsconnector.addTransport(WSWrapper.create());
 
-      xhrconnector = connectorManager.registerConnector('XHR', XHRConnector.create({
+      xhrconnector = manager.registerConnector('XHR', XHRConnector.create({
         urlBase: Config.getXHRUrl(),
         urlParamModel: rtfParamList
       }));
@@ -227,13 +242,13 @@ var connectorManagerInstance = (function() {
 
   return {
     get: function() {
-      if ( connectorManager == null ) {
-        connectorManager = ConnectorManager.create({
+      if ( manager == null ) {
+        manager = ConnectorManager.create({
           sequence: Config.getSequence()
         });
         registerDefaultConnectors();
       }
-      return connectorManager;
+      return manager;
     }
   }
 }());
@@ -256,15 +271,31 @@ var RTFApi = SKMObject.extend({
     this._clientId = null;
 
     // Prepare batchId and add it to the parameterizer
-    rtfParamList.addParameter('batchId', this._getIncrementedBatchId());
+    rtfParamList.add('batchId', this._getIncrementedBatchId());
     
     // Resends a confirmation back to server api
-    connectorManagerInstance.get().on('update',
+    connectorManager.get().on('update',
       this.handleReconfirmation, this);
 
-    // Removes 'subscribe' from rtfParamList when a connector has stopped
-    connectorManagerInstance.get().on('stopped',
+    // Handle when manager has stopped - something wrong happened
+    connectorManager.get().on('stopped',
       this.handleManagerSequenceStopped, this);
+
+    // Handle when manager has been deactivated - next/sequence switch
+    connectorManager.get().on('deactivated')
+      this.handleManagerSequenceDeactivated, this);
+
+    // re-add subscriptions to the param list before connector began update
+    connectorManager.get().on('before:startConnector', function() {
+      rtfSubscriptionList.eachSubscription(function(subscription) {
+        rtfParamList.add('subscribe', subscription.name);
+      });
+    });
+
+    // remove subscribe after every connector has beganß update
+    connectorManager.get().on('after:startConnector', function() {
+      rtfParamList.remove('subscribe');
+    });
   },
 
 
@@ -275,26 +306,33 @@ var RTFApi = SKMObject.extend({
 
   startUpdates: function() {
     Logger.debug('%cRTFApi.startUpdates', 'color:green');
-    
     // Validate clientId presence
     this._validateCliendIdAdded();
-    
     // Validates the presence of subscriptions
     this._validateSubscriptionsAdded();
-
     // Start the connectors, if any available.
-    connectorManagerInstance.get().startConnectors();
+    connectorManager.get().startConnectors();
+  },
+
+  startAfterError: function() {
+    // Restart connectors
+    // Add the subscrition to the param list
   },
 
   stopUpdates: function() {
     Logger.debug('%cRTFApi.stopUpdates', 'color:green');
     // stop all connectors
-    connectorManagerInstance.get().stopConnectors();
+    connectorManager.get().stopConnectors();
+  },
+
+  // possible duplicate of [startUpdates]
+  restartUpdates: function() {
+    Logger.debug('%cRTFApi.restartUpdates', 'color:green');
   },
 
   switchToNextConnector: function() {
     Logger.debug('%cRTFApi.switchToNextConnector', 'color:green');
-    connectorManagerInstance.get().switchToNextConnector();
+    connectorManager.get().switchToNextConnector();
   },
 
   /**
@@ -309,7 +347,7 @@ var RTFApi = SKMObject.extend({
     if ( cid !== null ) {
       throw new Error('RTFApi.setClientId : clientId already set!');
     }
-    rtfParamList.addParameter('clientId', this._clientId = id);
+    rtfParamList.add('clientId', this._clientId = id);
   },
 
 
@@ -329,16 +367,12 @@ var RTFApi = SKMObject.extend({
     // sends batch id only if 'message' or 'reconfirmation'
     if ( 'message' in message || 'reconfirmation' in message ) {
       batchId = this._getIncrementedBatchId();
-      // Logger.debug('%cRTFApi.handleReconfirmation : ', 'color:green', batchId);
-      // Alter batchId parameter
-      rtfParamList.alterParameter('batchId', batchId);
-      rtfParamList.removeParameter('subscribe');
-      // ...and send the new batch id
-      connectorManagerInstance.get().sendMessage('batchId{' + batchId + '}');
+      // ar trebui ca fiecare subscribe sa fie sters dupa prima conectare
+      rtfParamList.alter('batchId', batchId)//.remove('subscribe');
     } else if ('noupdates' in message) {
       batchId = this._batchId;
-      connectorManagerInstance.get().sendMessage('batchId{' + batchId + '}');
     }
+    connectorManager.get().sendMessage('batchId{' + batchId + '}');
   },
 
   /**
@@ -349,8 +383,11 @@ var RTFApi = SKMObject.extend({
    * that an error has occurred
    */
   handleManagerSequenceStopped: function() {
-    // ...and notify the subscriptions that something wrong has happened
-    rtfParamList.removeParameter('subscribe');
+    // notify all subscriptions that an error has occured
+  },
+
+  handleManagerSequenceDeactivated: function() {
+    // notify all subscriptions that sequence has been deactivated
   },
 
 
@@ -386,14 +423,15 @@ var RTFApi = SKMObject.extend({
       Subscription.create({ name: name }) );
     
     // Tie the subscription to the manager's updates
-    connectorManagerInstance.get().on('update', subscription.handleUpdate, subscription);
+    connectorManager.get()
+      .on('update', subscription.handleUpdate, subscription);
 
     // Add it to the rtfParamList
-    // rtfParamList.addParameter('subscribe', name);
-    rtfParamList.addParameter('subscribe', name);
+    // rtfParamList.add('subscribe', name);
+    rtfParamList.add('subscribe', name);
 
     // Tell the connector to notify server api
-    connectorManagerInstance.get().sendMessage('subscribe{' + name + '}');
+    connectorManager.get().sendMessage('subscribe{' + name + '}');
 
     return subscription;
   },
@@ -409,7 +447,8 @@ var RTFApi = SKMObject.extend({
     var subscription = rtfSubscriptionList.get(name);
 
     // Dettach update event
-    connectorManagerInstance.get().off('update', subscription.handleUpdate, subscription);
+    connectorManager.get()
+      .off('update', subscription.handleUpdate, subscription);
     
     // Remove from subscription list
     rtfSubscriptionList.remove(name);
@@ -417,8 +456,8 @@ var RTFApi = SKMObject.extend({
     // Destroy subscription
     subscription.destroy();
     
-    // rtfParamList.removeParameter('subscribe');
-    rtfParamList.removeParameter('subscribe');
+    // rtfParamList.remove('subscribe');
+    rtfParamList.remove('subscribe');
   },
 
 
@@ -450,24 +489,23 @@ var RTFApi = SKMObject.extend({
 });
 
 
-var apiInstance = (function() {
-  var instance = null;
-
-  return {
-    get: function() {
-      if ( instance == null ) {
-        instance = RTFApi.create();
-      }
-      return instance;
-    }
-  }
-}());
-
-
 return {
   Config: Config,
-  Api: apiInstance
+
+  Api: (function() {
+    var instance = null;
+
+    return {
+      get: function() {
+        if ( instance == null ) {
+          instance = RTFApi.create();
+        }
+        return instance;
+      }
+    }
+  }())
 };
 
 
+// end module
 });
