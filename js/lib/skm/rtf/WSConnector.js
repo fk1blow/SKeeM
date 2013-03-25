@@ -20,9 +20,7 @@ var ConnectorErrors = {
 
 
 var WebSocketConnector = BaseConnector.extend({
-  initialize: function() {
-    Logger.debug('%cnew WebSocketConnector', 'color:#A2A2A2');
-  },
+  _typeName: 'WS',
 
   beginUpdate: function() {
     this.buildTransportUrl();

@@ -20,9 +20,7 @@ var ConnectorErrors = {
 
 
 var XHRConnector = BaseConnector.extend({
-  initialize: function() {
-    Logger.debug('%cnew XHRConnector', 'color:#A2A2A2');
-  },
+  _typeName: 'XHR',
 
   beginUpdate: function() {
     this.buildTransportUrl();
