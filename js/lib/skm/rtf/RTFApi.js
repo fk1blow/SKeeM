@@ -283,7 +283,7 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
 
     // Prepare batchId and add it to the parameterizer
-    this._prepareBatchId();
+    rtfParamList.add('batchId', this._batchId);
 
     // creates the connector manager
     this._createConnectorManager();
@@ -309,18 +309,10 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
       this.handleRemoveSubscribes, this);
   },
 
-
-  /*
-    Commands
-   */
-
-
   startUpdates: function() {
     Logger.debug('%cRTFApi.startUpdates', 'color:green');
-    // Validate clientId presence
-    this._validateCliendIdAdded();
-    // Validates the presence of subscriptions
-    this._validateSubscriptionsAdded();
+    // check clientId, subscription list
+    this._checkEssentialFields();
     // Start the connectors, if any available.
     this._connectorManager.startConnectors();
   },
@@ -355,18 +347,12 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     rtfParamList.add('clientId', this._clientId = id);
   },
 
-
-  /*
-    Subscriptions
-   */
-  
-
   /**
    * Returns a subscription
    * 
    * @param  {String} name the name identifier of the subscription
    */
-  getSubscription: function(name) {
+  findSubscription: function(name) {
     return rtfSubscriptionList.get(name);
   },
 
@@ -449,23 +435,13 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     return bid;
   },
 
-  _validateCliendIdAdded: function() {
-    var cid = this._clientId;
-    if ( cid  === null || typeof cid === 'undefined' || cid.length < 1 ) {
-      Logger.info('%cRTFApi : ' + 
-        'invalid clientId or clientId not set : ', 'color:red', cid);
-    }
-  },
-
-  _validateSubscriptionsAdded: function() {
-    if ( rtfSubscriptionList.isNullOrEmpty() ) {
-      Logger.info('%cRTFApi : ' + 
-        'subscription list is empty or null', 'color:red');
-    }
-  },
-
-  _prepareBatchId: function() {
-    rtfParamList.add('batchId', this._getIncrementedBatchId());
+  _checkEssentialFields: function() {
+    // Checks clientId presence
+    if ( !this._clientId )
+      Logger.warn('RTFApi.startUpdates :: no clientId set!');
+    // Checks the presence of subscriptions
+    if ( rtfSubscriptionList.isNullOrEmpty() )
+      Logger.warn('RTFApi.startUpdates :: subscription list is empty!');
   }
 });
 
