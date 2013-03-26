@@ -124,6 +124,10 @@ var rtfSubscriptionList = {
     }
   },
 
+  getList: function() {
+    return this._subscriptions;
+  },
+
   has: function(subscription) {
     return this._subscriptions && (subscription in this._subscriptions);
   },
@@ -146,6 +150,7 @@ var ParamsModel = SKMObject.extend(Subscribable, {
   _parameterizerList: null,
 
   getList: function() {
+    this._parameterizerList = this._parameterizerList || {};
     return this._parameterizerList;
   },
 
@@ -159,7 +164,7 @@ var ParamsModel = SKMObject.extend(Subscribable, {
   },
 
   toQueryString: function(concatStr) {
-    var i = 0, qs = '', part, segment, params = this._parameterizerList;
+    var i = 0, qs = '', part, segment, params = this.getList();
     var concatWith = concatStr || '&';
     for ( part in params ) {
       i = 0, segment = params[part];
@@ -179,30 +184,37 @@ var ParamsModel = SKMObject.extend(Subscribable, {
     return qs;
   },
 
+  reset: function(name, value) {
+    if ( name in this.getList() )
+      delete this._parameterizerList[name];
+    return this;
+  },
+
   add: function(name, value) {
-    var list = this._parameterizerList = this._parameterizerList || {};
+    var list = this.getList();
     if ( list[name] ) {
       list[name].push(value);
     } else {
       list[name] = [value];
     }
-    this.fire('changed');
+    this.fire('added');
     return this;
   },
 
   remove: function(name) {
-    if ( name in this._parameterizerList )
-      delete this._parameterizerList[name];
-    this.fire('changed');
+    var list = this.getList();
+    if ( name in list )
+      delete list[name];
+    this.fire('removed');
     return this;
   },
 
   alter: function(name, newValue) {
-    var param = this._parameterizerList[name];
-    if ( param ) {
-      this._parameterizerList[name] = [newValue];
+    var param, list = this.getList();
+    if ( param = list[name] ) {
+      list[name] = [newValue];
     }
-    this.fire('changed');
+    this.fire('altered');
     return this;
   }
 });
@@ -260,7 +272,50 @@ var connectorManager = (function() {
  */
 
 
-var RTFApi = SKMObject.extend({
+var ApiHandlers = {
+  /**
+   * Confirms receiving a message(update) from server api
+   * 
+   * @description basically, it sends a message back to the server,
+   * confirming that he(the client) has received the update message 
+   */
+  handleReconfirmation: function(message) {
+    var batchId;
+    // sends batch id only if 'message' or 'reconfirmation'
+    if ( 'message' in message || 'reconfirmation' in message ) {
+      batchId = this._getIncrementedBatchId();
+      // ar trebui ca fiecare subscribe sa fie sters dupa prima conectare
+      rtfParamList.alter('batchId', batchId)//.remove('subscribe');
+    } else if ('noupdates' in message) {
+      batchId = this._batchId;
+    }
+    connectorManager.get().sendMessage('batchId{' + batchId + '}');
+  },
+
+  handleManagerSequenceStopped: function() {
+    // notify all subscriptions that an error has occured
+  },
+
+  handleManagerSequenceDeactivated: function() {
+    // notify all subscriptions that sequence has been deactivated
+  },
+
+  handleResetThenAddSubscribes: function() {
+    // reset param
+    rtfParamList.reset('subscribe');
+    // Re-add the subscriptions to the params list
+    rtfSubscriptionList.eachSubscription(function(subscription) {
+      rtfParamList.add('subscribe', subscription.name);
+    });
+  },
+
+  handleRemoveSubscribes: function() {
+    rtfParamList.remove('subscribe');
+  }
+}
+
+
+var RTFApi = SKMObject.extend(ApiHandlers, {
   _clientId:  null,
 
   _batchId: 1,
@@ -282,20 +337,16 @@ var RTFApi = SKMObject.extend({
       this.handleManagerSequenceStopped, this);
 
     // Handle when manager has been deactivated - next/sequence switch
-    connectorManager.get().on('deactivated')
+    connectorManager.get().on('deactivated',
       this.handleManagerSequenceDeactivated, this);
 
     // re-add subscriptions to the param list before connector began update
-    connectorManager.get().on('before:startConnector', function() {
-      rtfSubscriptionList.eachSubscription(function(subscription) {
-        rtfParamList.add('subscribe', subscription.name);
-      });
-    });
+    connectorManager.get().on('before:nextSequence',
+      this.handleResetThenAddSubscribes, this);
 
-    // remove subscribe after every connector has beganß update
-    connectorManager.get().on('after:startConnector', function() {
-      rtfParamList.remove('subscribe');
-    });
+    // remove subscribe after every connector has began update
+    connectorManager.get().on('after:startConnector',
+      this.handleRemoveSubscribes, this);
   },
 
 
@@ -321,13 +372,7 @@ var RTFApi = SKMObject.extend({
 
   stopUpdates: function() {
     Logger.debug('%cRTFApi.stopUpdates', 'color:green');
-    // stop all connectors
     connectorManager.get().stopConnectors();
-  },
-
-  // possible duplicate of [startUpdates]
-  restartUpdates: function() {
-    Logger.debug('%cRTFApi.restartUpdates', 'color:green');
   },
 
   switchToNextConnector: function() {
@@ -348,46 +393,6 @@ var RTFApi = SKMObject.extend({
       throw new Error('RTFApi.setClientId : clientId already set!');
     }
     rtfParamList.add('clientId', this._clientId = id);
-  },
-
-
-  /*
-    Handlers
-   */
-
-
-  /**
-   * Confirms receiving a message(update) from server api
-   * 
-   * @description basically, it sends a message back to the server,
-   * confirming that he(the client) has received the update message 
-   */
-  handleReconfirmation: function(message) {
-    var batchId;
-    // sends batch id only if 'message' or 'reconfirmation'
-    if ( 'message' in message || 'reconfirmation' in message ) {
-      batchId = this._getIncrementedBatchId();
-      // ar trebui ca fiecare subscribe sa fie sters dupa prima conectare
-      rtfParamList.alter('batchId', batchId)//.remove('subscribe');
-    } else if ('noupdates' in message) {
-      batchId = this._batchId;
-    }
-    connectorManager.get().sendMessage('batchId{' + batchId + '}');
-  },
-
-  /**
-   * Resets the "subscribe" parameter when
-   * a connector sequence is closed
-   *
-   * @todo the api should notify the Subscriptions
-   * that an error has occurred
-   */
-  handleManagerSequenceStopped: function() {
-    // notify all subscriptions that an error has occured
-  },
-
-  handleManagerSequenceDeactivated: function() {
-    // notify all subscriptions that sequence has been deactivated
   },
 
 
@@ -427,7 +432,6 @@ var RTFApi = SKMObject.extend({
       .on('update', subscription.handleUpdate, subscription);
 
     // Add it to the rtfParamList
-    // rtfParamList.add('subscribe', name);
     rtfParamList.add('subscribe', name);
 
     // Tell the connector to notify server api
