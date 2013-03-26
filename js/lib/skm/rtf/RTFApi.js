@@ -243,7 +243,7 @@ var ApiHandlers = {
     } else if ('noupdates' in message) {
       batchId = this._batchId;
     }
-    this._connectorManager.sendMessage('batchId{' + batchId + '}');
+    this.sendMessage('batchId{' + batchId + '}');
   },
 
   handleManagerSequenceStopped: function() {
@@ -281,29 +281,22 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
 
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
-
     // Prepare batchId and add it to the parameterizer
     rtfParamList.add('batchId', this._batchId);
-
     // creates the connector manager
     this._createConnectorManager();
-    
     // Resends a confirmation back to server api
     this._connectorManager.on('update',
       this.handleReconfirmation, this);
-
     // Handle when manager has stopped - something wrong happened
     this._connectorManager.on('stopped',
       this.handleManagerSequenceStopped, this);
-
     // Handle when manager has been deactivated - next/sequence switch
     this._connectorManager.on('deactivated',
       this.handleManagerSequenceDeactivated, this);
-
     // re-add subscriptions to the param list before connector began update
     this._connectorManager.on('before:nextSequence',
       this.handleResetThenAddSubscribes, this);
-
     // remove subscribe after every connector has began update
     this._connectorManager.on('after:startConnector',
       this.handleRemoveSubscribes, this);
@@ -317,11 +310,6 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     this._connectorManager.startConnectors();
   },
 
-  startAfterError: function() {
-    // Restart connectors
-    // Add the subscrition to the param list
-  },
-
   stopUpdates: function() {
     Logger.debug('%cRTFApi.stopUpdates', 'color:green');
     this._connectorManager.stopConnectors();
@@ -330,6 +318,12 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
   switchToNextConnector: function() {
     Logger.debug('%cRTFApi.switchToNextConnector', 'color:green');
     this._connectorManager.switchToNextConnector();
+  },
+
+  sendMessage: function(message) {
+    if ( ! message )
+      Logger.warn('RTFApi.sendMessage : unable to send an empty message');
+    this._connectorManager.sendMessage(message);
   },
 
   /**
@@ -352,7 +346,7 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
    * 
    * @param  {String} name the name identifier of the subscription
    */
-  findSubscription: function(name) {
+  getSubscription: function(name) {
     return rtfSubscriptionList.get(name);
   },
 
@@ -380,7 +374,7 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     rtfParamList.add('subscribe', name);
 
     // Tell the connector to notify server api
-    this._connectorManager.sendMessage('subscribe{' + name + '}');
+    this.sendMessage('subscribe{' + name + '}');
 
     return subscription;
   },
