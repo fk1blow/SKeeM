@@ -266,12 +266,9 @@ var connectorManager = (function() {
 }());
 
 
-
 /**
- * API
+ * RTFApi handlers delegate
  */
-
-
 var ApiHandlers = {
   /**
    * Confirms receiving a message(update) from server api
@@ -315,6 +312,9 @@ var ApiHandlers = {
 }
 
 
+/**
+ * API constructor
+ */
 var RTFApi = SKMObject.extend(ApiHandlers, {
   _clientId:  null,
 
@@ -477,8 +477,7 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
 
   _validateCliendIdAdded: function() {
     var cid = this._clientId;
-    if ( cid  === null || typeof cid === 'undefined'
-        || cid.length < 1 ) {
+    if ( cid  === null || typeof cid === 'undefined' || cid.length < 1 ) {
       Logger.info('%cRTFApi : ' + 
         'invalid clientId or clientId not set : ', 'color:red', cid);
     }
