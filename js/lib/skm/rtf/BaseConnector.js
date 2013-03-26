@@ -44,7 +44,7 @@ var Connector = SKMObject.extend(Subscribable, {
 
   initialize: function() {
     console.log('%cnew Connector', 'color:#a2a2a2');
-    this.urlParamModel.on('changed', this.buildTransportUrl, this);
+    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
   },
 
   /**
@@ -117,7 +117,7 @@ var Connector = SKMObject.extend(Subscribable, {
    * urlParams and urlBase fields
    */
   buildTransportUrl: function() {
-    console.log('%cConnector.buildTransportUrl : ', 'color:red', this._typeName);
+    // console.log('%cConnector.buildTransportUrl : ', 'color:red', this._typeName);
     var qs = this.urlParamModel.toQueryString();
     this.transport.url = this.urlBase + qs;
   }
