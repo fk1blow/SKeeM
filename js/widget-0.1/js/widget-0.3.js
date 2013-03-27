@@ -131,6 +131,36 @@ var Widget = Backbone.View.extend({
 			}
 		},
 		
-     
+});
 
-	});
+
+
+var TestWidget = Widget.extend({
+	// templateString: '<div id="<%= id_attr %>">',
+	// templateDataObject: {
+	// 	id_attr: 'my-id-from-options'
+	// },
+	// templateEngine: _
+
+});
+
+var myTestWidget = new TestWidget({
+	setOptions: {
+		viewOptions: ['templateString', 'templateEngine'],
+		configOptions: {
+			renderTemplate: true
+		}
+	},
+	// templateEngine: _,
+	templateString: '<div id="<%= id_attr %>">',
+	templateDataObject: {
+		id_attr: 'my-id-from-constructor'
+	}
+
+});
+
+// myTestWidget.setTemplate('<div id="<%= attrd %>">');
+// myTestWidget.setTemplateEngine();
+// myTestWidget.renderTemplate({attrd: 'tmplt_ID'});
+
+console.log('::Start  --> ', myTestWidget);
