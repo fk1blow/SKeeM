@@ -212,6 +212,10 @@ var ParamsModel = SKMObject.extend(Subscribable, {
     return this;
   },
 
+  addByKeyAndValue: function(paramObject) {
+    //
+  },
+
   remove: function(name) {
     var list = this.getList();
     if ( name in list )
@@ -355,6 +359,10 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     rtfParamList.add('jSessionId', jsID);
   },
   
+  /**
+   * @todo create a [addParam] method that takes an object as argument
+   * { paramKey: value } and sends it to the [rtfParamList]
+   */
   setSessionId: function(key,value) {
       var cid = this._sessionId;
       if ( cid !== null ) {
