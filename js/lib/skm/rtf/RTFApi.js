@@ -462,7 +462,9 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     manager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.getXHRUrl(),
       urlParamModel: rtfParamList
-    })).addTransport(XHRWrapper.create());
+    })).addTransport(XHRWrapper.create({
+       httpMethod: 'POST'
+    }));
   },
 
   _getIncrementedBatchId: function() {

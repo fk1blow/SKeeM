@@ -56,14 +56,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	url: null,
 
-	/**
-	 * Default configuration
-	 * @type {Object}
-	 */
-	defaults: {
-		type: 'GET',
-		dataType: 'JSON'
-	},
+	httpMethod: 'GET',
+
+	dataType: 'JSON',
 
 	_wrapper: null,
 
@@ -133,9 +128,11 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	_doRequest: function(options) {
 		var opt = options || {};
-		var methodType = opt.type || this.defaults.type;
-		var dataType = opt.dataType || this.defaults.dataType;
+		var methodType = opt.type || this.httpMethod;
+		var dataType = opt.dataType || this.dataType;
 		var messageData = opt.message || {};
+
+		// cl('xxxxxx', messageData)
 
 		// Abort the request if there is one in progress
 		this.abortRequest();
@@ -151,7 +148,12 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 			dataType: dataType,
 
 			// Data to be sent to the server
-			data: messageData,
+			// data: messageData,
+
+			data: {
+				'subscribe':'{test,detail}',
+				'params':'{test:{eu:10}}' 
+			},
 
 			error: function (err) {
 				this.handleOnError(err);
