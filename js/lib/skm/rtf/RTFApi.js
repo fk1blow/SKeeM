@@ -356,7 +356,6 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
       throw new Error('RTFApi.setClientId : clientId already set!');
     }
     rtfParamList.add('clientId', this._clientId = id);
-    rtfParamList.add('jSessionId', jsID);
   },
   
   /**
@@ -364,12 +363,12 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
    * { paramKey: value } and sends it to the [rtfParamList]
    */
   setSessionId: function(key,value) {
-      var cid = this._sessionId;
-      if ( cid !== null ) {
-        throw new Error('RTFApi.setSessionId : ' +key + ' already set!');
-      }
-      rtfParamList.add(key, value);
-    },
+    var cid = this._sessionId;
+    if ( cid !== null ) {
+      throw new Error('RTFApi.setSessionId : ' + key + ' already set!');
+    }
+    rtfParamList.add(key, value);
+  },
 
   /**
    * Returns a subscription
@@ -386,13 +385,17 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
    * @description creates a new Subscription object
    * and ties it to the connector's "api:update" event
    * @param {String} name subscription name
+   * @param {Object} optParams the optional parameters object to be
+   * sendt alongside subscription name
    */
-  addSubscription: function(name, parameters) {
-    var subscription, activeConnector;
+  addSubscription: function(name, optParams) {
+    var subscription, message;
     if ( rtfSubscriptionList.has(name) ) {
       Logger.info('RTFApi.addSubscription :: ' + name +
         ' subscription already registered!'); 
     }
+    message = 'subscribe{' + name + '}';
+
     // Create the new subscription and add it to the list
     subscription = rtfSubscriptionList.add( name,
       Subscription.create({ name: name }) );
@@ -403,8 +406,14 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     // Add it to the rtfParamList
     rtfParamList.add('subscribe', name);
 
+    // if params are sent, concatenate to message string
+    if ( optParams ) {
+      var strParams = JSON.stringify(optParams).replace(/\"|\'/g, '');
+      message += ('params{' + name + ':{' + strParams + '}');
+    }
+
     // Tell the connector to notify server api
-    this.sendMessage('subscribe{' + name + '}');
+    this.sendMessage(message);
 
     return subscription;
   },
