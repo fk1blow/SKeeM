@@ -36,6 +36,8 @@ var Config = (function(){
 
   var connectorSequence = ['WebSocket', 'XHR'];
 
+  var wsReconnectAttempts = 1;
+
   return {
     getSequence: function() {
       return connectorSequence;
@@ -43,6 +45,14 @@ var Config = (function(){
 
     setSequence: function(sequence) {
       connectorSequence = sequence;
+    },
+
+    getWSReconnectAttempts: function() {
+      return wsReconnectAttempts;
+    },
+
+    setWSReconnectAttempts: function(attempts) {
+      wsReconnectAttempts = attempts;
     },
 
     getWSUrl: function() {
@@ -275,6 +285,8 @@ var ApiHandlers = {
  */
 var RTFApi = SKMObject.extend(ApiHandlers, {
   _clientId:  null,
+  
+  _sessionId:  null,
 
   _batchId: 1,
 
@@ -340,7 +352,16 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
       throw new Error('RTFApi.setClientId : clientId already set!');
     }
     rtfParamList.add('clientId', this._clientId = id);
+    rtfParamList.add('jSessionId', jsID);
   },
+  
+  setSessionId: function(key,value) {
+      var cid = this._sessionId;
+      if ( cid !== null ) {
+        throw new Error('RTFApi.setSessionId : ' +key + ' already set!');
+      }
+      rtfParamList.add(key, value);
+    },
 
   /**
    * Returns a subscription
@@ -417,7 +438,9 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     manager.registerConnector('WebSocket', WSConnector.create({
       urlBase: Config.getWSUrl(),
       urlParamModel: rtfParamList
-    })).addTransport(WSWrapper.create());
+    })).addTransport(WSWrapper.create({
+      reconnectAttempts: Config.getWSReconnectAttempts()
+    }));
 
     manager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.getXHRUrl(),
