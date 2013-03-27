@@ -114,6 +114,7 @@ var rtfSubscriptionList = {
   },
 
   get: function(name) {
+    this._subscriptions = this._subscriptions || {};
     return this._subscriptions[name];
   },
 
@@ -357,7 +358,7 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
    * and ties it to the connector's "api:update" event
    * @param {String} name subscription name
    */
-  addSubscription: function(name) {
+  addSubscription: function(name, parameters) {
     var subscription, activeConnector;
     if ( rtfSubscriptionList.has(name) ) {
       Logger.info('RTFApi.addSubscription :: ' + name +
