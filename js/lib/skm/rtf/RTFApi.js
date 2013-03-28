@@ -23,67 +23,22 @@ var Logger = SKMLogger.create();
  */
 
 
-var Config = (function(){
-  var transportsURLs = {
+var Config = {
+  sequence: ['WebSocket', 'XHR'],
+
+  urls: {
     ws: 'ws://localhost:8080/testws',
     xhr: 'http://localhost:8080/testajax'
-  };
+  },
 
-  var defaultURLs = {
-    ws: 'ws://localhost:8080/testws',
-    xhr: 'http://localhost:8080/testajax'
-  };
+  wsReconnectAttempts: 3
+};
 
-  var connectorSequence = ['WebSocket', 'XHR'];
 
-  var wsReconnectAttempts = 1;
 
-  return {
-    getSequence: function() {
-      return connectorSequence;
-    },
 
-    setSequence: function(sequence) {
-      connectorSequence = sequence;
-    },
 
-    getWSReconnectAttempts: function() {
-      return wsReconnectAttempts;
-    },
 
-    setWSReconnectAttempts: function(attempts) {
-      wsReconnectAttempts = attempts;
-    },
-
-    getWSUrl: function() {
-      var url = null;
-      if ( ! (url = transportsURLs.ws) ) {
-        url = defaultURLs.ws;
-        Logger.info('%cConfig.getWSUrl : ws url is null - '
-          + ' returning default url', 'color:red');
-      }
-      return transportsURLs.ws;
-    },
-
-    setWSUrl: function(url) {
-      transportsURLs.ws = url;
-    },
-
-    getXHRUrl: function() {
-      var url = null;
-      if ( ! (url = transportsURLs.xhr) ) {
-        url = defaultURLs.xhr;
-        Logger.info('%cConfig.getXHRUrl : xhr url is null - '
-          + ' returning default url', 'color:red');
-      }
-      return transportsURLs.xhr;
-    },
-
-    setXHRUrl: function(url) {
-      transportsURLs.xhr = url;
-    }
-  }
-}());
 
 
 /*
@@ -238,6 +193,11 @@ var ParamsModel = SKMObject.extend(Subscribable, {
 var rtfParamList = ParamsModel.create();
 
 
+
+
+
+
+
 /**
  * RTFApi handlers delegate
  */
@@ -310,6 +270,8 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
 
   _connectorManager: null,
 
+  _subscriptionAdded: null,
+
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
 
@@ -326,29 +288,11 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
     // creates the connector manager
     this._createConnectorManager();
 
-    // Resends a confirmation back to server api
-    this._connectorManager.on('update',
-      this.handleMessage, this);
-
-    // Handle when manager has stopped - something wrong happened
-    this._connectorManager.on('stopped',
-      this.handleManagerSequenceStopped, this);
-
-    // Handle when manager has been deactivated - next/sequence switch
-    this._connectorManager.on('deactivated',
-      this.handleManagerSequenceDeactivated, this);
-
-    // re-add subscriptions to the param list before connector began update
-    this._connectorManager.on('before:nextSequence',
-      this.handleResetThenAddSubscribes, this);
-
-    // remove subscribe after every connector has began update
-    this._connectorManager.on('after:startConnector',
-      this.handleRemoveSubscribes, this);
+    // attaches connector handlers
+    this._attachConnectorManagerHandlers();
   },
 
   startUpdates: function() {
-    Logger.debug('%cRTFApi.startUpdates', 'color:green');
     // check clientId, subscription list
     this._checkEssentialFields();
     // Start the connectors, if any available.
@@ -356,53 +300,20 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
   },
 
   stopUpdates: function() {
-    Logger.debug('%cRTFApi.stopUpdates', 'color:green');
     this._connectorManager.stopConnectors();
   },
 
   switchToNextConnector: function() {
-    Logger.debug('%cRTFApi.switchToNextConnector', 'color:green');
     this._connectorManager.switchToNextConnector();
   },
 
   sendMessage: function(message) {
-    if ( ! message )
-      Logger.warn('RTFApi.sendMessage : unable to send an empty message');
     this._connectorManager.sendMessage(message);
   },
 
-  
-  /**
-   * @todo
-   * Refactor params list create/update
-   */
-
-
-  /**
-   * Sets the clientId of the rtf client
-   *
-   * @description same as session id though can be left out
-   * and the value implicitly retrieved/set by server api
-   * @param {String} id cliend/sessions id string
-   */
-  setClientId: function(id) {
-    var cid = this._clientId;
-    if ( cid !== null ) {
-      throw new Error('RTFApi.setClientId : clientId already set!');
-    }
-    rtfParamList.add('clientId', this._clientId = id);
-  },
-  
-  /**
-   * @todo create a [addParam] method that takes an object as argument
-   * { paramKey: value } and sends it to the [rtfParamList]
-   */
-  setSessionId: function(key,value) {
-    var cid = this._sessionId;
-    if ( cid !== null ) {
-      throw new Error('RTFApi.setSessionId : ' + key + ' already set!');
-    }
-    rtfParamList.add(key, value);
+  addUrlParameter: function(name, value) {
+    rtfParamList.add(name, value);
+    return this;
   },
 
   /**
@@ -494,21 +405,43 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
 
   _createConnectorManager: function() {
     var manager = this._connectorManager = ConnectorManager.create({
-      sequence: Config.getSequence()
+      sequence: Config.sequence
     });
 
     manager.registerConnector('WebSocket', WSConnector.create({
-      urlBase: Config.getWSUrl(),
+      urlBase: Config.urls.ws,
       urlParamModel: rtfParamList
     })).addTransport(WSWrapper.create({
-      reconnectAttempts: Config.getWSReconnectAttempts(),
+      reconnectAttempts: Config.wsReconnectAttempts,
       pingServer: true
     }));
 
     manager.registerConnector('XHR', XHRConnector.create({
-      urlBase: Config.getXHRUrl(),
+      urlBase: Config.urls.xhr,
       urlParamModel: rtfParamList
     })).addTransport(XHRWrapper.create());
+  },
+
+  _attachConnectorManagerHandlers: function() {
+    // Resends a confirmation back to server api
+    this._connectorManager.on('update',
+      this.handleMessage, this);
+
+    // Handle when manager has stopped - something wrong happened
+    this._connectorManager.on('stopped',
+      this.handleManagerSequenceStopped, this);
+
+    // Handle when manager has been deactivated - next/sequence switch
+    this._connectorManager.on('deactivated',
+      this.handleManagerSequenceDeactivated, this);
+
+    // re-add subscriptions to the param list before connector began update
+    this._connectorManager.on('before:nextSequence',
+      this.handleResetThenAddSubscribes, this);
+
+    // remove subscribe after every connector has began update
+    this._connectorManager.on('after:startConnector',
+      this.handleRemoveSubscribes, this);
   },
 
   _getIncrementedBatchId: function() {
@@ -518,7 +451,7 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
 
   _checkEssentialFields: function() {
     // Checks clientId presence
-    if ( !this._clientId )
+    if ( !rtfParamList.getByName('clientId') )
       Logger.warn('RTFApi.startUpdates :: no clientId set!');
     // Checks the presence of subscriptions
     if ( rtfSubscriptionList.isNullOrEmpty() )

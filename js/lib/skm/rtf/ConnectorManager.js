@@ -101,13 +101,17 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   * Pauses the sequence and doesn't
   * modify sequence index
   */
-  pauseConnectors: function() {},
+  pauseConnectors: function() {
+    return this;
+  },
 
   /**
   * Resumes the sequence, not altered
   * since the pause
   */
-  resumeConnectors: function() {},
+  resumeConnectors: function() {
+    return this;
+  },
   
   /**
    * Switches to the next connector in sequence
@@ -178,8 +182,8 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     if ( connector = this.getActiveConnector() )
       connector.sendMessage(message);
     else {
-      Logger.info('ConnectorManager.sendMessage : invalid connector type' + 
-        ' or connector is null');
+      Logger.info('ConnectorManager.sendMessage : invalid connector type' 
+        + ' or connector is null');
     }
     return this;
   },
