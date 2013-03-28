@@ -241,36 +241,46 @@ var rtfParamList = ParamsModel.create();
 /**
  * RTFApi handlers delegate
  */
-var ApiHandlers = {
-  /**
-   * Confirms receiving a message(update) from server api
-   * 
-   * @description basically, it sends a message back to the server,
-   * confirming that he(the client) has received the update message 
-   */
-  handleReconfirmation: function(message) {
-    var batchId;
-    // sends batch id only if 'message' or 'reconfirmation'
-    if ( 'message' in message || 'reconfirmation' in message ) {
-      batchId = this._getIncrementedBatchId();
-      // ar trebui ca fiecare subscribe sa fie sters dupa prima conectare
-      rtfParamList.alter('batchId', batchId)//.remove('subscribe');
-    } else if ('noupdates' in message) {
-      batchId = this._batchId;
+var ApiDelegates = {
+  handleMessage: function(data) {
+    var batchId = this._batchId;
+    if ( 'message' in data ) {
+      Logger.debug('ApiDelegates.handleMessage :: message', data);
+    } else if ( 'reconfirmation' in data ) {
+      Logger.debug('ApiDelegates.handleMessage :: reconfirmation', data);
+    } else if ( 'noupdates' in data ) {
+      return this.handleNoUpdates(data);
+    } else {
+      return this.handleInvalidData(data);
     }
+    // get batchId sent by server
+    batchId = data['batchId'];
+    // update it in params list
+    rtfParamList.alter('batchId', batchId);
+    // send message
     this.sendMessage('batchId{' + batchId + '}');
   },
 
-  handleManagerSequenceStopped: function() {
-    // notify all subscriptions that an error has occured
+  handleNoUpdates: function() {
+    Logger.debug('ApiDelegates.handleNoUpdates :: batchId ', this._batchId);
+    this.sendMessage('batchId{' + this._batchId + '}');
   },
 
+  handleInvalidData: function(data) {
+    Logger.error('ApiDelegates.handleInvalidData :: invalid data', data);
+  },
+
+  // notify all subscriptions that an error has occured
+  handleManagerSequenceStopped: function() {
+    Logger.debug('ApiDelegates.handleManagerSequenceStopped');
+  },
+
+  // notify all subscriptions that sequence has been deactivated
   handleManagerSequenceDeactivated: function() {
-    // notify all subscriptions that sequence has been deactivated
+    Logger.warn('ApiDelegates.handleManagerSequenceDeactivated');
   },
 
   handleResetThenAddSubscribes: function() {
-    // reset param
     rtfParamList.reset('subscribe');
     // Re-add the subscriptions to the params list
     rtfSubscriptionList.eachSubscription(function(subscription) {
@@ -287,7 +297,7 @@ var ApiHandlers = {
 /**
  * API constructor
  */
-var RTFApi = SKMObject.extend(ApiHandlers, {
+var RTFApi = SKMObject.extend(ApiDelegates, {
   _clientId:  null,
   
   _sessionId:  null,
@@ -298,22 +308,29 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
 
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
+    
     // Prepare batchId and add it to the parameterizer
     rtfParamList.add('batchId', this._batchId);
+    
     // creates the connector manager
     this._createConnectorManager();
+
     // Resends a confirmation back to server api
     this._connectorManager.on('update',
-      this.handleReconfirmation, this);
+      this.handleMessage, this);
+
     // Handle when manager has stopped - something wrong happened
     this._connectorManager.on('stopped',
       this.handleManagerSequenceStopped, this);
+
     // Handle when manager has been deactivated - next/sequence switch
     this._connectorManager.on('deactivated',
       this.handleManagerSequenceDeactivated, this);
+
     // re-add subscriptions to the param list before connector began update
     this._connectorManager.on('before:nextSequence',
       this.handleResetThenAddSubscribes, this);
+
     // remove subscribe after every connector has began update
     this._connectorManager.on('after:startConnector',
       this.handleRemoveSubscribes, this);
@@ -342,6 +359,13 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
       Logger.warn('RTFApi.sendMessage : unable to send an empty message');
     this._connectorManager.sendMessage(message);
   },
+
+  
+  /**
+   * @todo
+   * Refactor params list create/update
+   */
+
 
   /**
    * Sets the clientId of the rtf client
@@ -408,12 +432,22 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
 
     // if params are sent, concatenate to message string
     if ( optParams ) {
-      var strParams = JSON.stringify(optParams).replace(/\"|\'/g, '');
-      message += ('params{' + name + ':{' + strParams + '}');
+      var  newParams = {};
+      newParams[name]=optParams;
+
+      var strParams = JSON.stringify(newParams).replace(/\"|\'/g, '');
+      // this._connectorManager += ('params{' + name + ':{' + strParams + '}');
+      this.sendMessage({ params: strParams });
+    } else {
+      this.sendMessage({ message: message });
     }
 
+    // message = optParams;
+
     // Tell the connector to notify server api
-    this.sendMessage(message);
+    // this.sendMessage(message, { params: optParams });
+
+    
 
     return subscription;
   },
@@ -462,9 +496,7 @@ var RTFApi = SKMObject.extend(ApiHandlers, {
     manager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.getXHRUrl(),
       urlParamModel: rtfParamList
-    })).addTransport(XHRWrapper.create({
-       httpMethod: 'POST'
-    }));
+    })).addTransport(XHRWrapper.create());
   },
 
   _getIncrementedBatchId: function() {
