@@ -56,7 +56,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	url: null,
 
-	httpMethod: 'GET',
+	httpMethod: 'POST',
 
 	dataType: 'JSON',
 
@@ -77,9 +77,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * using default method type - 'GET'
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	sendMessage: function(messageObj) {
+	sendMessage: function(message) {
 		Logger.info('XHRWrapper.send');
-		this._doRequest({ message: messageObj });
+		this._doRequest(message);
 		return this;
 	},
 
@@ -87,9 +87,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * Send a message using a GET request
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	sendGetRequest: function(messageObj) {
+	sendGetRequest: function(message) {
 		Logger.info('XHRWrapper.sendGetRequest');
-		this._doRequest({ type: 'GET', message: messageObj });
+		this._doRequest(message, { httpMethod: 'GET' });
 		return this;
 	},
 
@@ -97,9 +97,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * Sends a message using a POST request
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	sendPostRequest: function(messageObj) {
+	sendPostRequest: function(message) {
 		Logger.info('XHRWrapper.sendPostRequest');
-		this._doRequest({ type: 'POST', message: messageObj });
+		this._doRequest(message, { httpMethod: 'POST' });
 		return this;
 	},
 
@@ -126,13 +126,10 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * @param  {Object} options an object used for
 	 * AJAX setting(method, url, type, etc)
 	 */
-	_doRequest: function(options) {
+	_doRequest: function(messageData, options) {
 		var opt = options || {};
-		var methodType = opt.type || this.httpMethod;
-		var dataType = opt.dataType || this.dataType;
-		var messageData = opt.message || {};
-
-		// cl('xxxxxx', messageData)
+		var methodType = opt.httpMethod || this.httpMethod;
+		var dataType = this.dataType;
 
 		// Abort the request if there is one in progress
 		this.abortRequest();
@@ -148,12 +145,16 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 			dataType: dataType,
 
 			// Data to be sent to the server
-			// data: messageData,
+			// data: JSON.stringify({ 'params': { a: 'a', b: 'b' } }),
+			
+			// data: { params: JSON.stringify(messageData) },
 
-			data: {
-				'subscribe':'{test,detail}',
-				'params':'{test:{eu:10}}' 
-			},
+			data: messageData,
+
+			// data: {
+			// 	'subscribe':'{test,detail}',
+			// 	'params':'{test:{eu:10}}' 
+			// },
 
 			error: function (err) {
 				this.handleOnError(err);
