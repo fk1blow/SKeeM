@@ -195,6 +195,36 @@ var rtfParamList = ParamsModel.create();
 
 
 
+/*
+
+// parsez si trimit subscriptiiile la widget-uri
+data: { updateMessage: [
+  { subscription: 'you have subscribed to we...' }
+  
+  // subscriptie
+  { nextLiveMatches: {} },
+  
+  { MBEAN: 'testing mbean' }
+],
+[
+  { nextLiveMatches: {} }
+]};
+
+data: { reconfirmationMessage: [
+  { subscription: 'you have subscribed to we...' }
+
+  // subscriptie
+  { nextLiveMatches: {} },
+  
+  { MBEAN: 'testing mbean' }
+]}
+
+{ noupdates: 'noupdates' }
+
+data: { error: 'error message' }
+
+
+*/
 
 
 
@@ -204,14 +234,18 @@ var rtfParamList = ParamsModel.create();
 var ApiDelegates = {
   handleMessage: function(data) {
     var batchId = this._batchId;
-    if ( 'message' in data ) {
+
+    if ( 'updateMessage' in data ) {
       Logger.debug('ApiDelegates.handleMessage :: message', data);
-    } else if ( 'reconfirmation' in data ) {
+    } else if ( 'reconfirmationMessage' in data ) {
       Logger.debug('ApiDelegates.handleMessage :: reconfirmation', data);
     } else if ( 'noupdates' in data ) {
-      return this.handleNoUpdates(data);
+      Logger.debug('ApiDelegates.handleNoUpdates :: batchId ', this._batchId);
+      this.sendMessage('batchId{' + this._batchId + '}');
+      return;
     } else {
-      return this.handleInvalidData(data);
+      Logger.error('ApiDelegates.handleMessage :: invalid data', data);
+      // return this.handleInvalidData(data);
     }
     // get batchId sent by server
     batchId = data['batchId'];
@@ -221,18 +255,9 @@ var ApiDelegates = {
     this.sendMessage('batchId{' + batchId + '}');
   },
 
-  handleNoUpdates: function() {
-    Logger.debug('ApiDelegates.handleNoUpdates :: batchId ', this._batchId);
-    this.sendMessage('batchId{' + this._batchId + '}');
-  },
-
-  handleInvalidData: function(data) {
-    Logger.error('ApiDelegates.handleInvalidData :: invalid data', data);
-  },
-
   // notify all subscriptions that an error has occured
-  handleManagerSequenceStopped: function() {
-    Logger.debug('ApiDelegates.handleManagerSequenceStopped');
+  handleManagerStopped: function() {
+    Logger.debug('ApiDelegates.handleManagerStopped');
   },
 
   // notify all subscriptions that sequence has been deactivated
@@ -429,7 +454,7 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
 
     // Handle when manager has stopped - something wrong happened
     this._connectorManager.on('stopped',
-      this.handleManagerSequenceStopped, this);
+      this.handleManagerStopped, this);
 
     // Handle when manager has been deactivated - next/sequence switch
     this._connectorManager.on('deactivated',

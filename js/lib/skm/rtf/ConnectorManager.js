@@ -96,22 +96,6 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     this._activeConnector = null;
     this.started = false;
   },
-
-  /**
-  * Pauses the sequence and doesn't
-  * modify sequence index
-  */
-  pauseConnectors: function() {
-    return this;
-  },
-
-  /**
-  * Resumes the sequence, not altered
-  * since the pause
-  */
-  resumeConnectors: function() {
-    return this;
-  },
   
   /**
    * Switches to the next connector in sequence
@@ -250,7 +234,8 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
       'stopping current sequence', 'color:green');
     // Remove events and end update
     if ( this._activeConnector ) {
-      this._activeConnector.off().endUpdate();
+      this._activeConnector.off()
+      this._activeConnector.endUpdate();
       this._activeConnector = null;
     }
   },
@@ -264,19 +249,15 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
 
   _startConnector: function(connector) {
     this.fire('before:startConnector');
-
     // Stop current connectors and start next one
     connector.on('connector:deactivated', this.handleConnectorDeactivated, this);
-
     // Stop and clean current connector
     connector.on('api:error', this.handleConnectorError, this);
-
     // notify of update...
     connector.on('api:update', this.handleConnectorUpdate, this);
-
     // Begin update connector
     connector.beginUpdate();
-
+    // ...aaaaaaand
     this.fire('after:startConnector');
   }
 });
