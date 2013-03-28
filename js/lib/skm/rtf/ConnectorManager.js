@@ -11,7 +11,28 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var Manager = SKMObject.extend(Subscribable, {
+var ManagerDelegates = {
+  handleConnectorDeactivated: function() {
+    Logger.debug('%ManagerDelegates connector:deactivated!', 'color:red');
+    this.fire('deactivated');
+    this._stopCurrentSequence();
+    this._startNextSequence();
+  },
+
+  handleConnectorError: function(error) {
+    Logger.debug('%cManagerDelegates api:error', 'color:red', error);
+    this.fire('stopped');
+    this._stopCurrentSequence();
+  },
+
+  handleConnectorUpdate: function(message) {
+    Logger.debug('%cManagerDelegates api:update', 'color:green');
+    this.fire('update', message);
+  }
+}
+
+
+var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   /**
    * List of connector object instances
    * @type {Object Connector}
@@ -149,6 +170,8 @@ var Manager = SKMObject.extend(Subscribable, {
    * Sends a message through a connector
    * @param  {Mixed} message a string or plain json of
    * the message sent to the server
+   * @param {JSON} optData an object containing additional
+   * parameters sent to the connector - wrapper
    */
   sendMessage: function(message) {
     var connector;
@@ -239,25 +262,13 @@ var Manager = SKMObject.extend(Subscribable, {
     this.fire('before:startConnector');
 
     // Stop current connectors and start next one
-    connector.on('connector:deactivated', function() {
-      Logger.debug('%cConnectorManager connector:deactivated!', 'color:red');
-      this.fire('deactivated');
-      this._stopCurrentSequence();
-      this._startNextSequence();
-    }, this);
+    connector.on('connector:deactivated', this.handleConnectorDeactivated, this);
 
     // Stop and clean current connector
-    connector.on('api:error', function(error) {
-      Logger.debug('%cConnectorManager api:error', 'color:red', error);
-      this.fire('stopped');
-      this._stopCurrentSequence();
-    }, this);
+    connector.on('api:error', this.handleConnectorError, this);
 
-    connector.on('api:update', function(message) {
-      Logger.debug('%cConnectorManager message api:update',
-        'color:green', message);
-      this.fire('update', message);
-    }, this);
+    // notify of update...
+    connector.on('api:update', this.handleConnectorUpdate, this);
 
     // Begin update connector
     connector.beginUpdate();
