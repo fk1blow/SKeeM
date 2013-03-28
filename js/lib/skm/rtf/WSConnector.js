@@ -48,6 +48,7 @@ var WebSocketConnector = BaseConnector.extend({
     this.transport.on('link:closed', this.hanleLinkClosed, this);
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
+    this.transport.on('pong', this.handlePongReceived, this);
     // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
@@ -83,7 +84,8 @@ var WebSocketConnector = BaseConnector.extend({
    */
   handleReceivedMessage: function(message) {
     Logger.info('WebSocketConnector.handleReceivedMessage');
-    this.fire('api:update', JSON.parse(message));
+    message = JSON.parse(message);
+    this.fire('api:update', message);
   },
   
   /**
@@ -112,13 +114,17 @@ var WebSocketConnector = BaseConnector.extend({
    * @param  {Object} message JSON message sent by rtf server api
    */
   hanleLinkClosed: function(message) {
-    var reason;
-    Logger.info('WebSocketConnector.hanleLinkClosed');
-    if ( message ) {
-      reason = jQuery.parseJSON(message.reason);
-      if ( reason.error )
-        this.fire('api:error', reason.error);
-    }
+   var reason;
+    Logger.info('WebSocketConnector.hanleLinkClosed');
+    if ( message ) { // if the message is string you got an exception, thats baaad!!!
+        try{
+            reason = JSON.parse(message.reason);// JSON.parse douchebag
+        }catch(e){
+            reason = message;
+        }
+      if ( reason )
+        this.fire('api:error', reason);
+    }
   }
 });
 

@@ -13,7 +13,7 @@ var Logger = SKMLogger.create();
 
 var ManagerDelegates = {
   handleConnectorDeactivated: function() {
-    Logger.debug('%ManagerDelegates connector:deactivated!', 'color:red');
+    Logger.debug('%cManagerDelegates connector:deactivated!', 'color:red');
     this.fire('deactivated');
     this._stopCurrentSequence();
     this._startNextSequence();
@@ -26,7 +26,7 @@ var ManagerDelegates = {
   },
 
   handleConnectorUpdate: function(message) {
-    Logger.debug('%cManagerDelegates api:update', 'color:green');
+    Logger.debug('%cManagerDelegates api:update', 'color:green', message);
     this.fire('update', message);
   }
 }

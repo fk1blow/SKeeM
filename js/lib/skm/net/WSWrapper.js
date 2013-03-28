@@ -67,6 +67,7 @@ var HandlerEventDelegates = {
 
     connection.on('link:opened', function() {
       this.fire('link:opened');
+      this._initPingTimer();
     }, this)
     .on('link:closed', function(evt) {
       this._stopConnecting();
@@ -78,11 +79,11 @@ var HandlerEventDelegates = {
      */
 
     connection.on('message', function(message) {
-      this.fire('message', message);
+      if ( message == 'pong' )
+        Logger.debug('%cWSWrapper :: pong', 'color:blue');
+      else
+        this.fire('message', message);
     }, this)
-    .on('server:pong', function() {
-      this.fire('server:pong');
-    }, this);
 
 
     /**
@@ -159,8 +160,8 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
 
   initialize: function() {
     Logger.debug('%cnew WSWrapper', 'color:#A2A2A2');
-    this._timerPing = Timer.create({ tickInterval: this.pingInterval, ticks: 0 })
-      .on('tick', this.ping, this);
+    this._timerPing = Timer.create({ tickInterval: this.pingInterval, ticks: 0 });
+    this._timerPing.on('tick', this.ping, this);
     this._initNativeWrapper();
     this._initConnectionHandler();
   },
@@ -215,6 +216,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
       this._timerPing.stop();
       return false;
     }
+    Logger.debug('%cWSWrapper :: ping', 'color:green');
     this.send('ping');
     return this;
   },
@@ -251,9 +253,11 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     var socket = this._nativeWrapper.createSocket(this.url, this.protocols);
     if ( socket == null )
       this.fire('implementation:missing')._stopConnecting();
-    else
-      this._connectionHandler.attachListenersTo(socket)
-          .startConnectingAttempt();
+    else {
+      this._connectionHandler
+        .attachListenersTo(socket)
+        .startConnectingAttempt();
+    }
   },
 
   _stopConnecting: function() {
@@ -269,7 +273,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   _initPingTimer: function() {
     if ( !this.pingServer )
       return false;
-    // if timer is not enable, only then try to (re)start it
+    // if timer is not enabled, only then try to (re)start it
     if ( !this._timerPing.enabled ) {
       Logger.info('Ping started.');
       this._timerPing.start();

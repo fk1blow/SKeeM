@@ -290,6 +290,10 @@ var ApiDelegates = {
 
   handleRemoveSubscribes: function() {
     rtfParamList.remove('subscribe');
+  },
+
+  handleBrowserUnload: function() {
+    this.sendMessage('closeConnection');
   }
 }
 
@@ -302,12 +306,19 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
   
   _sessionId:  null,
 
-  _batchId: 1,
+  _batchId: 0,
 
   _connectorManager: null,
 
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
+
+    var that = this;
+
+    // handle browser/tab unload/close
+    $(window).bind("beforeunload", function() {
+      that.handleBrowserUnload();
+    });
     
     // Prepare batchId and add it to the parameterizer
     rtfParamList.add('batchId', this._batchId);
@@ -490,7 +501,8 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
       urlBase: Config.getWSUrl(),
       urlParamModel: rtfParamList
     })).addTransport(WSWrapper.create({
-      reconnectAttempts: Config.getWSReconnectAttempts()
+      reconnectAttempts: Config.getWSReconnectAttempts(),
+      pingServer: true
     }));
 
     manager.registerConnector('XHR', XHRConnector.create({
