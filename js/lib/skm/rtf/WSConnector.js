@@ -19,6 +19,11 @@ var ConnectorErrors = {
 }
 
 
+
+// should be implemented by every connector
+var ConnectorDecisionDelegate = {}
+
+
 var WebSocketConnector = BaseConnector.extend({
   _typeName: 'WS',
 
@@ -56,6 +61,8 @@ var WebSocketConnector = BaseConnector.extend({
    */
   
   sendMessage: function(msg) {
+    if ( msg && (typeof msg === 'object') )
+      msg = JSON.stringify(msg);
     Logger.debug('%cWebSocketConnector.sendMessage : ', 'color:red', msg);
     this.transport.send(msg);
   },
