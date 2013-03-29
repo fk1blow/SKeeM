@@ -238,21 +238,87 @@ data: { error: 'error message' }
 
 
 
+
+
 /**
  * RTFApi handlers delegate
  */
-var ApiDelegate = {
+var ApiHandlersDelegate = {
+  handleSubscriptionConfirmation: function(subscription) {
+    cl('%chandleSubscriptionConfirmation', 'color:red', subscription);
+  },
+
+  handleTriggerObservers: function(dataObj) {
+    var item = null, messageUpdateItem, len = dataObj.length;
+    for ( var i = 0; i < len; i++ ) {
+      messageUpdateItem = dataObj[i];
+      for ( item in messageUpdateItem ) {
+        if ( item == 'subscription' )
+          this.handleSubscriptionConfirmation(messageUpdateItem[item]);
+        else
+          this.fire('message:' + item, messageUpdateItem[item]);
+      }
+    }
+  },
+
   handleMessage: function(data) {
+    if ( 'update' in data ) {
+      Logger.debug('ApiHandlersDelegate.handleMessage, update', data);
+
+      this.handleTriggerObservers(data['update']);
+      this.handleUpdateBatchId(data['batchId']);
+    }
+    else if ( 'reconfirmation' in data ) {
+      Logger.debug('ApiHandlersDelegate.handleMessage, reconfirmation', data);
+
+      this.handleTriggerObservers(data['reconfirmation']); 
+      this.handleUpdateBatchId(data['batchId']);
+    }
+    else if ( 'noupdates' in data ) {
+      Logger.debug('ApiHandlersDelegate.handleNoUpdates, batchId ', this._batchId);
+      this.sendMessage('batchId{' + this._batchId + '}');
+    }
+    else {
+      Logger.error('ApiHandlersDelegate.handleMessage, invalid data ', data);
+    }
+
+
+
+    /*else if ( 'noupdates' in data ) {
+      return this.handleNoUpdates();
+    }
+    else {
+      return this.handleInvalidData(data);
+    }*/
+    
+    /*
+    rtfParamList.alter('batchId', batchId);
+    this.sendMessage('batchId{' + batchId + '}');
+    */
+  },
+
+  xxx_handleMessage: function(data) {
     // get batchId sent by server
     var batchId = data['batchId'];
 
-    if ( 'updateMessage' in data ) {
-      Logger.debug('ApiDelegate.handleMessage, message', data);
-    } else if ( 'reconfirmationMessage' in data ) {
-      Logger.debug('ApiDelegate.handleMessage, reconfirmation', data);
-    } else if ( 'noupdates' in data ) {
+    if ( 'update' in data ) {
+      Logger.debug('ApiHandlersDelegate.handleMessage, message', data);
+
+      for ( var i = 0; i < data['update'].length; i++ ) {
+        var updatedObject = data['update'][i];
+        for ( var item in updatedObject ) {
+          this.fire('message:' + item, updatedObject[item]);
+        }
+      }
+    }
+    else if ( 'reconfirmation' in data ) {
+      Logger.debug('ApiHandlersDelegate.handleMessage, reconfirmation', data);
+      // this.handleUpdateData(data['reconfirmationMessage']);
+    }
+    else if ( 'noupdates' in data ) {
       return this.handleNoUpdates();
-    } else {
+    }
+    else {
       return this.handleInvalidData(data);
     }
     
@@ -262,13 +328,10 @@ var ApiDelegate = {
     this.sendMessage('batchId{' + batchId + '}');
   },
 
-  handleNoUpdates: function() {
-    Logger.debug('ApiDelegate.handleNoUpdates, batchId ', this._batchId);
-    this.sendMessage('batchId{' + this._batchId + '}');
-  },
-
-  handleInvalidData: function(data) {
-    Logger.error('ApiDelegate.handleMessage, invalid data ', data);
+  handleUpdateBatchId: function(batchId) {
+    Logger.debug('ApiHandlersDelegate.handleUpdateBatchid, batchId ', batchId);
+    rtfParamList.alter('batchId', batchId);
+    this.sendMessage('batchId{' + batchId + '}');
   },
 
   /**
@@ -276,12 +339,13 @@ var ApiDelegate = {
    * 
    * @description Event triggered whenever the (server)api/protocols
    * has an issue with the current connection and its parameters.
-   * If a batchId is wrong, the server might trigger api:error...
+   * EX: batchId is wrong, the server might trigger api:error and
+   * the widget subscribed, might want to resubscribe
    * 
    * @todo Usually, the subscriptions will have to be notified of this error!
    */
   handleConnectorProtocolsApiError: function() {
-    Logger.warn('%cApiDelegate.handleApiProtocolsError '
+    Logger.warn('%cApiHandlersDelegate.handleApiProtocolsError '
       + 'An api or protocol error has been triggered', 'color:red');
   },
 
@@ -293,31 +357,39 @@ var ApiDelegate = {
    * For the time being, just log the event
    */
   handleConnectorDeactivated: function() {
-    Logger.debug('%cApiDelegate.handleManagerSequenceDeactivated', 'color:red');
+    Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
   },
 
+
+
+
+
   handleBeforeNextSequence: function() {
-    rtfParamList.reset('subscribe');
+    /*rtfParamList.reset('subscribe');
     // Re-add the subscriptions to the params list
     rtfSubscriptionList.eachSubscription(function(subscription) {
       rtfParamList.add('subscribe', subscription.name);
-    });
+    });*/
   },
 
   handleAfterStartConnector: function() {
-    rtfParamList.remove('subscribe');
+    /*rtfParamList.remove('subscribe');*/
   },
+
+
+
+
 
   handleBrowserUnload: function() {
     this.sendMessage('closeConnection');
   }
-}
+};
 
 
 /**
  * API constructor
  */
-var RTFApi = SKMObject.extend(ApiDelegate, {
+var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
   _clientId:  null,
   
   _sessionId:  null,
@@ -420,12 +492,8 @@ var RTFApi = SKMObject.extend(ApiDelegate, {
       this.sendMessage({ message: message });
     }
 
-    // message = optParams;
-
     // Tell the connector to notify server api
-    // this.sendMessage(message, { params: optParams });
-
-    
+    this.sendMessage(message, { params: optParams });
 
     return subscription;
   },
@@ -495,7 +563,7 @@ var RTFApi = SKMObject.extend(ApiDelegate, {
     this._connectorManager.on('before:nextSequence',
       this.handleBeforeNextSequence, this);
 
-    // remove subscribe after every connector has began update
+    // remove subscribtions after every connector has began update
     this._connectorManager.on('after:startConnector',
       this.handleAfterStartConnector, this);
   },
