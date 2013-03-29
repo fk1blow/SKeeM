@@ -243,7 +243,8 @@ data: { error: 'error message' }
  */
 var ApiDelegate = {
   handleMessage: function(data) {
-    var batchId = this._batchId;
+    // get batchId sent by server
+    var batchId = data['batchId'];
 
     if ( 'updateMessage' in data ) {
       Logger.debug('ApiDelegate.handleMessage, message', data);
@@ -254,8 +255,7 @@ var ApiDelegate = {
     } else {
       return this.handleInvalidData(data);
     }
-    // get batchId sent by server
-    batchId = data['batchId'];
+    
     // update it in params list
     rtfParamList.alter('batchId', batchId);
     // send message
