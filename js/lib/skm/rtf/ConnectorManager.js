@@ -12,21 +12,18 @@ var Logger = SKMLogger.create();
 
 
 var ManagerDelegates = {
-  handleConnectorDeactivated: function() {
-    Logger.debug('%cManagerDelegates connector:deactivated!', 'color:red');
-    this.fire('deactivated');
+  handleConnectorTransportDeactivated: function() {
+    this.fire('connector:deactivated');
     this._stopCurrentSequence();
     this._startNextSequence();
   },
 
-  handleConnectorError: function(error) {
-    Logger.debug('%cManagerDelegates api:error', 'color:red', error);
-    this.fire('stopped');
+  handleConnectorApiError: function(error) {
+    this.fire('protocols:error api:error');
     this._stopCurrentSequence();
   },
 
-  handleConnectorUpdate: function(message) {
-    Logger.debug('%cManagerDelegates api:update', 'color:green', message);
+  handleConnectorApiUpdate: function(message) {
     this.fire('update', message);
   }
 }
@@ -207,7 +204,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * and starts the update
    */
   _startNextSequence: function() {
-    Logger.debug('%cConnectorManager : starting next sequence', 'color:green');
+    Logger.debug('ConnectorManager : starting next sequence');
 
     // tell that a next sequence is about the be started
     this.fire('before:nextSequence');
@@ -218,7 +215,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     if ( this._activeConnector != undefined ) {
       this._startConnector(this._activeConnector);
     } else {
-      Logger.debug('%ccConnectorManager : sequence complete!', 'color:red');
+      Logger.debug('ConnectorManager : sequence complete!');
       this._activeConnector = null;
       this.started = false;
     }
@@ -230,8 +227,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * Stops the current sequence and end update
    */
   _stopCurrentSequence: function() {
-    Logger.debug('%cConnectorManager : ' + 
-      'stopping current sequence', 'color:green');
+    Logger.debug('ConnectorManager : stopping current sequence');
     // Remove events and end update
     if ( this._activeConnector ) {
       this._activeConnector.off()
@@ -250,14 +246,15 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   _startConnector: function(connector) {
     this.fire('before:startConnector');
     // Stop current connectors and start next one
-    connector.on('connector:deactivated', this.handleConnectorDeactivated, this);
+    connector.on('transport:deactivated',
+      this.handleConnectorTransportDeactivated, this);
     // Stop and clean current connector
-    connector.on('api:error', this.handleConnectorError, this);
+    connector.on('api:error', this.handleConnectorApiError, this);
     // notify of update...
-    connector.on('api:update', this.handleConnectorUpdate, this);
+    connector.on('api:update', this.handleConnectorApiUpdate, this);
     // Begin update connector
     connector.beginUpdate();
-    // ...aaaaaaand
+    // ...aaaaaaand, be gone
     this.fire('after:startConnector');
   }
 });
