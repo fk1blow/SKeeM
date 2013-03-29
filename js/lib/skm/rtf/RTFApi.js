@@ -245,12 +245,12 @@ data: { error: 'error message' }
  */
 var ApiHandlersDelegate = {
   handleSubscriptionConfirmation: function(subscription) {
-    Logger.debug('%ApiHandlersDelegate.chandleSubscriptionConfirmation',
+    Logger.debug('%cApiHandlersDelegate.handleSubscriptionConfirmation',
       'color:red', subscription);
   },
 
   handleMbeanMessage: function(message) {
-    Logger.debug('%ApiHandlersDelegate.handleMbeanMessage',
+    Logger.debug('%cApiHandlersDelegate.handleMbeanMessage',
       'color:red', message);
   },
 
@@ -291,20 +291,6 @@ var ApiHandlersDelegate = {
     else {
       Logger.error('ApiHandlersDelegate.handleMessage, invalid data ', data);
     }
-
-
-
-    /*else if ( 'noupdates' in data ) {
-      return this.handleNoUpdates();
-    }
-    else {
-      return this.handleInvalidData(data);
-    }*/
-    
-    /*
-    rtfParamList.alter('batchId', batchId);
-    this.sendMessage('batchId{' + batchId + '}');
-    */
   },
 
   xxx_handleMessage: function(data) {
@@ -339,7 +325,6 @@ var ApiHandlersDelegate = {
   },
 
   handleUpdateBatchId: function(batchId) {
-    Logger.debug('ApiHandlersDelegate.handleUpdateBatchid, batchId ', batchId);
     rtfParamList.alter('batchId', batchId);
     this.sendMessage('batchId{' + batchId + '}');
   },
