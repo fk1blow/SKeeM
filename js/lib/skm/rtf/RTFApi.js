@@ -245,16 +245,28 @@ data: { error: 'error message' }
  */
 var ApiHandlersDelegate = {
   handleSubscriptionConfirmation: function(subscription) {
-    cl('%chandleSubscriptionConfirmation', 'color:red', subscription);
+    Logger.debug('%ApiHandlersDelegate.chandleSubscriptionConfirmation',
+      'color:red', subscription);
+  },
+
+  handleMbeanMessage: function(message) {
+    Logger.debug('%ApiHandlersDelegate.handleMbeanMessage',
+      'color:red', message);
   },
 
   handleTriggerObservers: function(dataObj) {
     var item = null, messageUpdateItem, len = dataObj.length;
+    
+    // for every item in the update/reconfirmation array
     for ( var i = 0; i < len; i++ ) {
       messageUpdateItem = dataObj[i];
+
+      // each message update object key - subscription/MBEAN/error
       for ( item in messageUpdateItem ) {
         if ( item == 'subscription' )
           this.handleSubscriptionConfirmation(messageUpdateItem[item]);
+        else if ( item == 'MBEAN' )
+          this.handleMbeanMessage(messageUpdateItem[item]);
         else
           this.fire('message:' + item, messageUpdateItem[item]);
       }
@@ -264,13 +276,11 @@ var ApiHandlersDelegate = {
   handleMessage: function(data) {
     if ( 'update' in data ) {
       Logger.debug('ApiHandlersDelegate.handleMessage, update', data);
-
       this.handleTriggerObservers(data['update']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'reconfirmation' in data ) {
       Logger.debug('ApiHandlersDelegate.handleMessage, reconfirmation', data);
-
       this.handleTriggerObservers(data['reconfirmation']); 
       this.handleUpdateBatchId(data['batchId']);
     }
