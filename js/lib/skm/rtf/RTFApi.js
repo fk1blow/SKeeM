@@ -198,28 +198,38 @@ var rtfParamList = ParamsModel.create();
 /*
 
 // parsez si trimit subscriptiiile la widget-uri
-data: { updateMessage: [
-  { subscription: 'you have subscribed to we...' }
+
+data: {
+  update: [
+    { subscribeConfirmation: 'you have subscribed to we...' }
+    
+    // update subscriptie, nume = nextLiveMatches
+    { nextLiveMatches: {} },
+
+    // update subscriptie, nume = otherLiveMatches
+    { otherLiveMatches: {} },    
   
-  // subscriptie
-  { nextLiveMatches: {} },
-  
-  { MBEAN: 'testing mbean' }
-],
-[
-  { nextLiveMatches: {} }
+    { MBEAN: 'testing mbean' }
+  ]
 ]};
 
-data: { reconfirmationMessage: [
-  { subscription: 'you have subscribed to we...' }
+data: {
+  reconfirmation: [
+    { subscribeConfirmation: 'you have subscribed to we...' }
+    
+    // update subscriptie, nume = nextLiveMatches
+    { nextLiveMatches: {} },
 
-  // subscriptie
-  { nextLiveMatches: {} },
+    // update subscriptie, nume = otherLiveMatches
+    { otherLiveMatches: {} },    
   
-  { MBEAN: 'testing mbean' }
-]}
+    { MBEAN: 'testing mbean' }
+  ]
+]};
 
-{ noupdates: 'noupdates' }
+
+data: { noupdates: 'noupdates' }
+
 
 data: { error: 'error message' }
 
@@ -231,21 +241,18 @@ data: { error: 'error message' }
 /**
  * RTFApi handlers delegate
  */
-var ApiDelegates = {
+var ApiDelegate = {
   handleMessage: function(data) {
     var batchId = this._batchId;
 
     if ( 'updateMessage' in data ) {
-      Logger.debug('ApiDelegates.handleMessage :: message', data);
+      Logger.debug('ApiDelegate.handleMessage, message', data);
     } else if ( 'reconfirmationMessage' in data ) {
-      Logger.debug('ApiDelegates.handleMessage :: reconfirmation', data);
+      Logger.debug('ApiDelegate.handleMessage, reconfirmation', data);
     } else if ( 'noupdates' in data ) {
-      Logger.debug('ApiDelegates.handleNoUpdates :: batchId ', this._batchId);
-      this.sendMessage('batchId{' + this._batchId + '}');
-      return;
+      return this.handleNoUpdates();
     } else {
-      Logger.error('ApiDelegates.handleMessage :: invalid data', data);
-      // return this.handleInvalidData(data);
+      return this.handleInvalidData(data);
     }
     // get batchId sent by server
     batchId = data['batchId'];
@@ -255,17 +262,41 @@ var ApiDelegates = {
     this.sendMessage('batchId{' + batchId + '}');
   },
 
-  // notify all subscriptions that an error has occured
-  handleManagerStopped: function() {
-    Logger.debug('ApiDelegates.handleManagerStopped');
+  handleNoUpdates: function() {
+    Logger.debug('ApiDelegate.handleNoUpdates, batchId ', this._batchId);
+    this.sendMessage('batchId{' + this._batchId + '}');
   },
 
-  // notify all subscriptions that sequence has been deactivated
-  handleManagerSequenceDeactivated: function() {
-    Logger.warn('ApiDelegates.handleManagerSequenceDeactivated');
+  handleInvalidData: function(data) {
+    Logger.error('ApiDelegate.handleMessage, invalid data ', data);
   },
 
-  handleResetThenAddSubscribes: function() {
+  /**
+   * Handles a connector's protocol or api error
+   * 
+   * @description Event triggered whenever the (server)api/protocols
+   * has an issue with the current connection and its parameters.
+   * If a batchId is wrong, the server might trigger api:error...
+   * 
+   * @todo Usually, the subscriptions will have to be notified of this error!
+   */
+  handleConnectorProtocolsApiError: function() {
+    Logger.warn('%cApiDelegate.handleApiProtocolsError '
+      + 'An api or protocol error has been triggered', 'color:red');
+  },
+
+  /**
+   * Handles when a connector has been deactivated
+   * 
+   * @description Usually, this means the transport could not be
+   * initialized or has tried to reconnect unsuccesfully
+   * For the time being, just log the event
+   */
+  handleConnectorDeactivated: function() {
+    Logger.debug('%cApiDelegate.handleManagerSequenceDeactivated', 'color:red');
+  },
+
+  handleBeforeNextSequence: function() {
     rtfParamList.reset('subscribe');
     // Re-add the subscriptions to the params list
     rtfSubscriptionList.eachSubscription(function(subscription) {
@@ -273,7 +304,7 @@ var ApiDelegates = {
     });
   },
 
-  handleRemoveSubscribes: function() {
+  handleAfterStartConnector: function() {
     rtfParamList.remove('subscribe');
   },
 
@@ -286,7 +317,7 @@ var ApiDelegates = {
 /**
  * API constructor
  */
-var RTFApi = SKMObject.extend(ApiDelegates, {
+var RTFApi = SKMObject.extend(ApiDelegate, {
   _clientId:  null,
   
   _sessionId:  null,
@@ -449,24 +480,24 @@ var RTFApi = SKMObject.extend(ApiDelegates, {
 
   _attachConnectorManagerHandlers: function() {
     // Resends a confirmation back to server api
-    this._connectorManager.on('update',
-      this.handleMessage, this);
+    this._connectorManager.on('update', this.handleMessage, this);
 
     // Handle when manager has stopped - something wrong happened
-    this._connectorManager.on('stopped',
-      this.handleManagerStopped, this);
+    this._connectorManager.on('protocols:error api:error',
+      this.handleConnectorProtocolsApiError, this);
 
     // Handle when manager has been deactivated - next/sequence switch
-    this._connectorManager.on('deactivated',
-      this.handleManagerSequenceDeactivated, this);
+    // or transport issues - issues handled by the manager
+    this._connectorManager.on('connector:deactivated',
+      this.handleConnectorDeactivated, this);
 
     // re-add subscriptions to the param list before connector began update
     this._connectorManager.on('before:nextSequence',
-      this.handleResetThenAddSubscribes, this);
+      this.handleBeforeNextSequence, this);
 
     // remove subscribe after every connector has began update
     this._connectorManager.on('after:startConnector',
-      this.handleRemoveSubscribes, this);
+      this.handleAfterStartConnector, this);
   },
 
   _getIncrementedBatchId: function() {
