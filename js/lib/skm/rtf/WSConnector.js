@@ -64,7 +64,7 @@ var WebSocketConnector = BaseConnector.extend({
   sendMessage: function(msg) {
     if ( msg && (typeof msg === 'object') )
       msg = JSON.stringify(msg);
-    Logger.debug('%cWebSocketConnector.sendMessage : ', 'color:red', msg);
+    Logger.debug('WebSocketConnector.sendMessage : ', msg);
     this.transport.send(msg);
   },
 
@@ -83,7 +83,7 @@ var WebSocketConnector = BaseConnector.extend({
    * @param  {Object} message JSON message send by rtf server api
    */
   handleReceivedMessage: function(message) {
-    Logger.info('WebSocketConnector.handleReceivedMessage');
+    // Logger.info('WebSocketConnector.handleReceivedMessage');
     message = JSON.parse(message);
     this.fire('api:update', message);
   },
@@ -99,7 +99,7 @@ var WebSocketConnector = BaseConnector.extend({
    */
   handleReconnectingStopped: function() {
     Logger.info('WebSocketConnector.handleReconnectingStopped');
-    this.fire('connector:deactivated');
+    this.fire('transport:deactivated');
   },
   
   /**

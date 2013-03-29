@@ -91,7 +91,7 @@ var XHRConnector = BaseConnector.extend({
     if ( err.status == 405 ) {
       this.fire('api:error', err.responseText);
     } else {
-      this.fire('connector:deactivated');
+      this.fire('transport:deactivated');
     }
   }
 });
