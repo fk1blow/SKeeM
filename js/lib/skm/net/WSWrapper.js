@@ -162,6 +162,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     Logger.debug('%cnew WSWrapper', 'color:#A2A2A2');
     this._timerPing = Timer.create({ tickInterval: this.pingInterval, ticks: 0 });
     this._timerPing.on('tick', this.ping, this);
+    this._initUnloadSynDisconnect();
     this._initNativeWrapper();
     this._initConnectionHandler();
   },
@@ -293,6 +294,13 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     });
     // Disconnect and auto reconnect bindings
     this._attachConnectionEvents();
+  },
+
+  _initUnloadSynDisconnect: function() {
+    if ( this.syncDisconnectOnUnload )
+      window.onunload = function() {
+        this.disconnect();
+      }
   }
 });
 
