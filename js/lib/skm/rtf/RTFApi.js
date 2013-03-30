@@ -1,4 +1,3 @@
-
 // RTF Api Manager implementation
 
 define(['skm/k/Object',
@@ -369,14 +368,6 @@ var ApiHandlersDelegate = {
 
   handleAfterStartConnector: function() {
     /*rtfParamList.remove('subscribe');*/
-  },
-
-
-
-
-
-  handleBrowserUnload: function() {
-    this.sendMessage('closeConnection');
   }
 };
 
@@ -397,13 +388,6 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
-
-    var that = this;
-
-    // handle browser/tab unload/close
-    $(window).bind("beforeunload", function() {
-      that.handleBrowserUnload();
-    });
     
     // Prepare batchId and add it to the parameterizer
     rtfParamList.add('batchId', this._batchId);
