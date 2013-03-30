@@ -1,5 +1,5 @@
 
-// SKM WebSocket implementation
+// WebSocket wrapper
 
 define(['skm/k/Object',
   'skm/util/Logger',
@@ -80,7 +80,7 @@ var HandlerEventDelegates = {
 
     connection.on('message', function(message) {
       if ( message == 'pong' )
-        Logger.debug('%cWSWrapper :: pong', 'color:blue');
+        Logger.debug('%cWSWrapper : pong', 'color:blue');
       else
         this.fire('message', message);
     }, this)
@@ -172,11 +172,11 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
 
   connect: function() {
     if ( this.isOpened() ) {
-      Logger.error('WebSocket already open.');
+      Logger.error('WSWrapper.connect : ws already open.');
       return false;
     }
     if ( this.isReconnecting() ) {
-      Logger.error('WebSocket already trying to reconnect.');
+      Logger.error('WSWrapper.connect : ws already trying to reconnect.');
       return false;
     }
     this._startConnecting();
@@ -184,16 +184,16 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   },
 
   disconnect: function() {
-    Logger.info('WebSocket disconnect.');
     this._stopConnecting();
+    return true;
   },
 
   send: function(message) {
     var socketObject = this._nativeWrapper.getSocketObject();
     // If the socket is not ready or not created yet
     if ( socketObject === null || !this.isOpened() ) {
-      Logger.info('Unable to send message; invalid socket ' +
-                  'wrapper state or connection not yet opened.');
+      Logger.info('WSWrapper.send : unable to send message; invalid'
+        + ' wrapper state or connection not yet opened.');
       return;
     }
     // Wrap inside a timeout if iDevice browser detected
@@ -212,11 +212,12 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
    */
   ping: function() {
     if ( ! this.isOpened() ) {
-      Logger.info('Cannot ping server. WebSocket connection is closed.');
+      Logger.info('WSWrapper.ping : cannot ping server or'
+        + ' connection is closed. Stopping ping timer.');
       this._timerPing.stop();
       return false;
     }
-    Logger.debug('%cWSWrapper :: ping', 'color:green');
+    Logger.debug('%cWSWrapper : ping', 'color:green');
     this.send('ping');
     return this;
   },
