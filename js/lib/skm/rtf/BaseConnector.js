@@ -120,6 +120,10 @@ var Connector = SKMObject.extend(Subscribable, {
     // console.log('%cConnector.buildTransportUrl : ', 'color:red', this._typeName);
     var qs = this.urlParamModel.toQueryString();
     this.transport.url = this.urlBase + qs;
+  },
+
+  getType: function() {
+    return this._typeName;
   }
 });
 

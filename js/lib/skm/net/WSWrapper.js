@@ -298,8 +298,9 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
 
   _initUnloadSynDisconnect: function() {
     if ( this.syncDisconnectOnUnload )
+      var that = this;
       window.onunload = function() {
-        this.disconnect();
+        that.disconnect();
       }
   }
 });

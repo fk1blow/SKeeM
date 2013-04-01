@@ -19,11 +19,6 @@ var ConnectorErrors = {
 }
 
 
-
-// should be implemented by every connector
-var ConnectorDecisionDelegate = {}
-
-
 var WebSocketConnector = BaseConnector.extend({
   _typeName: 'WS',
 
