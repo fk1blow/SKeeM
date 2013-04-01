@@ -196,7 +196,7 @@ var rtfParamList = ParamsModel.create();
 
 /*
 
-// parsez si trimit subscriptiiile la widget-uri
+// parsez si trimit subscriptiile la widget-uri
 
 data: {
   update: [
@@ -325,6 +325,10 @@ var ApiHandlersDelegate = {
 
   handleUpdateBatchId: function(batchId) {
     rtfParamList.alter('batchId', batchId);
+    this._batchId = batchId;
+    // Dude, you must set the current object property too, so when you'll
+    // try to reconnect you must have last batchId, not 0!!
+    // Thanks dude!
     this.sendMessage('batchId{' + batchId + '}');
   },
 
