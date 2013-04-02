@@ -41,6 +41,7 @@ var WebSocketConnector = BaseConnector.extend({
     this.transport.on('link:closed', this.hanleLinkClosed, this);
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
+    this.transport.on('connecting:stopped', this.handleConnectingStopped, this);
     // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
@@ -94,6 +95,15 @@ var WebSocketConnector = BaseConnector.extend({
     this.fire('transport:deactivated');
   },
   
+  /**
+   * Handles a ws failed attempt at connecting
+   * 
+   * @description If the transport is unable to connect
+   */
+  handleConnectingStopped: function() {
+    //
+  },
+
   /**
    * Handles ws link:closed
    *

@@ -16,54 +16,16 @@ console.log('-------------------------------------------------------------------
 
 
 
-
-/**
- * RTF Manager
- */
-
-var wsurls = [
-  'ws://10.0.3.98:8080/testws?clientId=' + (new Date().getTime()) + '&subscribe=test&batchId=1',
-  'ws://10.0.3.98:3000'
-];
-
-var xhrUrl = 'http://10.0.3.98/testajax?subscribe=test&clientId=' + ((new Date).getTime());
+var ws = WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 1 });
 
 
+ws.on('all', function() {
+  cl(arguments)
+})
 
+ws.connect()
 
-
-var rtf = RTFManager.create({
-  sequence: [ 'WebSocket', 'XHR' ]
-});
-
-
-/*rtf.setConnectorParameters({
-  subscribeId: 'nextMatchesWidget',
-  clientId: (new Date().getTime())// similar cu session id
-});*/
-
-
-rtf.registerConnector('WebSocket', WSConnector.create({
-  transport: WSWrapper.create({ url: wsurls[0] })
-}));
-
-
-rtf.registerConnector('XHR', XHRConnector.create({
-  transport: XHRWrapper.create({ url: xhrUrl })
-}));
-
-// rtf.on('update', function() {
-//   cl('event :: update', arguments)
-// })
-
-rtf.startConnectors();
-
-
-
-
-
-
-
+// cl(ws)
 
 
 
