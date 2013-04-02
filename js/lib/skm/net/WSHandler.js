@@ -35,7 +35,6 @@ var WrapperMessageDelegates = {
       this._isReconnecting = false;
       this.fire('link:closed', event);
     } else {
-      // debugger;
       // manually closed by the user, no need to trigger events
       if ( this._closeExpected ) {
         Logger.info('Close expected/invoked. Nothing more to do');

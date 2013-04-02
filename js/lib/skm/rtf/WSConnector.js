@@ -38,10 +38,12 @@ var WebSocketConnector = BaseConnector.extend({
 
   addTransportListeners: function() {
     // connection dropped
-    this.transport.on('link:closed', this.hanleLinkClosed, this);
+    this.transport.on('link:closed link:interrupted',
+      this.hanleLinkClosed, this);
+
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
-    this.transport.on('connecting:stopped', this.handleConnectingStopped, this);
+    
     // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)
