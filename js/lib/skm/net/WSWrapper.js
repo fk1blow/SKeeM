@@ -72,6 +72,9 @@ var HandlerEventDelegates = {
     .on('link:closed', function(evt) {
       this._stopConnecting();
       this.fire('link:closed', evt);
+    }, this)
+    .on('link:interrupted', function() {
+      this.fire('link:interrupted');
     }, this);
 
     /**
