@@ -29,20 +29,30 @@ var WrapperMessageDelegates = {
 
     // stop all timers
     this._stopTimers();
-    // If  socket connection is closed by the server
+
+    // If the socket connection is closed by the server
     if ( event.wasClean ) {
       this._isReconnecting = false;
       this.fire('link:closed', event);
     } else {
+      // debugger;
+      // manually closed by the user, no need to trigger events
       if ( this._closeExpected ) {
         Logger.info('Close expected/invoked. Nothing more to do');
-        // should inform the DelegatesHandler about this state change
         this._isReconnecting = false;
-      } else {
+      }
+      // if has been opened before
+      else if ( this._linkWasOpened ) {
+        this._isReconnecting = false;
+        this.fire('link:interrupted');
+      }
+      else {
+        this.fire('connecting:stopped');
         this._makeReconnectAttempt();
       }
-      this.fire('connecting:stopped');
     }
+
+    this._linkWasOpened = false;
     this._closeExpected = false;
   },
 
@@ -50,6 +60,7 @@ var WrapperMessageDelegates = {
     Logger.info('WrapperMessageDelegates.handleOnOpen');
     this._stopTimers();
     this._reconnectionAttempt = 0;
+    this._linkWasOpened = true;
     this.fire('link:opened');
   },
 
@@ -93,6 +104,8 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   _closeExpected: false,
 
   _isReconnecting: false,
+
+  _linkWasOpened: false,
 
   initialize: function() {
     Logger.debug('%cnew WSHandler', 'color:#A2A2A2');
