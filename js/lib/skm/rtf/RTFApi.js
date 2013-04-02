@@ -283,12 +283,14 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
   _subscribedChannels: null,
 
+  _subscriptionParams: null,
+
   // If the subscription is incorrect, assume it will trigger an error
   /*_subscriptions: null,*/
 
   initialize: function() {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
-
+ 
     // Create the parameters list object
     this._paramList = ParamsModel.create();
     
@@ -302,6 +304,8 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
     this._attachConnectorManagerHandlers();
 
     this._subscribedChannels = {};
+
+    this._subscriptionParams = [];
   },
 
   startUpdates: function() {
@@ -326,13 +330,6 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
     this._connectorManager.sendMessage(message);
   },
 
-  /**
-   * Adds a new subscription
-   *
-   * @todo Break this functionality outside the Rtf Api
-   * @description Adds a new channel listeners and adds
-   * the 'subscribe' to [_paramList]
-   */
   subscribeToChannel: function(name, optParams) {
     var connectorType, message = '';//'subscribe:{' + name + '}';
     var connector = this._connectorManager.getActiveConnector();
@@ -361,6 +358,47 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
       cl(message)
     }
+
+    cl(this._subscribedChannels)
+  },
+
+  /**
+   * Adds a new subscription
+   *
+   * @todo Break this functionality outside the Rtf Api
+   * @description Adds a new channel listeners and adds
+   * the 'subscribe' to [_paramList]
+   */
+  xxx_subscribeToChannel: function(name, optParams) {
+    var connectorType, message = '';//'subscribe:{' + name + '}';
+    var connector = this._connectorManager.getActiveConnector();
+    var messageParamsObj = {};
+
+    // Add it to the this._paramList
+    this._paramList.add('subscribe', name);
+
+    this._addParamsForSubscription(name, optParams);
+
+    // functioneaza si fara a verifica daca exista optParams
+    if ( connector && optParams ) {
+      // connectorType = 'XHR';
+      connectorType = connector.getType();
+      
+      message = 'subscribe:{' + name + '}';
+      messageParamsObj[name] = this._subscribedChannels[name];
+
+      if ( connectorType == 'WS' ) {
+          message += 'params:' + JSON.stringify(messageParamsObj)
+                                     .replace(/\"|\'/g, '');
+      }
+      else if ( connectorType == 'XHR' ) {
+        message = messageParamsObj;
+      }
+
+      cl(message)
+    }
+
+    cl(this._subscribedChannels)
 
 
     // this.sendMessage(message);
@@ -402,7 +440,7 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
 
 
-  xxx_subscribeToChannel: function(name, optParams) {
+  xxx2xx_subscribeToChannel: function(name, optParams) {
     var message = 'subscribe{' + name + '}';
 
     // Add it to the this._paramList

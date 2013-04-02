@@ -25,7 +25,6 @@ var WebSocketConnector = BaseConnector.extend({
   beginUpdate: function() {
     this.buildTransportUrl();
     Logger.debug('WebSocketConnector.beginUpdate\n', this.transport.url);
-    // this.addTransportListeners();
     this.transport.connect();
     return this;
   },
@@ -34,7 +33,6 @@ var WebSocketConnector = BaseConnector.extend({
     Logger.debug('WebSocketConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
-    // this.removeTransportListeners();
     return this;
   },
 
@@ -43,7 +41,6 @@ var WebSocketConnector = BaseConnector.extend({
     this.transport.on('link:closed', this.hanleLinkClosed, this);
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
-    this.transport.on('pong', this.handlePongReceived, this);
     // unable to connect through provided transport(various reasons)
     this.transport
       .on('reconnecting:stopped', this.handleReconnectingStopped, this)

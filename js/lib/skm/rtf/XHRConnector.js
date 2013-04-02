@@ -26,7 +26,7 @@ var XHRConnector = BaseConnector.extend({
     this.buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
     // this.addTransportListeners();
-    this.transport.sendMessage();
+    this.sendMessage();
     return this;
   },
 
@@ -53,7 +53,7 @@ var XHRConnector = BaseConnector.extend({
 
   sendMessage: function(msg) {
     Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', msg);
-    this.buildTransportUrl();
+    // this.buildTransportUrl();
     this.transport.sendMessage(msg);
   },
 
