@@ -75,9 +75,9 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * Starts the connectors [beginUpdate]
    * and creates the transports available
    */
-  startConnectors: function() {
+  startConnectors: function(startParams) {
     Logger.info('ConnectorManager.startConnectors');
-    this._startInitialSequence();
+    this._startInitialSequence(startParams);
     this.started = true;
   },
 
@@ -170,19 +170,18 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   },
 
 
-/**
+  /**
    * Private
    */
   
 
-   /**
-    * Starts the initial update sequence
-    * when the connectors is at 0(zero) index
-    */
-  _startInitialSequence: function() {
-    var list = this._connectors;
+  /**
+   * Starts the initial update sequence
+   * when the connectors is at 0(zero) index
+   */
+  _startInitialSequence: function(sequenceParams) {
+    var nextConnector, list = this._connectors;
     this._activeSequenceIdx = 0;
-    var nextConnector;
     
     if ( list === null || ( list && ! ( this.sequence[0] in list ) ) ) {
       Logger.info('%cConnectorManager : connector list is empty or null',
@@ -194,7 +193,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     this.fire('before:initialSequence');
 
     this._activeConnector = list[this.sequence[0]];
-    this._startConnector(this._activeConnector);
+    this._startConnector(this._activeConnector, sequenceParams);
 
     this.fire('after:initialSequence');
   },
@@ -243,7 +242,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     return this.sequence[this._activeSequenceIdx + 1];
   },
 
-  _startConnector: function(connector) {
+  _startConnector: function(connector, sequenceParams) {
     this.fire('before:startConnector');
     // Stop current connectors and start next one
     connector.on('transport:deactivated',
@@ -253,7 +252,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     // notify of update...
     connector.on('api:update', this.handleConnectorApiUpdate, this);
     // Begin update connector
-    connector.beginUpdate();
+    connector.beginUpdate(sequenceParams);
     // ...aaaaaaand, be gone
     this.fire('after:startConnector');
   }

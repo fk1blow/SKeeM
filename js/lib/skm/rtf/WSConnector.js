@@ -22,9 +22,21 @@ var ConnectorErrors = {
 var WebSocketConnector = BaseConnector.extend({
   _typeName: 'WS',
 
-  beginUpdate: function() {
+  beginUpdate: function(parameterizer) {
+    var paramMessage = null;
     this.buildTransportUrl();
-    Logger.debug('WebSocketConnector.beginUpdate\n', this.transport.url);
+    Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
+    
+    if ( parameterizer ) {
+      paramMessage = parameterizer.parameterizeForWS();
+      // after opened, build the parameter object
+      // and send it through the transport
+      this.transport.on('link:opened', function() {
+        Logger.debug('%csending parameters', 'color:red', paramMessage);
+        this.send(paramMessage);
+      });
+    }
+
     this.transport.connect();
     return this;
   },
@@ -36,6 +48,11 @@ var WebSocketConnector = BaseConnector.extend({
     return this;
   },
 
+  /*
+    - define the list of events that a connector can trigger
+    - for ex, if the link is being interrupted, make sure you notify the manager
+    that an error has ocured - this error will be sent to the widget
+  */
   addTransportListeners: function() {
     // connection dropped
     this.transport.on('link:closed link:interrupted',
@@ -43,11 +60,10 @@ var WebSocketConnector = BaseConnector.extend({
 
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
-    
+
     // unable to connect through provided transport(various reasons)
-    this.transport
-      .on('reconnecting:stopped', this.handleReconnectingStopped, this)
-      .on('implementation:missing', this.handleReconnectingStopped, this);
+    this.transport.on('reconnecting:stopped implementation:missing',
+      this.handleReconnectingStopped, this)
     return this;
   },
 
@@ -56,11 +72,15 @@ var WebSocketConnector = BaseConnector.extend({
     Message senders
    */
   
-  sendMessage: function(msg) {
-    if ( msg && (typeof msg === 'object') )
-      msg = JSON.stringify(msg);
-    Logger.debug('WebSocketConnector.sendMessage : ', msg);
-    this.transport.send(msg);
+
+  /**
+   * [sendMessage description]
+   * 
+   * @param  {String} messageKey   [description]
+   */
+  sendMessage: function(message) {
+    Logger.debug('WebSocketConnector.sendMessage : ', message);
+    this.transport.send(message);
   },
 
   
@@ -98,15 +118,6 @@ var WebSocketConnector = BaseConnector.extend({
   },
   
   /**
-   * Handles a ws failed attempt at connecting
-   * 
-   * @description If the transport is unable to connect
-   */
-  handleConnectingStopped: function() {
-    //
-  },
-
-  /**
    * Handles ws link:closed
    *
    * @description if server api closes the link, it sends a message
@@ -118,17 +129,19 @@ var WebSocketConnector = BaseConnector.extend({
    * @param  {Object} message JSON message sent by rtf server api
    */
   hanleLinkClosed: function(message) {
-   var reason;
-    Logger.info('WebSocketConnector.hanleLinkClosed');
-    if ( message ) { // if the message is string you got an exception, thats baaad!!!
-        try{
-            reason = JSON.parse(message.reason);// JSON.parse douchebag
-        }catch(e){
-            reason = message;
-        }
-      if ( reason )
-        this.fire('api:error', reason);
-    }
+    Logger.info('WebSocketConnector.hanleLinkClosed');
+    var reason;
+    // if the message is string you got an exception, thats baaad!!!
+    if ( message ) {
+      try {
+        reason = JSON.parse(message.reason);// JSON.parse douchebag
+      }catch(e){
+        reason = message;
+      }
+      if ( reason )
+        this.fire('api:error', reason);
+    }
+    // un alt trigger aici-sa
   }
 });
 

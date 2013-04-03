@@ -63,7 +63,7 @@ var Config = {
 };
 
 
-var ParamsModel = SKMObject.extend(Subscribable, {
+var UrlModel = SKMObject.extend(Subscribable, {
   _parameterizerList: null,
 
   getList: function() {
@@ -139,10 +139,57 @@ var ParamsModel = SKMObject.extend(Subscribable, {
 });
 
 
+var Parameterizer = {
+  _channelList: null,
+
+  addParamsForSubscription: function(name, params) {
+    this._channelList = this._channelList || {};
+    var channel, item, paramsList = params || {};
+    var list = this._channelList;
+    // Now compose the subscribed list
+    if ( name in list ) {
+      channel = list[name];
+    } else {
+      channel = list[name] = {};
+    }
+    // ...and add channel parameters, if any
+    for ( item in paramsList ) {
+      channel[item] = paramsList[item];
+    }
+  },
+
+  addParamsForSubscriptionList: function(list) {
+    var subscription = null;
+    for ( subscription in list ) {
+      this.addParamsForSubscription(subscription, list[subscription]);
+    }
+  },
+
+  parameterizeForXHR: function() {
+    // xhr parameterizer logic here
+  },
+
+  parameterizeForWS : function() {
+    var item, first = true, parameterized = 'subscribe:{';
+    var list = this._channelList;
+    for ( item in list ) {
+      if (!first) {
+        parameterized+= ',';
+      }
+      parameterized += item;
+      first = false;
+    }
+    parameterized += '}';
+    parameterized += 'params:' + JSON.stringify(list).replace(/\'|\"/g, '');
+    return parameterized;
+  }
+};
+
+
 /**
  * RTFApi handlers delegate
  */
-var ApiHandlersDelegate = {
+var ApiDelegate = {
   handleMessageObservers: function(dataObj) {
     var itemKey = null, i = 0, len = dataObj.length,
       messageUpdateItem, itemVal = null;
@@ -173,29 +220,29 @@ var ApiHandlersDelegate = {
 
   handleMessage: function(data) {
     if ( 'update' in data ) {
-      Logger.debug('ApiHandlersDelegate.handleMessage, update', data);
+      Logger.debug('ApiDelegate.handleMessage, update', data);
       this.handleMessageObservers(data['update']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'reconfirmation' in data ) {
-      Logger.debug('ApiHandlersDelegate.handleMessage, reconfirmation', data);
+      Logger.debug('ApiDelegate.handleMessage, reconfirmation', data);
       this.handleMessageObservers(data['reconfirmation']); 
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'noupdates' in data ) {
-      Logger.debug('ApiHandlersDelegate.handleNoUpdates, batchId ', this._batchId);
+      Logger.debug('ApiDelegate.handleNoUpdates, batchId ', this._batchId);
       // Just send the same batchId, over and over again
       this.handleUpdateBatchId(this._batchId);
     }
     else {
-      Logger.error('ApiHandlersDelegate.handleMessage, invalid data ', data);
+      Logger.error('ApiDelegate.handleMessage, invalid data ', data);
     }
   },
 
   // If the subscription is incorrect, assume it will trigger an error
   handleSubscriptionConfirmation: function(listObj) {
     /*var subscription = null, subscriptionIdx = undefined;
-    Logger.debug('ApiHandlersDelegate.handleSubscriptionConfirmation');
+    Logger.debug('ApiDelegate.handleSubscriptionConfirmation');
 
     // For each subscription in the confirmation object
     // remove the one found at index - mutate the [_subscriptions] array
@@ -214,12 +261,14 @@ var ApiHandlersDelegate = {
   },
 
   handleUpdateBatchId: function(batchId) {
-    this._paramList.alter('batchId', batchId);
+    this._connectorsUrlModel.alter('batchId', batchId);
     // Dude, you must set the current object property too, so when you'll
     // try to reconnect you must have last batchId, not 0!!
     // Thanks, dude!
     this._batchId = batchId;
-    this.sendMessage('batchId{' + batchId + '}');
+
+    // this.sendMessage('batchId:{' + batchId + '}');
+    this.sendMessage('batchId:{' + batchId + '}');
   },
 
   /**
@@ -249,11 +298,11 @@ var ApiHandlersDelegate = {
   },
 
   handleBeforeNextSequence: function() {
-    this._paramList.reset('subscribe');
+    this._connectorsUrlModel.reset('subscribe');
     
     // Re-add the subscriptions to the params list
     /*rtfSubscriptionList.eachSubscription(function(subscription) {
-      this._paramList.add('subscribe', subscription.name);
+      this._connectorsUrlModel.add('subscribe', subscription.name);
     });*/
     
 
@@ -261,12 +310,12 @@ var ApiHandlersDelegate = {
     /*var subscribedChannel;
 
     for ( subscribedChannel in this._subscribedChannels ) {
-      this._paramList.add('subscribe', )
+      this._connectorsUrlModel.add('subscribe', )
     }*/
   },
 
   handleAfterStartConnector: function() {
-    this._paramList.remove('subscribe');
+    this._connectorsUrlModel.remove('subscribe');
   }
 };
 
@@ -274,43 +323,38 @@ var ApiHandlersDelegate = {
 /**
  * API constructor
  */
-var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
+var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
   _batchId: 0,
 
-  _paramList: null,
+  _connectorsUrlModel: null,
 
   _connectorManager: null,
 
-  _subscribedChannels: null,
-
-  _subscriptionParams: null,
-
-  // If the subscription is incorrect, assume it will trigger an error
-  /*_subscriptions: null,*/
-
-  initialize: function() {
+  initialize: function(options) {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
  
     // Create the parameters list object
-    this._paramList = ParamsModel.create();
+    this._connectorsUrlModel = UrlModel.create();
     
     // Prepare batchId and add it to the parameterizer
-    this._paramList.add('batchId', this._batchId);
+    this._connectorsUrlModel.add('batchId', this._batchId);
     
     // creates the connector manager
     this._createConnectorManager();
 
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
-
-    this._subscribedChannels = {};
-
-    this._subscriptionParams = [];
   },
 
-  startUpdates: function() {
+  startUpdates: function(subscriptions) {
+    if ( !subscriptions || typeof subscriptions !== 'object' ) {
+      throw new TypeError('RTFApi.startUpdates :: unable to start updates'
+        + ' without a subscription list');
+    }
+    // for every subscription in list, compose and add the parameters
+    Parameterizer.addParamsForSubscriptionList(subscriptions);
     // Start the connectors, if any available.
-    this._connectorManager.startConnectors();
+    this._connectorManager.startConnectors(Parameterizer);
   },
 
   stopUpdates: function() {
@@ -322,7 +366,7 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
   },
 
   addUrlParameter: function(name, value) {
-    this._paramList.add(name, value);
+    this._connectorsUrlModel.add(name, value);
     return this;
   },
 
@@ -330,13 +374,64 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
     this._connectorManager.sendMessage(message);
   },
 
+
+
+
+
+/*
+
+pendingSubscribtionobj = {
+  'test':{}
+
+}
+
+Addsubscribe..*(key,value);
+pendingSubscriptionObj [key] = JSON.stringify(value).replace.....
+
+
+ajax
+is face url 
+sendMessage({params:pendingSubscriptionObj.stringifiat.replace.....puncte puncte puncte..... });
+
+
+
+var pendingSubscriptions={};
+pendingSubscriptions['test']={eu:10,tu:233};
+pendingSubscriptions['nextLiveMAtches']={discipline:1,bettype:43};
+
+
+var data = { params:
+JSON.stringify(pendingSubscriptions).replace(/\"/g,'')
+}
+console.log(data);
+
+$.ajax({
+ url:'',
+ data : data,
+ type:'POST'
+})
+
+
+
+
+console.log('subscriburile.....' + 'params:' + JSON.stringify(pendingSubscriptions).replace(/\"/g,'') )
+
+
+
+ */
+
   subscribeToChannel: function(name, optParams) {
+    
+  },
+
+  // dupa initializare - dupa ce a pornit srv/dupa [beginUpdates]
+  xxx2_subscribeToChannel: function(name, optParams) {
     var connectorType, message = '';//'subscribe:{' + name + '}';
     var connector = this._connectorManager.getActiveConnector();
     var messageParamsObj = {};
 
-    // Add it to the this._paramList
-    this._paramList.add('subscribe', name);
+    // Add it to the this._connectorsUrlModel
+    this._connectorsUrlModel.add('subscribe', name);
 
     this._addParamsForSubscription(name, optParams);
 
@@ -361,21 +456,49 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
     cl(this._subscribedChannels)
   },
+    /*
+    //WS
+    ###subscribe fara params
+    sendMessage('subscribe','nextLiveMatches');
+
+
+
+    ###subscribe cu params
+    sendMessage('subscribe','nextLiveMatches}params:{nextLiveMatches:{eu:19,tu:20}');
+
+
+    //AJAX
+    ###fara params
+    sendMessage()
+
+
+
+
+
+      // transform subscribe param obj to a string
+      // replace all \" with empty string
+      connectorManager.getActiveConnector().sendMessage(subscribeName, subscribeParamsAsString)
+
+     */
+
+
+
+
 
   /**
    * Adds a new subscription
    *
    * @todo Break this functionality outside the Rtf Api
    * @description Adds a new channel listeners and adds
-   * the 'subscribe' to [_paramList]
+   * the 'subscribe' to [_connectorsUrlModel]
    */
   xxx_subscribeToChannel: function(name, optParams) {
     var connectorType, message = '';//'subscribe:{' + name + '}';
     var connector = this._connectorManager.getActiveConnector();
     var messageParamsObj = {};
 
-    // Add it to the this._paramList
-    this._paramList.add('subscribe', name);
+    // Add it to the this._connectorsUrlModel
+    this._connectorsUrlModel.add('subscribe', name);
 
     this._addParamsForSubscription(name, optParams);
 
@@ -420,26 +543,6 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
     // this.sendMessage(message, { params: optParams });
   },
 
-  _addParamsForSubscription: function(name, params) {
-    var channel, channelList = this._subscribedChannels,
-        item, paramsList = params || {};
-    // Now compose the subscribed list
-    if ( name in channelList ) {
-      channel = channelList[name];
-    } else {
-      channel = channelList[name] = {};
-    }
-    // ...and add channel parameters, if any
-    for ( item in paramsList ) {
-      channel[item] = paramsList[item];
-    }
-  },
-
-
-
-
-
-
   xxx2xx_subscribeToChannel: function(name, optParams) {
     var message = 'subscribe{' + name + '}';
 
@@ -469,7 +572,7 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
    * notifying it that a subscription has been removed ?!?!?!?
    */
   unsubscribeFromChannel: function(name) {
-    this._paramList.remove('subscribe');
+    this._connectorsUrlModel.remove('subscribe');
   },
 
 
@@ -485,7 +588,7 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
     manager.registerConnector('WebSocket', WSConnector.create({
       urlBase: Config.urls.ws,
-      urlParamModel: this._paramList
+      urlParamModel: this._connectorsUrlModel
     })).addTransport(WSWrapper.create({
       reconnectAttempts: Config.wsReconnectAttempts,
       pingServer: true
@@ -493,7 +596,7 @@ var RTFApi = SKMObject.extend(ApiHandlersDelegate, Subscribable, {
 
     manager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.urls.xhr,
-      urlParamModel: this._paramList
+      urlParamModel: this._connectorsUrlModel
     })).addTransport(XHRWrapper.create());
   },
 

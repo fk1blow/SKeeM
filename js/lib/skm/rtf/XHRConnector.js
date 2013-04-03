@@ -51,10 +51,17 @@ var XHRConnector = BaseConnector.extend({
    */
   
 
-  sendMessage: function(msg) {
-    Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', msg);
-    // this.buildTransportUrl();
-    this.transport.sendMessage(msg);
+  sendSubscribeRequest: function(subscribeName, subscribeParams) {
+    var json = {};
+    json[subscribeName] = subscribeParams;
+    var subscribeParamsAsStr = JSON.stringify(json).replace(/\"|\'/g, '');
+
+    this.transport.sendMessage(subscribeParamsAsStr);
+  },
+
+  sendMessage: function(message) {
+    Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', message);
+    this.transport.sendMessage(message);
   },
 
   
