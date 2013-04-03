@@ -20,7 +20,7 @@ var ConnectorErrors = {
 
 
 var WebSocketConnector = BaseConnector.extend({
-  _typeName: 'WS',
+  _typeName: 'WebSocket',
 
   beginUpdate: function(parameterizer) {
     var paramMessage = null;

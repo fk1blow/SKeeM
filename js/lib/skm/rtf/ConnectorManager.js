@@ -179,7 +179,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * Starts the initial update sequence
    * when the connectors is at 0(zero) index
    */
-  _startInitialSequence: function(sequenceParams) {
+  _startInitialSequence: function(options) {
     var nextConnector, list = this._connectors;
     this._activeSequenceIdx = 0;
     
@@ -193,7 +193,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     this.fire('before:initialSequence');
 
     this._activeConnector = list[this.sequence[0]];
-    this._startConnector(this._activeConnector, sequenceParams);
+    this._startConnector(this._activeConnector, options);
 
     this.fire('after:initialSequence');
   },
@@ -242,7 +242,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     return this.sequence[this._activeSequenceIdx + 1];
   },
 
-  _startConnector: function(connector, sequenceParams) {
+  _startConnector: function(connector, options) {
     this.fire('before:startConnector');
     // Stop current connectors and start next one
     connector.on('transport:deactivated',
@@ -252,7 +252,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     // notify of update...
     connector.on('api:update', this.handleConnectorApiUpdate, this);
     // Begin update connector
-    connector.beginUpdate(sequenceParams);
+    connector.beginUpdate(options);
     // ...aaaaaaand, be gone
     this.fire('after:startConnector');
   }
