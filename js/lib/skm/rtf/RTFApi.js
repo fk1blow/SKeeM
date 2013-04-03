@@ -319,10 +319,8 @@ var ApiDelegate = {
   handleUpdateBatchId: function(batchId) {
     this._connectorsUrlModel.alter('batchId', batchId);
     // Dude, you must set the current object property too, so when you'll
-    // try to reconnect you must have last batchId, not 0!!
-    // Thanks, dude!
+    // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
     this._batchId = batchId;
-
     // this.sendMessage('batchId:{' + batchId + '}');
     this.sendMessage('batchId:{' + batchId + '}');
   },
@@ -355,19 +353,6 @@ var ApiDelegate = {
 
   handleBeforeNextSequence: function() {
     this._connectorsUrlModel.reset('subscribe');
-    
-    // Re-add the subscriptions to the params list
-    /*rtfSubscriptionList.eachSubscription(function(subscription) {
-      this._connectorsUrlModel.add('subscribe', subscription.name);
-    });*/
-    
-
-    // Rebuild using another object that deals with subscribed channels and shit...
-    /*var subscribedChannel;
-
-    for ( subscribedChannel in this._subscribedChannels ) {
-      this._connectorsUrlModel.add('subscribe', )
-    }*/
   },
 
   handleAfterStartConnector: function() {
