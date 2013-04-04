@@ -18,8 +18,8 @@ var ManagerDelegates = {
     this._startNextSequence();
   },
 
-  handleConnectorApiError: function(error) {
-    this.fire('protocols:error api:error');
+  handleConnectorApiError: function() {
+    this.fire('api:error');
     this._stopCurrentSequence();
   },
 

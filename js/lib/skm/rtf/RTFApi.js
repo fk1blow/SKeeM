@@ -304,7 +304,8 @@ var ApiDelegate = {
   // If the subscription is incorrect, assume it will trigger an error
   handleSubscriptionConfirmation: function(confirmedList) {
     var subscription = null, subscriptionIdx = undefined;
-    Logger.debug('%cApiDelegate.handleSubscriptionConfirmation');
+    Logger.debug('%cApiDelegate.handleSubscriptionConfirmation',
+      'color:red', confirmedList);
     for ( subscription in confirmedList ) {
       Logger.debug('%cconfirmed subscription : ', 'color:red', subscription);
       Subscriptions.removeSubscription(subscription);
@@ -336,6 +337,11 @@ var ApiDelegate = {
    * @todo Usually, the subscriptions will have to be notified of this error!
    */
   handleConnectorProtocolsApiError: function() {
+    Logger.warn('%cApiHandlersDelegate.handleApiProtocolsError '
+      + 'An api or protocol error has been triggered', 'color:red');
+  },
+
+  handleConnectorApiError: function() {
     Logger.warn('%cApiHandlersDelegate.handleApiProtocolsError '
       + 'An api or protocol error has been triggered', 'color:red');
   },
@@ -615,8 +621,11 @@ var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
     this._connectorManager.on('update', this.handleMessage, this);
 
     // Handle when manager has stopped - something wrong happened
-    this._connectorManager.on('protocols:error api:error',
-      this.handleConnectorProtocolsApiError, this);
+    this._connectorManager.on('api:error',
+      this.handleConnectorApiError, this);
+
+    /*this._connectorManager.on('protocols:error',
+      this.handleConnectorProtocolsApiError, this);*/
 
     // Handle when manager has been deactivated - next/sequence switch
     // or transport issues - issues handled by the manager

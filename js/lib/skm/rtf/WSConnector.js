@@ -132,16 +132,16 @@ var WebSocketConnector = BaseConnector.extend({
     Logger.info('WebSocketConnector.hanleLinkClosed');
     var reason;
     // if the message is string you got an exception, thats baaad!!!
-    if ( message ) {
-      try {
-        reason = JSON.parse(message.reason);// JSON.parse douchebag
-      }catch(e){
-        reason = message;
-      }
-      if ( reason )
-        this.fire('api:error', reason);
-    }
-    // un alt trigger aici-sa
+    if ( message ) {
+      try {
+        reason = JSON.parse(message.reason);// JSON.parse douchebag
+      } catch(e) {
+        reason = message;
+      }
+      if ( reason )
+        this.fire('api:error', reason);
+    }
+    // un alt trigger aici-sa, in caz ca nu s-a trimis un mesaj - "link:closed"
   }
 });
 

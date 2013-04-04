@@ -25,8 +25,13 @@ var XHRConnector = BaseConnector.extend({
   beginUpdate: function() {
     this.buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
-    // this.addTransportListeners();
-    this.sendMessage();
+    
+    if ( parameterizer ) {
+      paramMessage = parameterizer.parameterizeForXHR();
+      Logger.debug('%csending parameters', 'color:red', paramMessage);
+    }
+
+    this.sendMessage(paramMessage);
     return this;
   },
 
