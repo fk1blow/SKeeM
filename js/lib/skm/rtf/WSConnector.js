@@ -54,16 +54,16 @@ var WebSocketConnector = BaseConnector.extend({
     that an error has ocured - this error will be sent to the widget
   */
   addTransportListeners: function() {
-    // connection dropped
-    this.transport.on('link:closed link:interrupted',
-      this.hanleLinkClosed, this);
+    // connection dropped by server
+    this.transport.on('link:closed', this.hanleLinkClosed, this);
 
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
 
     // unable to connect through provided transport(various reasons)
+    this.transport.on('link:interrupted', this.handleReconnectingStopped, this);
     this.transport.on('reconnecting:stopped implementation:missing',
-      this.handleReconnectingStopped, this)
+      this.handleReconnectingStopped, this);
     return this;
   },
 

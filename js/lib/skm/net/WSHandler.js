@@ -64,7 +64,6 @@ var WrapperMessageDelegates = {
   },
 
   handleOnError: function(event) {
-    // Logger.info('WrapperMessageDelegates : Socket error');
     this.fire('error', event);
   },
  
