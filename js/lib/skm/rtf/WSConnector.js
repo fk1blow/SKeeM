@@ -22,14 +22,14 @@ var ConnectorErrors = {
 var WebSocketConnector = BaseConnector.extend({
   _typeName: 'WebSocket',
 
-  beginUpdate: function(parameterizer) {
-    var paramMessage = null;
+  beginUpdate: function(options) {
+    var opt = options || {}, paramMessage = null;
     this.buildTransportUrl();
     Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
     
-    if ( parameterizer ) {
-      paramMessage = parameterizer.parameterizeForWS();
-      // after opened, build the parameter object
+    if ( opt.channelsParamsDelegate ) {
+      paramMessage = opt.channelsParamsDelegate.parameterizeForWS();
+      // after link established, build the parameter object
       // and send it through the transport
       this.transport.on('link:opened', function() {
         Logger.debug('%csending parameters', 'color:red', paramMessage);
