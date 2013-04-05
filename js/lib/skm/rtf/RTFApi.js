@@ -148,9 +148,8 @@ var RTFApi = SKMObject.extend(Subscribable, {
 
   _connectorsUrlModel: null,
 
-  _connectorManager: null,
+  _connectorsManager: null,
 
-  // @todo change name to [subscriptionsHandler]
   subscriptionsHandler: null,
 
   initialize: function(options) {
@@ -164,7 +163,7 @@ var RTFApi = SKMObject.extend(Subscribable, {
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
     // create the subscription channel object
-    this._createSubscriptionChannel();
+    this._createSubscriptionHandler();
   },
 
   startUpdates: function(subscriptionList) {
@@ -175,17 +174,17 @@ var RTFApi = SKMObject.extend(Subscribable, {
     // for every subscription in list, compose and add the parameters
     this.subscriptionsHandler.prepareSubscriptionsList(subscriptionList);
     // Start the connectors, if any available.
-    this._connectorManager.startConnectors({
+    this._connectorsManager.startConnectors({
       channelsParamsDelegate: this.subscriptionsHandler.subscriptions
     });
   },
 
   stopUpdates: function() {
-    this._connectorManager.stopConnectors();
+    this._connectorsManager.stopConnectors();
   },
 
   switchToNextConnector: function() {
-    this._connectorManager.switchToNextConnector();
+    this._connectorsManager.switchToNextConnector();
   },
 
   addUrlParameter: function(name, value) {
@@ -194,7 +193,7 @@ var RTFApi = SKMObject.extend(Subscribable, {
   },
 
   sendMessage: function(message) {
-    this._connectorManager.sendMessage(message);
+    this._connectorsManager.sendMessage(message);
   },
 
 
@@ -244,12 +243,11 @@ var RTFApi = SKMObject.extend(Subscribable, {
    */
   
 
-  _createSubscriptionChannel: function() {
+  _createSubscriptionHandler: function() {
     // Create the subscriptionsHandler instance
     this.subscriptionsHandler = ChannelsHandler.create({
-      dataSourceDelegate: this._connectorManager
+      dataSourceDelegate: this._connectorsManager
     });
-
 
     // update the batchId if an update is received
     this.subscriptionsHandler.on('update:batchId', 
@@ -258,7 +256,6 @@ var RTFApi = SKMObject.extend(Subscribable, {
     this.subscriptionsHandler.on('noupdates', function() {
       this.handleUpdateBatchId(this._batchId);
     }, this);
-    
 
     // @todo implement feature
     this.subscriptionsHandler.on('removed:subscription', function(name) {
@@ -271,7 +268,7 @@ var RTFApi = SKMObject.extend(Subscribable, {
   },
 
   _createConnectorManager: function() {
-    var manager = this._connectorManager = ConnectorManager.create({
+    var manager = this._connectorsManager = ConnectorManager.create({
       sequence: Config.sequence
     });
 
@@ -292,15 +289,15 @@ var RTFApi = SKMObject.extend(Subscribable, {
   _attachConnectorManagerHandlers: function() {
     // Handle when manager has been deactivated - next/sequence switch
     // or transport issues - issues handled by the manager
-    this._connectorManager.on('connector:deactivated',
+    this._connectorsManager.on('connector:deactivated',
       this.handleConnectorDeactivated, this);
 
     // reset subscriptions before next sequence begins
-    this._connectorManager.on('before:nextSequence',
+    this._connectorsManager.on('before:nextSequence',
       this.handleBeforeNextSequence, this);
 
     // remove subscribtions after every connector has began update
-    this._connectorManager.on('after:startConnector',
+    this._connectorsManager.on('after:startConnector',
       this.handleAfterStartConnector, this);
   },
 

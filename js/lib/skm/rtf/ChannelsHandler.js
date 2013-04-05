@@ -10,17 +10,17 @@ define(['skm/k/Object',
 
 
 var Logger = SKMLogger.create();
-
-
-var SubscriptionsList = {
-  _channelList: null,
+ 
+ 
+var SubscriptionsCollection = {
+  _currentList: null,
 
   _confirmedList: null,
 
   addSubscription: function(name, params) {
-    this._channelList = this._channelList || {};
+    this._currentList = this._currentList || {};
     var channel, item, paramsList = params || {};
-    var list = this._channelList;
+    var list = this._currentList;
     
     // if channel already added
     if ( name in list ) {
@@ -35,31 +35,24 @@ var SubscriptionsList = {
     }
   },
 
-  /*addSubscriptionList: function(list) {
-    var subscription = null;
-    for ( subscription in list ) {
-      this.addSubscription(subscription, list[subscription]);
-    }
-  },*/
-
   // Remove subscription from channel list and removes
   // the item from [_confirmedList] as well
   removeSubscription: function(name) {
     var subscription = null;
-    if ( name in this._channelList ) {
-      delete this._channelList[name];
+    if ( name in this._currentList ) {
+      delete this._currentList[name];
     }
   },
 
   confirmSubscription: function(name) {
-    var list = this._channelList;
+    var list = this._currentList;
     this._confirmedList = this._confirmedList || [];
     if ( name in list )
       this._confirmedList.push(name);
   },
 
   hasSubscribedAndConfirmed: function(name) {
-    var list = this._channelList;
+    var list = this._currentList;
     var hasSubscribed = false;
 
     if ( list ) {
@@ -69,13 +62,13 @@ var SubscriptionsList = {
   },
 
   parameterizeForXHR: function() {
-    var parameterized = JSON.stringify(this._channelList).replace(/\'|\"/g, '');
+    var parameterized = JSON.stringify(this._currentList).replace(/\'|\"/g, '');
     return parameterized;
   },
 
   parameterizeForWS : function() {
     var item, first = true, parameterized = 'subscribe:{';
-    var list = this._channelList;
+    var list = this._currentList;
     for ( item in list ) {
       if (!first) {
         parameterized+= ',';
@@ -94,8 +87,8 @@ var SubscriptionsList = {
  * [SubscriptionChannel description]
  * @type {[type]}
  */
-var ChannelsHandler = SKMObject.extend(Subscribable, {
-  subscriptions: SubscriptionsList,
+var SubscriptionsHandler = SKMObject.extend(Subscribable, {
+  subscriptions: SubscriptionsCollection,
 
   // the instance of connector manager, that will trigger some updates
   dataSourceDelegate: null,
@@ -141,7 +134,10 @@ var ChannelsHandler = SKMObject.extend(Subscribable, {
 
   /**
    * Adds a list of subscription channels to the subscriptions object
-   * 
+   *
+   * @description this method is used when calling RTFApi.startUpdates,
+   * to populate the SubscriptionsCollection with a list of subscriptions
+   * and thei (optional) parameters.
    * @param  {Object} list a collection of subscriptions, alongside params
    */
   prepareSubscriptionsList: function(list) {
@@ -173,9 +169,7 @@ var ChannelsHandler = SKMObject.extend(Subscribable, {
           this.handleSubscriptionConfirmation(itemVal);
         else if ( itemKey == 'MBEAN' )
           this.handleMbeanMessage(itemVal);
-        else if ( itemKey == 'error' ) // Add test case
-          // should remove ['message:error'] trigger
-          // this.fire('message:error', itemVal);
+        else if ( itemKey == 'error' )
           this.fire('error:' + itemKey, itemVal);
         else
           this.fire('update:' + itemKey, itemVal);
@@ -185,25 +179,25 @@ var ChannelsHandler = SKMObject.extend(Subscribable, {
 
   handleMessage: function(data) {
     if ( 'update' in data ) {
-      Logger.debug('ChannelsHandler.handleMessage, update', data);
+      Logger.debug('SubscriptionsHandler.handleMessage, update', data);
       this.handleMessageObservers(data['update']);
-      // this.handleUpdate Id(data['batchId']);
+      // this.handleUpdate Id(data['chId']);
       this.fire('update:batchId', data['batchId']);
     }
     else if ( 'reconfirmation' in data ) {
-      Logger.debug('ChannelsHandler.handleMessage, reconfirmation', data);
+      Logger.debug('SubscriptionsHandler.handleMessage, reconfirmation', data);
       this.handleMessageObservers(data['reconfirmation']); 
       // this.handleUpdateBatchId(data['batchId']);
       this.fire('update:batchId', data['batchId']);
     }
     else if ( 'noupdates' in data ) {
-      Logger.debug('ChannelsHandler.handleNoUpdates, batchId ', this._batchId);
+      Logger.debug('SubscriptionsHandler.handleNoUpdates, batchId ', this._batchId);
       // Just send the same batchId, over and over again
       // this.handleUpdateBatchId(this._batchId);
       this.fire('noupdates'); // if no param given, take the current batchId - this.batchId
     }
     else {
-      Logger.error('ChannelsHandler.handleMessage, invalid data ', data);
+      Logger.error('SubscriptionsHandler.handleMessage, invalid data ', data);
     }
   },
 
@@ -211,7 +205,7 @@ var ChannelsHandler = SKMObject.extend(Subscribable, {
   handleSubscriptionConfirmation: function(confirmedList) {
     var subscription = null, subscriptionIdx = undefined;
     
-    Logger.debug('%cChannelsHandler.handleSubscriptionConfirmation',
+    Logger.debug('%cSubscriptionsHandler.handleSubscriptionConfirmation',
       'color:red', confirmedList);
 
     for ( subscription in confirmedList ) {
@@ -225,13 +219,13 @@ var ChannelsHandler = SKMObject.extend(Subscribable, {
 
 
   handleApiError: function() {
-    Logger.warn('%cChannelsHandler.handleApiProtocolsError '
+    Logger.warn('%cSubscriptionsHandler.handleApiProtocolsError '
       + 'An api or protocol error has been triggered', 'color:red');
   }
 });
 
 
-return ChannelsHandler;
+return SubscriptionsHandler;
 
 
 });
