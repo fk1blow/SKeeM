@@ -22,12 +22,13 @@ var ConnectorErrors = {
 var XHRConnector = BaseConnector.extend({
   _typeName: 'XHR',
 
-  beginUpdate: function() {
+  beginUpdate: function(options) {
+    var opt = options || {}, paramMessage = null;
     this.buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
     
-    if ( parameterizer ) {
-      paramMessage = parameterizer.parameterizeForXHR();
+    if ( opt.channelsParamsDelegate ) {
+      paramMessage = opt.channelsParamsDelegate.parameterizeForXHR();
       Logger.debug('%csending parameters', 'color:red', paramMessage);
     }
 
