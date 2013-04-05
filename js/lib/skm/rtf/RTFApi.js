@@ -36,9 +36,10 @@ define(['skm/k/Object',
   'skm/net/XHRWrapper',
   'skm/rtf/ConnectorManager',
   'skm/rtf/XHRConnector',
-  'skm/rtf/WSConnector'],
+  'skm/rtf/WSConnector',
+  'skm/rtf/ChannelsHandler'],
   function(SKMObject, SKMLogger, Subscribable, WSWrapper, XHRWrapper,
-           ConnectorManager, XHRConnector, WSConnector)
+           ConnectorManager, XHRConnector, WSConnector, ChannelsHandler)
 {
 'use strict';
 
@@ -139,268 +140,18 @@ var UrlModel = SKMObject.extend(Subscribable, {
 });
 
 
-var xxx_Subscription = {
-  _channelList: null,
-
-  addParamsForSubscription: function(name, params) {
-    this._channelList = this._channelList || {};
-    var channel, item, paramsList = params || {};
-    var list = this._channelList;
-    // Now compose the subscribed list
-    if ( name in list ) {
-      channel = list[name];
-    } else {
-      channel = list[name] = {};
-    }
-    // ...and add channel parameters, if any
-    for ( item in paramsList ) {
-      channel[item] = paramsList[item];
-    }
-  },
-
-  addParamsForSubscriptionList: function(list) {
-    var subscription = null;
-    for ( subscription in list ) {
-      this.addParamsForSubscription(subscription, list[subscription]);
-    }
-  },
-
-  removeSubscription: function() {
-    //
-  },
-
-  parameterizeForXHR: function() {
-    var parameterized = JSON.stringify(this._channelList).replace(/\'|\"/g, '');
-    return parameterized;
-  },
-
-  parameterizeForWS : function() {
-    var item, first = true, parameterized = 'subscribe:{';
-    var list = this._channelList;
-    for ( item in list ) {
-      if (!first) {
-        parameterized+= ',';
-      }
-      parameterized += item;
-      first = false;
-    }
-    parameterized += '}';
-    parameterized += 'params:' + this.parameterizeForXHR();
-    return parameterized;
-  }
-};
-
-
-
-
-
-var Subscriptions = {
-  _channelList: null,
-
-  _confirmedList: null,
-
-  addSubscription: function(name, params) {
-    this._channelList = this._channelList || {};
-    var channel, item, paramsList = params || {};
-    var list = this._channelList;
-    
-    // if channel already added
-    if ( name in list ) {
-      channel = list[name];
-    } else {
-      channel = list[name] = {};
-    }
-    
-    // ...and add channel parameters, if any
-    for ( item in paramsList ) {
-      channel[item] = paramsList[item];
-    }
-  },
-
-  addSubscriptionList: function(list) {
-    var subscription = null;
-    for ( subscription in list ) {
-      this.addSubscription(subscription, list[subscription]);
-    }
-  },
-
-  // Remove subscription from channel list and removes
-  // the item from [_confirmedList] as well
-  removeSubscription: function(name) {
-    var subscription = null;
-    if ( name in this._channelList ) {
-      delete this._channelList[name];
-    }
-  },
-
-  confirmSubscription: function(name) {
-    var list = this._channelList;
-    this._confirmedList = this._confirmedList || [];
-    if ( name in list )
-      this._confirmedList.push(name);
-  },
-
-  hasSubscribedAndConfirmed: function(name) {
-    var list = this._channelList;
-    var hasSubscribed = false;
-
-    if ( list ) {
-      hasSubscribed = (name in list);
-    }
-    return hasSubscribed;
-  },
-
-  parameterizeForXHR: function() {
-    var parameterized = JSON.stringify(this._channelList).replace(/\'|\"/g, '');
-    return parameterized;
-  },
-
-  parameterizeForWS : function() {
-    var item, first = true, parameterized = 'subscribe:{';
-    var list = this._channelList;
-    for ( item in list ) {
-      if (!first) {
-        parameterized+= ',';
-      }
-      parameterized += item;
-      first = false;
-    }
-    parameterized += '}';
-    parameterized += 'params:' + this.parameterizeForXHR();
-    return parameterized;
-  }
-};
-
-
-/**
- * RTFApi handlers delegate
- */
-var ApiDelegate = {
-  handleMessageObservers: function(dataObj) {
-    var itemKey = null, i = 0, len = dataObj.length,
-      messageUpdateItem, itemVal = null;
-    
-    // for every item in the update/reconfirmation array
-    for ( i = 0; i < len; i++ ) {
-      messageUpdateItem = dataObj[i];
-
-      // each message update object key - subscription/MBEAN/error
-      for ( itemKey in messageUpdateItem ) {
-        // the value of the current itemKey
-        itemVal = messageUpdateItem[itemKey];
-
-        // If the subscription is incorrect, assume it will trigger an error
-        if ( itemKey == 'subscription' )
-          this.handleSubscriptionConfirmation(itemVal);
-        else if ( itemKey == 'MBEAN' )
-          this.handleMbeanMessage(itemVal);
-        else if ( itemKey == 'error' ) // Add test case
-          this.fire('message:error', itemVal);
-        else
-          this.fire('message:' + itemKey, itemVal);
-      }
-    }
-  },
-
-  handleMessage: function(data) {
-    if ( 'update' in data ) {
-      Logger.debug('ApiDelegate.handleMessage, update', data);
-      this.handleMessageObservers(data['update']);
-      this.handleUpdateBatchId(data['batchId']);
-    }
-    else if ( 'reconfirmation' in data ) {
-      Logger.debug('ApiDelegate.handleMessage, reconfirmation', data);
-      this.handleMessageObservers(data['reconfirmation']); 
-      this.handleUpdateBatchId(data['batchId']);
-    }
-    else if ( 'noupdates' in data ) {
-      Logger.debug('ApiDelegate.handleNoUpdates, batchId ', this._batchId);
-      // Just send the same batchId, over and over again
-      this.handleUpdateBatchId(this._batchId);
-    }
-    else {
-      Logger.error('ApiDelegate.handleMessage, invalid data ', data);
-    }
-  },
-
-  // If the subscription is incorrect, assume it will trigger an error
-  handleSubscriptionConfirmation: function(confirmedList) {
-    var subscription = null, subscriptionIdx = undefined;
-    
-    Logger.debug('%cApiDelegate.handleSubscriptionConfirmation',
-      'color:red', confirmedList);
-
-    for ( subscription in confirmedList ) {
-      Logger.debug('%cconfirmed subscription : ', 'color:red', subscription);
-      // Subscriptions.removeSubscription(subscription);
-      Subscriptions.confirmSubscription(subscription);
-    }
-  },
-
-  handleMbeanMessage: function(message) {
-    Logger.debug('%cApiHandlersDelegate.handleMbeanMessage',
-      'color:red', message);
-  },
-
-  handleUpdateBatchId: function(batchId) {
-    this._connectorsUrlModel.alter('batchId', batchId);
-    // Dude, you must set the current object property too, so when you'll
-    // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
-    this._batchId = batchId;
-    // this.sendMessage('batchId:{' + batchId + '}');
-    this.sendMessage('batchId:{' + batchId + '}');
-  },
-
-  /**
-   * Handles a connector's protocol or api error
-   * 
-   * @description Event triggered whenever the (server)api/protocols
-   * has an issue with the current connection and its parameters.
-   * EX: batchId is wrong, the server might trigger api:error and
-   * the widget subscribed, might want to resubscribe
-   * 
-   * @todo Usually, the subscriptions will have to be notified of this error!
-   */
-  handleConnectorProtocolsApiError: function() {
-    Logger.warn('%cApiHandlersDelegate.handleApiProtocolsError '
-      + 'An api or protocol error has been triggered', 'color:red');
-  },
-
-  handleConnectorApiError: function() {
-    Logger.warn('%cApiHandlersDelegate.handleApiProtocolsError '
-      + 'An api or protocol error has been triggered', 'color:red');
-  },
-
-  /**
-   * Handles when a connector has been deactivated
-   * 
-   * @description Usually, this means the transport could not be
-   * initialized or has tried to reconnect unsuccesfully
-   * For the time being, just log the event
-   */
-  handleConnectorDeactivated: function() {
-    Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
-  },
-
-  handleBeforeNextSequence: function() {
-    this._connectorsUrlModel.reset('subscribe');
-  },
-
-  handleAfterStartConnector: function() {
-    this._connectorsUrlModel.remove('subscribe');
-  }
-};
-
-
 /**
  * API constructor
  */
-var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
+var RTFApi = SKMObject.extend(Subscribable, {
   _batchId: 0,
 
   _connectorsUrlModel: null,
 
   _connectorManager: null,
+
+  // @todo change name to [subscriptionsHandler]
+  subscriptionsHandler: null,
 
   initialize: function(options) {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
@@ -412,6 +163,21 @@ var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
     this._createConnectorManager();
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
+    // create the subscription channel object
+    this._createSubscriptionChannel();
+  },
+
+  startUpdates: function(subscriptionList) {
+    if ( !subscriptionList || typeof subscriptionList !== 'object' ) {
+      throw new TypeError('RTFApi.startUpdates :: unable to start updates'
+        + ' without a subscription list');
+    }
+    // for every subscription in list, compose and add the parameters
+    this.subscriptionsHandler.prepareSubscriptionsList(subscriptionList);
+    // Start the connectors, if any available.
+    this._connectorManager.startConnectors({
+      channelsParamsDelegate: this.subscriptionsHandler.subscriptions
+    });
   },
 
   stopUpdates: function() {
@@ -431,47 +197,45 @@ var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
     this._connectorManager.sendMessage(message);
   },
 
-  startUpdates: function(subscriptionList) {
-    if ( !subscriptionList || typeof subscriptionList !== 'object' ) {
-      throw new TypeError('RTFApi.startUpdates :: unable to start updates'
-        + ' without a subscription list');
-    }
-    // for every subscription in list, compose and add the parameters
-    Subscriptions.addSubscriptionList(subscriptionList);
-    // Start the connectors, if any available.
-    this._connectorManager.startConnectors(Subscriptions);
-  },
 
-  subscribeToChannel: function(name, optParams) {
-    var connector = null;
-    var resubscribeMessage = 'Channel "' + name + '" already subscribed.'
-        + ' Unsubscribe then subscribe again.';
-
-    if ( Subscriptions.hasSubscribedAndConfirmed(name) ) {
-      Logger.error(resubscribeMessage);
-    } else {
-      // get active connector
-      connector = this._connectorManager.getActiveConnector();
-      // Added to the connector url model
-      this._connectorsUrlModel.add('subscribe', name);
-      // Add subscription
-      Subscriptions.addSubscription(name, optParams);
-      if ( connector.getType() == 'WebSocket' ) {
-        connector.sendMessage(Subscriptions.parameterizeForWS());
-      } else if ( connector.getType() == 'XHR' ) {
-        connector.sendMessage(Subscriptions.parameterizeForXHR());
-      }
-    }
-  },
+  /*
+    Handlers
+   */
+  
 
   /**
-   * Removes a subscription
-   *
-   * @todo Should this method send a message back to the server
-   * notifying it that a subscription has been removed ?!?!?!?
+   * Handles when a connector has been deactivated
+   * 
+   * @description Usually, this means the transport could not be
+   * initialized or has tried to reconnect unsuccesfully
+   * For the time being, just log the event
    */
-  unsubscribeFromChannel: function(name) {
+  handleConnectorDeactivated: function() {
+    Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
+  },
+
+  handleBeforeNextSequence: function() {
+    this._connectorsUrlModel.reset('subscribe');
+  },
+
+  handleAfterStartConnector: function() {
     this._connectorsUrlModel.remove('subscribe');
+  },
+
+  // @todo add handler from ChannelsHandler
+  handleMbeanMessage: function(message) {
+    Logger.debug('%cApiHandlersDelegate.handleMbeanMessage',
+      'color:red', message);
+  },
+
+  handleUpdateBatchId: function(batchId) {
+    Logger.debug('RTFApi.handleUpdateBatchId', batchId);
+    this._connectorsUrlModel.alter('batchId', batchId);
+    // Dude, you must set the current object property too, so when you'll
+    // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
+    this._batchId = batchId;
+    // this.sendMessage('batchId:{' + batchId + '}');
+    this.sendMessage('batchId:{' + batchId + '}');
   },
 
 
@@ -479,6 +243,32 @@ var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
     Privates
    */
   
+
+  _createSubscriptionChannel: function() {
+    // Create the subscriptionsHandler instance
+    this.subscriptionsHandler = ChannelsHandler.create({
+      dataSourceDelegate: this._connectorManager
+    });
+
+
+    // update the batchId if an update is received
+    this.subscriptionsHandler.on('update:batchId', 
+      this.handleUpdateBatchId, this);
+    // if no update given, just update using the current batchId
+    this.subscriptionsHandler.on('noupdates', function() {
+      this.handleUpdateBatchId(this._batchId);
+    }, this);
+    
+
+    // @todo implement feature
+    this.subscriptionsHandler.on('removed:subscription', function(name) {
+      this._connectorsUrlModel.remove(name);
+    }, this);
+
+    this.subscriptionsHandler.on('added:subscription', function(name) {
+      this._connectorsUrlModel.add('subscribe', name);
+    }, this);
+  },
 
   _createConnectorManager: function() {
     var manager = this._connectorManager = ConnectorManager.create({
@@ -500,22 +290,12 @@ var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
   },
 
   _attachConnectorManagerHandlers: function() {
-    // Resends a confirmation back to server api
-    this._connectorManager.on('update', this.handleMessage, this);
-
-    // Handle when manager has stopped - something wrong happened
-    this._connectorManager.on('api:error',
-      this.handleConnectorApiError, this);
-
-    /*this._connectorManager.on('protocols:error',
-      this.handleConnectorProtocolsApiError, this);*/
-
     // Handle when manager has been deactivated - next/sequence switch
     // or transport issues - issues handled by the manager
     this._connectorManager.on('connector:deactivated',
       this.handleConnectorDeactivated, this);
 
-    // re-add subscriptions to the param list before connector began update
+    // reset subscriptions before next sequence begins
     this._connectorManager.on('before:nextSequence',
       this.handleBeforeNextSequence, this);
 
