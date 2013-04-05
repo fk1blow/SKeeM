@@ -195,18 +195,22 @@ var xxx_Subscription = {
 
 
 var Subscriptions = {
-  _channellList: null,
+  _channelList: null,
+
+  _confirmedList: null,
 
   addSubscription: function(name, params) {
-    this._channellList = this._channellList || {};
+    this._channelList = this._channelList || {};
     var channel, item, paramsList = params || {};
-    var list = this._channellList;
-    // Now compose the subscribed list
+    var list = this._channelList;
+    
+    // if channel already added
     if ( name in list ) {
       channel = list[name];
     } else {
       channel = list[name] = {};
     }
+    
     // ...and add channel parameters, if any
     for ( item in paramsList ) {
       channel[item] = paramsList[item];
@@ -220,21 +224,40 @@ var Subscriptions = {
     }
   },
 
+  // Remove subscription from channel list and removes
+  // the item from [_confirmedList] as well
   removeSubscription: function(name) {
     var subscription = null;
-    if ( name in this._channellList ) {
-      delete this._channellList[name];
+    if ( name in this._channelList ) {
+      delete this._channelList[name];
     }
   },
 
+  confirmSubscription: function(name) {
+    var list = this._channelList;
+    this._confirmedList = this._confirmedList || [];
+    if ( name in list )
+      this._confirmedList.push(name);
+  },
+
+  hasSubscribedAndConfirmed: function(name) {
+    var list = this._channelList;
+    var hasSubscribed = false;
+
+    if ( list ) {
+      hasSubscribed = (name in list);
+    }
+    return hasSubscribed;
+  },
+
   parameterizeForXHR: function() {
-    var parameterized = JSON.stringify(this._channellList).replace(/\'|\"/g, '');
+    var parameterized = JSON.stringify(this._channelList).replace(/\'|\"/g, '');
     return parameterized;
   },
 
   parameterizeForWS : function() {
     var item, first = true, parameterized = 'subscribe:{';
-    var list = this._channellList;
+    var list = this._channelList;
     for ( item in list ) {
       if (!first) {
         parameterized+= ',';
@@ -271,8 +294,7 @@ var ApiDelegate = {
           this.handleSubscriptionConfirmation(itemVal);
         else if ( itemKey == 'MBEAN' )
           this.handleMbeanMessage(itemVal);
-        // Add test case
-        else if ( itemKey == 'error' )
+        else if ( itemKey == 'error' ) // Add test case
           this.fire('message:error', itemVal);
         else
           this.fire('message:' + itemKey, itemVal);
@@ -304,11 +326,14 @@ var ApiDelegate = {
   // If the subscription is incorrect, assume it will trigger an error
   handleSubscriptionConfirmation: function(confirmedList) {
     var subscription = null, subscriptionIdx = undefined;
+    
     Logger.debug('%cApiDelegate.handleSubscriptionConfirmation',
       'color:red', confirmedList);
+
     for ( subscription in confirmedList ) {
       Logger.debug('%cconfirmed subscription : ', 'color:red', subscription);
-      Subscriptions.removeSubscription(subscription);
+      // Subscriptions.removeSubscription(subscription);
+      Subscriptions.confirmSubscription(subscription);
     }
   },
 
@@ -418,167 +443,25 @@ var RTFApi = SKMObject.extend(ApiDelegate, Subscribable, {
   },
 
   subscribeToChannel: function(name, optParams) {
-    var connector = this._connectorManager.getActiveConnector();
+    var connector = null;
+    var resubscribeMessage = 'Channel "' + name + '" already subscribed.'
+        + ' Unsubscribe then subscribe again.';
 
-    // Added to the connector url model
-    this._connectorsUrlModel.add('subscribe', name);
-
-    // Add params to the parameterizer
-    if ( optParams )
+    if ( Subscriptions.hasSubscribedAndConfirmed(name) ) {
+      Logger.error(resubscribeMessage);
+    } else {
+      // get active connector
+      connector = this._connectorManager.getActiveConnector();
+      // Added to the connector url model
+      this._connectorsUrlModel.add('subscribe', name);
+      // Add subscription
       Subscriptions.addSubscription(name, optParams);
-
-    if ( connector.getType() == 'WebSocket' ) {
-      connector.sendMessage(Subscriptions.parameterizeForWS());
-    } else if ( connector.getType() == 'XHR' ) {
-      connector.sendMessage(Subscriptions.parameterizeForXHR());
-    }
-  },
-
-
-
-
-
-
-
-  // dupa initializare - dupa ce a pornit srv/dupa [beginUpdates]
-  xxx2_subscribeToChannel: function(name, optParams) {
-    var connectorType, message = '';//'subscribe:{' + name + '}';
-    var connector = this._connectorManager.getActiveConnector();
-    var messageParamsObj = {};
-
-    // Add it to the this._connectorsUrlModel
-    this._connectorsUrlModel.add('subscribe', name);
-
-    this._addParamsForSubscription(name, optParams);
-
-    // functioneaza si fara a verifica daca exista optParams
-    if ( connector && optParams ) {
-      // connectorType = 'XHR';
-      connectorType = connector.getType();
-      
-      message = 'subscribe:{' + name + '}';
-      messageParamsObj[name] = this._subscribedChannels[name];
-
-      if ( connectorType == 'WS' ) {
-          message += 'params:' + JSON.stringify(messageParamsObj)
-                                     .replace(/\"|\'/g, '');
+      if ( connector.getType() == 'WebSocket' ) {
+        connector.sendMessage(Subscriptions.parameterizeForWS());
+      } else if ( connector.getType() == 'XHR' ) {
+        connector.sendMessage(Subscriptions.parameterizeForXHR());
       }
-      else if ( connectorType == 'XHR' ) {
-        message = messageParamsObj;
-      }
-
-      cl(message)
     }
-
-    cl(this._subscribedChannels)
-  },
-    /*
-    //WS
-    ###subscribe fara params
-    sendMessage('subscribe','nextLiveMatches');
-
-
-
-    ###subscribe cu params
-    sendMessage('subscribe','nextLiveMatches}params:{nextLiveMatches:{eu:19,tu:20}');
-
-
-    //AJAX
-    ###fara params
-    sendMessage()
-
-
-
-
-
-      // transform subscribe param obj to a string
-      // replace all \" with empty string
-      connectorManager.getActiveConnector().sendMessage(subscribeName, subscribeParamsAsString)
-
-    */
-
-
-
-
-
-  /**
-   * Adds a new subscription
-   *
-   * @todo Break this functionality outside the Rtf Api
-   * @description Adds a new channel listeners and adds
-   * the 'subscribe' to [_connectorsUrlModel]
-   */
-  xxx_subscribeToChannel: function(name, optParams) {
-    var connectorType, message = '';//'subscribe:{' + name + '}';
-    var connector = this._connectorManager.getActiveConnector();
-    var messageParamsObj = {};
-
-    // Add it to the this._connectorsUrlModel
-    this._connectorsUrlModel.add('subscribe', name);
-
-    this._addParamsForSubscription(name, optParams);
-
-    // functioneaza si fara a verifica daca exista optParams
-    if ( connector && optParams ) {
-      // connectorType = 'XHR';
-      connectorType = connector.getType();
-      
-      message = 'subscribe:{' + name + '}';
-      messageParamsObj[name] = this._subscribedChannels[name];
-
-      if ( connectorType == 'WS' ) {
-          message += 'params:' + JSON.stringify(messageParamsObj)
-                                     .replace(/\"|\'/g, '');
-      }
-      else if ( connectorType == 'XHR' ) {
-        message = messageParamsObj;
-      }
-
-      cl(message)
-    }
-
-    cl(this._subscribedChannels)
-
-
-    // this.sendMessage(message);
-
-    // if params are sent, concatenate to message string
-    /*if ( optParams ) {
-      var  newParams = {};
-      newParams[name] = optParams;
-
-      var strParams = JSON.stringify(newParams).replace(/\"|\'/g, '');
-      this.sendMessage({ params: strParams });
-    } else {
-      this.sendMessage({ message: message });
-    }*/
-
-    // cl(this._subscribedChannels)
-
-    // Tell the connector to notify server api
-    // this.sendMessage(message, { params: optParams });
-  },
-
-  xx2xx_subscribeToChannel: function(name, optParams) {
-    var message = 'subscribe{' + name + '}';
-
-    // Add it to the this._paramList
-    this._paramList.add('subscribe', name);
-
-    // if params are sent, concatenate to message string
-    if ( optParams ) {
-      var  newParams = {};
-      newParams[name] = optParams;
-
-      var strParams = JSON.stringify(newParams).replace(/\"|\'/g, '');
-      // this._connectorManager += ('params{' + name + ':{' + strParams + '}');
-      this.sendMessage({ params: strParams });
-    } else {
-      this.sendMessage({ message: message });
-    }
-
-    // Tell the connector to notify server api
-    this.sendMessage(message, { params: optParams });
   },
 
   /**
