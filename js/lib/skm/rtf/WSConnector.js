@@ -42,7 +42,7 @@ var WebSocketConnector = BaseConnector.extend({
   },
 
   endUpdate: function() {
-    Logger.debug('WebSocketConnector.endUpdate');
+    Logger.debug('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
     return this;
@@ -77,7 +77,7 @@ var WebSocketConnector = BaseConnector.extend({
    * @param  {String} messageKey   [description]
    */
   sendMessage: function(message) {
-    Logger.debug('WebSocketConnector.sendMessage : ', message);
+    Logger.debug('WSConnector.sendMessage : ', message);
     this.transport.send(message);
   },
 
@@ -96,7 +96,7 @@ var WebSocketConnector = BaseConnector.extend({
    * @param  {Object} message JSON message send by rtf server api
    */
   handleReceivedMessage: function(message) {
-    // Logger.info('WebSocketConnector.handleReceivedMessage');
+    // Logger.info('WSConnector.handleReceivedMessage');
     message = JSON.parse(message);
     this.fire('api:update', message);
   },
@@ -111,7 +111,7 @@ var WebSocketConnector = BaseConnector.extend({
    * swtich to the next available connector, if any.
    */
   handleReconnectingStopped: function() {
-    Logger.info('WebSocketConnector.handleReconnectingStopped');
+    Logger.info('WSConnector.handleReconnectingStopped');
     this.fire('transport:deactivated');
   },
   
@@ -127,7 +127,7 @@ var WebSocketConnector = BaseConnector.extend({
    * @param  {Object} message JSON message sent by rtf server api
    */
   hanleLinkClosed: function(message) {
-    Logger.info('WebSocketConnector.hanleLinkClosed');
+    Logger.info('WSConnector.hanleLinkClosed');
     // if the message is string you got an exception, thats baaad!!!
     if ( message ) {
       this.fire('api:error', message);
