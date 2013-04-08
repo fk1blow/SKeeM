@@ -62,7 +62,7 @@ var Config = {
 var ChannelsList = {
   _currentList: null,
 
-  _confirmedChannels: null,
+  _confirmedList: null,
   
   addChannel: function(channel) {
     var list = this._currentList = this._currentList || {},
@@ -90,11 +90,14 @@ var ChannelsList = {
     }
   },
 
-  confirmSubscription: function(name) {
+  confirmSubscription: function(channelName, willConfirm) {
+    var confirmed = this._confirmedList = this._confirmedList || {};
     var list = this._currentList;
-    this._confirmedList = this._confirmedList || [];
-    // if ( name in list )
-    //   this._confirmedList.push(name);
+
+    if ( channelName in list && willConfirm ) {
+      confirmed[channelName] = list[channelName];
+      delete list[channelName];
+    }
   },
 
   hasSubscribedAndConfirmed: function(name) {
@@ -206,7 +209,7 @@ var UrlModel = SKMObject.extend(Subscribable, {
 
 
 // main API constructor
-var RTFApi = SKMObject.extend(Subscribable, {
+var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   _batchId: 0,
 
   _connectorsUrlModel: null,
@@ -225,8 +228,6 @@ var RTFApi = SKMObject.extend(Subscribable, {
     this._createConnectorManager();
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
-    // create the messages handler object
-    this._createMessagesHandler();
   },
 
   startUpdates: function(initialChannels) {
@@ -257,8 +258,6 @@ var RTFApi = SKMObject.extend(Subscribable, {
       connector = this._connectorsManager.getActiveConnector();
       // Added to the connector url model
       this._connectorsUrlModel.add('subscribe', name);
-      // @todo remove call
-      // this.fire('added:subscription', name);
       // Add subscription
       ChannelsList.addSubscription(name, optParams);
       // send a different message for every connector type
@@ -269,10 +268,18 @@ var RTFApi = SKMObject.extend(Subscribable, {
       }
     }
   },
-
+  
+  // @todo implement feature
   removeChannel: function(name) {
-    this.fire('removed:subscription', name);
-    // this._connectorsUrlModel.remove('subscribe');
+    cl(this._connectorsUrlModel)
+    // it shouldn't fire, instead, it should(somehow) remove 
+    // the channel from ChannelsList collection
+    // this.fire('removed:subscription', name);
+    // this._connectorsUrlModel.alter(name, );
+  },
+
+  getChannelsList: function() {
+    return ChannelsList;
   },
 
 
@@ -340,39 +347,21 @@ var RTFApi = SKMObject.extend(Subscribable, {
   },
 
 
+  // - adauga urmatoarele linii, in documentatie:
+  // - daca am primit confirmarea unei subscriptii, nu fac nimic
+  // - daca nu se primeste, atunci widgetul poate presupune ca a survenit o eroare
+
+  // @todo handle confirmation and batch id different for every connector type
+  // If current connector is XHR, prepare both batchID and
+  // Reconfirmation messages, before sendinf them using [sendMessage]
+
+
+
   /*
     Privates
    */
 
-
-  _createMessagesHandler: function() {
-    // Create the subscriptionsHandler instance
-    this._messagesHandler = MessagesHandler.create({
-      sourceOfMessages: this._connectorsManager
-    });
-
-    // update the batchId if an update is received
-    this._messagesHandler.on('update:batchId', this.handleUpdateBatchId, this);
-
-    // if no update given, just update using the current batchId
-    this._messagesHandler.on('noupdates', function() {
-      this.handleUpdateBatchId(this._batchId);
-    }, this);
-
-    // @todo implement feature
-    this._messagesHandler.on('removed:subscription', function(name) {
-      this._connectorsUrlModel.remove(name);
-    }, this);
-
-    // handles an MBEAN message
-    this._messagesHandler.on('message:mbean', this.handleMbeanMessage, this);
-
-    // @todo remove handler
-    // this._messagesHandler.on('added:subscription', function(name) {
-      // this._connectorsUrlModel.add('subscribe', name);
-    // }, this);
-  },
-
+ 
   _createConnectorManager: function() {
     var manager = this._connectorsManager = ConnectorManager.create({
       sequence: Config.sequence
@@ -405,6 +394,9 @@ var RTFApi = SKMObject.extend(Subscribable, {
     // remove subscribtions after every connector has began update
     this._connectorsManager.on('after:startConnector',
       this.handleAfterStartConnector, this);
+
+    // handle the raw incoming message
+    this._connectorsManager.on('update', this.handleMessage, this);
   },
 
   _getIncrementedBatchId: function() {

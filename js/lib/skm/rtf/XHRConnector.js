@@ -27,8 +27,8 @@ var XHRConnector = BaseConnector.extend({
     this.buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
     
-    if ( opt.channelsParamsDelegate ) {
-      paramMessage = opt.channelsParamsDelegate.parameterizeForXHR();
+    if ( opt.updateWrapperDelegate ) {
+      paramMessage = opt.updateWrapperDelegate.parameterizeForWS();
       Logger.debug('%csending parameters', 'color:red', paramMessage);
     }
 
