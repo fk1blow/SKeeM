@@ -326,9 +326,13 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this._connectorsUrlModel.reset('subscribe');
   },
 
-  handleAfterStartConnector: function() {
+  // @todo subscribe doesn't resides on the connectorUrlsModel
+  // instead, remove it from the ChannelsList
+  // Actually, it doesn't need to remove the channel name because it will be confirmed
+  // and remove from the [ChannelsList._currentList] collection
+  /*handleAfterStartConnector: function() {
     this._connectorsUrlModel.remove('subscribe');
-  },
+  },*/
 
   // @todo add handler from ChannelsHandler
   handleMbeanMessage: function(message) {
