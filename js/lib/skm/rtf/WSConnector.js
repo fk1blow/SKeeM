@@ -27,8 +27,8 @@ var WebSocketConnector = BaseConnector.extend({
     this.buildTransportUrl();
     Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
     
-    if ( opt.channelsParamsDelegate ) {
-      paramMessage = opt.channelsParamsDelegate.parameterizeForWS();
+    if ( opt.updateWrapperDelegate ) {
+      paramMessage = opt.updateWrapperDelegate.parameterizeForWS();
       // after link established, build the parameter object
       // and send it through the transport
       this.transport.on('link:opened', function() {

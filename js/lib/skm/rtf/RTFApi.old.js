@@ -37,9 +37,9 @@ define(['skm/k/Object',
   'skm/rtf/ConnectorManager',
   'skm/rtf/XHRConnector',
   'skm/rtf/WSConnector',
-  'skm/rtf/MessagesHandler'],
+  'skm/rtf/RTFMessageHandler'],
   function(SKMObject, SKMLogger, Subscribable, WSWrapper, XHRWrapper,
-           ConnectorManager, XHRConnector, WSConnector, MessagesHandler)
+           ConnectorManager, XHRConnector, WSConnector, MessageHandler)
 {
 'use strict';
 
@@ -56,76 +56,6 @@ var Config = {
   },
 
   wsReconnectAttempts: 3
-};
-
-
-var ChannelsList = {
-  _currentList: null,
-
-  _confirmedChannels: null,
-  
-  addChannel: function(channel) {
-    var list = this._currentList = this._currentList || {},
-        channelItem, paramItem,
-        channelParams = channel['params'],
-        channelName = channel['name'];
-
-    if ( channelName in list ) {
-      channelItem = list[channelName];
-    } else {
-      channelItem = list[channelName] = {};
-    }
-    // ...and add channel parameters, if any
-    for ( paramItem in channelParams ) {
-      channelItem[paramItem] = channelParams[paramItem];
-    }
-  }, 
-
-  // Remove subscription from channel list and removes
-  // the item from [_confirmedList] as well
-  removeChannel: function(name) {
-    var subscription = null;
-    if ( name in this._currentList ) {
-      delete this._currentList[name];
-    }
-  },
-
-  confirmSubscription: function(name) {
-    var list = this._currentList;
-    this._confirmedList = this._confirmedList || [];
-    // if ( name in list )
-    //   this._confirmedList.push(name);
-  },
-
-  hasSubscribedAndConfirmed: function(name) {
-    var list = this._currentList;
-    var hasSubscribed = false;
-
-    if ( list ) {
-      hasSubscribed = (name in list);
-    }
-    return hasSubscribed;
-  },
-
-  parameterizeForXHR: function() {
-    var parameterized = JSON.stringify(this._currentList).replace(/\'|\"/g, '');
-    return parameterized;
-  },
-
-  parameterizeForWS : function() {
-    var item, first = true, parameterized = 'subscribe:{';
-    var list = this._currentList;
-    for ( item in list ) {
-      if (!first) {
-        parameterized+= ',';
-      }
-      parameterized += item;
-      first = false;
-    }
-    parameterized += '}';
-    parameterized += 'params:' + this.parameterizeForXHR();
-    return parameterized;
-  }
 };
 
 
@@ -205,7 +135,9 @@ var UrlModel = SKMObject.extend(Subscribable, {
 });
 
 
-// main API constructor
+/**
+ * API constructor
+ */
 var RTFApi = SKMObject.extend(Subscribable, {
   _batchId: 0,
 
@@ -213,7 +145,7 @@ var RTFApi = SKMObject.extend(Subscribable, {
 
   _connectorsManager: null,
 
-  _messagesHandler: null,
+  subscriptionsHandler: null,
 
   initialize: function(options) {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
@@ -225,61 +157,22 @@ var RTFApi = SKMObject.extend(Subscribable, {
     this._createConnectorManager();
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
-    // create the messages handler object
-    this._createMessagesHandler();
+    // create the subscription channel object
+    this._createSubscriptionHandler();
   },
 
-  startUpdates: function(initialChannels) {
-    // if no channelList sent, hit them with an error
-    if ( !initialChannels || typeof initialChannels !== 'object' ) {
+  startUpdates: function(subscriptionList) {
+    if ( !subscriptionList || typeof subscriptionList !== 'object' ) {
       throw new TypeError('RTFApi.startUpdates :: unable to start updates'
         + ' without a subscription list');
     }
-    // Add every channel in list to the ChannelList collection object
-    for ( var channel in initialChannels ) {
-      ChannelsList.addChannel(initialChannels[channel]);
-    }
-    // Start the connectors, if any available
+    // for every subscription in list, compose and add the parameters
+    this.subscriptionsHandler.prepareSubscriptionsList(subscriptionList);
+    // Start the connectors, if any available.
     this._connectorsManager.startConnectors({
-      updateWrapperDelegate: ChannelsList
+      channelsParamsDelegate: this.subscriptionsHandler.subscriptions
     });
   },
-
-  addChannel: function(name, optParams) {
-    var connector = null;
-    var resubscribeMessage = 'Channel "' + name + '" already subscribed.'
-      + ' Unsubscribe then subscribe again.';
-
-    if ( ChannelsList.hasSubscribedAndConfirmed(name) ) {
-      Logger.error(resubscribeMessage);
-    } else {
-      // get active connector
-      connector = this._connectorsManager.getActiveConnector();
-      // Added to the connector url model
-      this._connectorsUrlModel.add('subscribe', name);
-      // @todo remove call
-      // this.fire('added:subscription', name);
-      // Add subscription
-      ChannelsList.addSubscription(name, optParams);
-      // send a different message for every connector type
-      if ( connector.getType() == 'WebSocket' ) {
-        connector.sendMessage(ChannelsList.parameterizeForWS());
-      } else if ( connector.getType() == 'XHR' ) {
-        connector.sendMessage(ChannelsList.parameterizeForXHR());
-      }
-    }
-  },
-
-  removeChannel: function(name) {
-    this.fire('removed:subscription', name);
-    // this._connectorsUrlModel.remove('subscribe');
-  },
-
-
-  /*
-    Commands
-   */
-  
 
   stopUpdates: function() {
     this._connectorsManager.stopConnectors();
@@ -343,34 +236,30 @@ var RTFApi = SKMObject.extend(Subscribable, {
   /*
     Privates
    */
+  
 
-
-  _createMessagesHandler: function() {
+  _createSubscriptionHandler: function() {
     // Create the subscriptionsHandler instance
-    this._messagesHandler = MessagesHandler.create({
-      sourceOfMessages: this._connectorsManager
+    this.subscriptionsHandler = ChannelsHandler.create({
+      dataSourceDelegate: this._connectorsManager
     });
 
     // update the batchId if an update is received
-    this._messagesHandler.on('update:batchId', this.handleUpdateBatchId, this);
-
+    this.subscriptionsHandler.on('update:batchId', 
+      this.handleUpdateBatchId, this);
     // if no update given, just update using the current batchId
-    this._messagesHandler.on('noupdates', function() {
+    this.subscriptionsHandler.on('noupdates', function() {
       this.handleUpdateBatchId(this._batchId);
     }, this);
 
     // @todo implement feature
-    this._messagesHandler.on('removed:subscription', function(name) {
+    this.subscriptionsHandler.on('removed:subscription', function(name) {
       this._connectorsUrlModel.remove(name);
     }, this);
 
-    // handles an MBEAN message
-    this._messagesHandler.on('message:mbean', this.handleMbeanMessage, this);
-
-    // @todo remove handler
-    // this._messagesHandler.on('added:subscription', function(name) {
-      // this._connectorsUrlModel.add('subscribe', name);
-    // }, this);
+    this.subscriptionsHandler.on('added:subscription', function(name) {
+      this._connectorsUrlModel.add('subscribe', name);
+    }, this);
   },
 
   _createConnectorManager: function() {
