@@ -19,10 +19,37 @@ var ConnectorState = {
 }
 
 
+var ParametersBuilder = {
+  parameterizeForXHR: function(parametersList) {
+    var parameterized = { message: null }, list = parametersList;
+    if ( list ) {
+      parameterized.message = JSON.stringify(list).replace(/\'|\"/g, '');
+    }
+    return parameterized;
+  },
+
+  parameterizeForWS : function(parametersList) {
+    var item, first = true, parameterized = 'subscribe:{';
+    var list = parametersList;
+    for ( item in list ) {
+      if (!first) {
+        parameterized+= ',';
+      }
+      parameterized += item;
+      first = false;
+    }
+    parameterized += '}';
+    parameterized += 'params:' + JSON.stringify(parametersList)
+      .replace(/\'|\"/g, '');
+    return parameterized;
+  }
+};
+
+
 /**
  * Abstract connector
  */
-var Connector = SKMObject.extend(Subscribable, {
+var BaseConnector = SKMObject.extend(Subscribable, ParametersBuilder, {
   /**
    * Transport type object
    * @type {WSWrapper, XHRWrapper} an instance of a Transport type
@@ -95,7 +122,7 @@ var Connector = SKMObject.extend(Subscribable, {
       this.transport = transportObject;
       this.addTransportListeners();
     } else {
-      throw new Error('Connector.addTransport : ' + 
+      throw new Error('BaseConnector.addTransport : ' + 
         'transport object already exists');
     }
     return this;
@@ -128,7 +155,7 @@ var Connector = SKMObject.extend(Subscribable, {
 });
 
 
-return Connector;
+return BaseConnector;
 
 
 });
