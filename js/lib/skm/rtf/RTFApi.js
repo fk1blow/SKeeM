@@ -217,12 +217,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     // this._startBeaconTimer();
   },
 
-
-  /*
-    Channels commands
-   */
-
-
   startWithChannels: function(initialChannels) {
     // if no channelList sent, hit them with an error
     if ( !initialChannels || typeof initialChannels !== 'object' ) {
@@ -240,11 +234,12 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   },
 
   addChannel: function(channel) {
-    var connector = null;
     var resubscribeMessage = 'Channel "' + name + '" already subscribed.'
       + ' Unsubscribe then subscribe again.';
 
     if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
+      // @todo trigger an event that tells the widget
+      // that the channel was already subscribed/confirmed
       Logger.error(resubscribeMessage);
     } else {
       // Add subscription
