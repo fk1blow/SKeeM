@@ -134,7 +134,7 @@ var WebSocketConnector = BaseConnector.extend({
   hanleLinkClosed: function(message) {
     Logger.info('WSConnector.hanleLinkClosed');
     // if the message is string you got an exception, thats baaad!!!
-    if ( message ) {
+    if ( message ) {
       this.fire('api:error', message);
     }
     this.fire('api:error');
