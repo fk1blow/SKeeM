@@ -77,7 +77,34 @@ var MessagesHandler = {
   handleApiError: function() {
     Logger.warn('%cMessagesHandler.handleApiProtocolsError '
       + 'An api or protocol error has been triggered', 'color:red');
-  }
+  },
+
+  /**
+   * Handles when a connector has been deactivated
+   * 
+   * @description Usually, this means the transport could not be
+   * initialized or has tried to reconnect unsuccesfully
+   * For the time being, just log the event
+   */
+  handleConnectorDeactivated: function() {
+    Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
+  },
+
+  // @todo add handler from ChannelsHandler
+  handleMbeanMessage: function(message) {
+    Logger.debug('%cApiHandlersDelegate.handleMbeanMessage',
+      'color:red', message);
+  },
+
+  handleUpdateBatchId: function(batchId) {
+    Logger.debug('RTFApi.handleUpdateBatchId', batchId);
+    this._connectorsUrlModel.alter('batchId', batchId);
+    // Dude, you must set the current object property too, so when you'll
+    // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
+    this._batchId = batchId;
+    // this.sendMessage('batchId:{' + batchId + '}');
+    this.sendMessage('batchId:{' + batchId + '}');
+  },
 };
 
 
