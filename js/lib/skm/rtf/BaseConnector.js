@@ -19,37 +19,10 @@ var ConnectorState = {
 }
 
 
-var ParametersBuilder = {
-  parameterizeForXHR: function(parametersList) {
-    var parameterized = { message: null }, list = parametersList;
-    if ( list ) {
-      parameterized.message = JSON.stringify(list).replace(/\'|\"/g, '');
-    }
-    return parameterized;
-  },
-
-  parameterizeForWS : function(parametersList) {
-    var item, first = true, parameterized = 'subscribe:{';
-    var list = parametersList;
-    for ( item in list ) {
-      if (!first) {
-        parameterized+= ',';
-      }
-      parameterized += item;
-      first = false;
-    }
-    parameterized += '}';
-    parameterized += 'params:' + JSON.stringify(parametersList)
-      .replace(/\'|\"/g, '');
-    return parameterized;
-  }
-};
-
-
 /**
  * Abstract connector
  */
-var BaseConnector = SKMObject.extend(Subscribable, ParametersBuilder, {
+var BaseConnector = SKMObject.extend(Subscribable, {
   /**
    * Transport type object
    * @type {WSWrapper, XHRWrapper} an instance of a Transport type
