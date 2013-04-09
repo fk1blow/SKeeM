@@ -19,12 +19,10 @@ var MessagesHandler = {
     // for every item in the update/reconfirmation array
     for ( i = 0; i < len; i++ ) {
       messageUpdateItem = dataObj[i];
-
       // each message update object key - subscription/MBEAN/error
       for ( itemKey in messageUpdateItem ) {
         // the value of the current itemKey
         itemVal = messageUpdateItem[itemKey];
-
         // If the subscription is incorrect, assume it will trigger an error
         if ( itemKey == 'subscription' )
           this.handleSubscriptionConfirmation(itemVal);
@@ -62,15 +60,15 @@ var MessagesHandler = {
 
   // If the subscription is incorrect, assume it will trigger an error
   handleSubscriptionConfirmation: function(confirmedList) {
-    var subscription = null, confirm = true;
+    var subscription = null;
     Logger.debug('%cMessagesHandler.handleSubscriptionConfirmation',
       'color:red', confirmedList);
 
-    for ( subscription in confirmedList ) {
-      Logger.debug('confirmed subscription : ', subscription);
-      confirm = confirmedList[subscription];
-      this.getChannelsList().confirmSubscription(subscription, confirm);
-    }
+      for ( subscription in confirmedList ) {
+        Logger.debug('confirmed subscription : ', subscription);
+        this.getChannelsListObject()
+          .confirmChannel(subscription, confirmedList[subscription]);
+      }
   },
 
   // @todo move method definition to RTFApi.js
@@ -87,17 +85,17 @@ var MessagesHandler = {
    * For the time being, just log the event
    */
   handleConnectorDeactivated: function() {
-    Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
+    Logger.debug('%cMessagesHandler.handleConnectorDeactivated', 'color:red');
   },
 
   // @todo add handler from ChannelsHandler
   handleMbeanMessage: function(message) {
-    Logger.debug('%cApiHandlersDelegate.handleMbeanMessage',
+    Logger.debug('%cMessagesHandler.handleMbeanMessage',
       'color:red', message);
   },
 
   handleUpdateBatchId: function(batchId) {
-    Logger.debug('RTFApi.handleUpdateBatchId', batchId);
+    Logger.debug('MessagesHandler.handleUpdateBatchId', batchId);
     this._connectorsUrlModel.alter('batchId', batchId);
     // Dude, you must set the current object property too, so when you'll
     // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
