@@ -28,7 +28,8 @@ var WebSocketConnector = BaseConnector.extend({
     Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
 
     if ( opt.initialParameters ) {
-      paramMessage = this.parameterizeForWS(opt.initialParameters);
+      // paramMessage = this.parameterizeForWS(opt.initialParameters);
+      paramMessage = opt.initialParameters;
       // after link established, build the parameter object
       // and send it through the transport
       this.transport.on('link:opened', function() {
@@ -81,9 +82,9 @@ var WebSocketConnector = BaseConnector.extend({
     this.transport.send(message);
   },
 
-  sendParameters: function(parametersList) {
+  /*sendParameters: function(parametersList) {
     this.sendMessage(this.parameterizeForWS(parametersList));
-  },
+  },*/
 
   
   /*

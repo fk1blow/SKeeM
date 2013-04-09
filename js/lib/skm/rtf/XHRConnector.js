@@ -28,7 +28,7 @@ var XHRConnector = BaseConnector.extend({
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
     
     if ( opt.initialParameters ) {
-      paramMessage = this.parameterizeForXHR(opt.initialParameters);
+      paramMessage = opt.initialParameters;
       Logger.debug('%csending parameters', 'color:red', paramMessage);
     }
 
@@ -68,12 +68,12 @@ var XHRConnector = BaseConnector.extend({
 
   sendMessage: function(message) {
     Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', message);
-    this.transport.sendMessage(message);
+    this.transport.sendMessage({ message: message });
   },
 
-  sendParameters: function(parametersList) {
+  /*sendParameters: function(parametersList) {
     this.sendMessage(this.parameterizeForXHR(parametersList));
-  },
+  },*/
 
   
   /*
