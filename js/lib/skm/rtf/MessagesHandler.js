@@ -60,14 +60,15 @@ var MessagesHandler = {
 
   // If the subscription is incorrect, assume it will trigger an error
   handleSubscriptionConfirmation: function(confirmedList) {
-    var subscription = null;
+    var subscription = null, state;
     Logger.debug('%cMessagesHandler.handleSubscriptionConfirmation',
       'color:red', confirmedList);
 
       for ( subscription in confirmedList ) {
         Logger.debug('confirmed subscription : ', subscription);
-        this.getChannelsListObject()
-          .confirmChannel(subscription, confirmedList[subscription]);
+        state = confirmedList[subscription];
+        this.getChannelsListObject().confirmChannel(subscription, state);
+        this.fire('confirmed:' + subscription, state);
       }
   },
 
