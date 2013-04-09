@@ -14,6 +14,7 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
+  'skm/util/Timer',
   'skm/util/Subscribable',
   'skm/net/WSWrapper',
   'skm/net/XHRWrapper',
@@ -21,7 +22,7 @@ define(['skm/k/Object',
   'skm/rtf/XHRConnector',
   'skm/rtf/WSConnector',
   'skm/rtf/MessagesHandler'],
-  function(SKMObject, SKMLogger, Subscribable, WSWrapper, XHRWrapper,
+  function(SKMObject, SKMLogger, SKMTimer, Subscribable, WSWrapper, XHRWrapper,
            ConnectorManager, XHRConnector, WSConnector, MessagesHandler)
 {
 'use strict';
@@ -96,6 +97,22 @@ var ChannelsList = {
 
   getCurrentList: function() {
     return this._currentList;
+  },
+
+  toStringifiedJson: function() {
+    var item, first = true, parameterized = 'subscribe:{';
+    var list = this._currentList;
+    for ( item in list ) {
+      if (!first) {
+        parameterized+= ',';
+      }
+      parameterized += item;
+      first = false;
+    }
+    parameterized += '}';
+    parameterized += 'params:' + JSON.stringify(list)
+      .replace(/\'|\"/g, '');
+    return parameterized;
   }
 };
 
@@ -182,6 +199,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   _messagesHandler: null,
 
+  _beaconTimer: null,
+
   connectorsManager: null,
 
   initialize: function(options) {
@@ -194,6 +213,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this._createConnectorManager();
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
+    // start the beacon
+    // this._startBeaconTimer();
   },
 
 
@@ -214,7 +235,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     }
     // Start the connectors, if any available
     this.connectorsManager.startConnectors({
-      initialParameters: ChannelsList.getCurrentList()
+      initialParameters: ChannelsList.toStringifiedJson()
     });
   },
 
@@ -229,8 +250,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       // Add subscription
       ChannelsList.addChannel(channel);
       // send message to connector
-      if ( connector = this.connectorsManager.getActiveConnector() )
-        connector.sendParameters(ChannelsList.getCurrentList());
+      // if ( connector = this.connectorsManager.getActiveConnector() )
+        this.sendMessage(ChannelsList.toStringifiedJson());
     }
   },
   
@@ -251,7 +272,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
   
 
-  stopConnectors: function() {
+  stopActiveConnector: function() {
     this.connectorsManager.stopConnectors();
   },
 
@@ -310,6 +331,12 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   _getIncrementedBatchId: function() {
     var bid = this._batchId++
     return bid;
+  },
+
+  _startBeaconTimer: function() {
+    /*this._beaconTimer = SKMTimer.create({
+      tickInterval: //
+    })*/
   }
 });
 
