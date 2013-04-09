@@ -1,9 +1,5 @@
 /*
 
-### add connector [beforeBeginUpdate] method
-  - this method should take care of the beginUpdate and channes/params issues
-  - invokes this method or produce a callback
-
 ### parameterize channels/parameters
   - the parameterization(i guess) of the channels list, must be made
   from a delegates object
@@ -68,8 +64,6 @@ var ChannelsList = {
     }
   }, 
 
-  // Remove subscription from channel list and removes
-  // the item from [_confirmedList] as well
   removeChannel: function(name) {
     var subscription = null;
     if ( name in this._currentList ) {
@@ -80,7 +74,8 @@ var ChannelsList = {
     }
   },
 
-  confirmSubscription: function(channelName, willConfirm) {
+  // @todo move it to the api module
+  confirmChannel: function(channelName, willConfirm) {
     var confirmed = this._confirmedList = this._confirmedList || {};
     var list = this._currentList;
 
@@ -160,8 +155,6 @@ var UrlModel = SKMObject.extend(Subscribable, {
     return this;
   },
 
-  addByKeyAndValue: function(paramObject) {},
-
   remove: function(name) {
     var list = this.getList();
     if ( name in list )
@@ -203,6 +196,12 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this._attachConnectorManagerHandlers();
   },
 
+
+  /*
+    Channels commands
+   */
+
+
   startWithChannels: function(initialChannels) {
     // if no channelList sent, hit them with an error
     if ( !initialChannels || typeof initialChannels !== 'object' ) {
@@ -242,13 +241,13 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.sendMessage('closeSubscription:{' + name + '}');
   },
 
-  getChannelsList: function() {
+  getChannelsListObject: function() {
     return ChannelsList;
   },
 
 
   /*
-    Commands
+    Connectors Commands
    */
   
 
@@ -260,13 +259,13 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.connectorsManager.switchToNextConnector();
   },
 
+  sendMessage: function(message) {
+    this.connectorsManager.sendMessage(message);
+  },
+
   addUrlParameter: function(name, value) {
     this._connectorsUrlModel.add(name, value);
     return this;
-  },
-
-  sendMessage: function(message) {
-    this.connectorsManager.sendMessage(message);
   },
 
 
