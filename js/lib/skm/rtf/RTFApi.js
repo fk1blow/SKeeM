@@ -1,13 +1,7 @@
 /*
 
-### parameterize channels/parameters
-  - the parameterization(i guess) of the channels list, must be made
-  from a delegates object
-  - every connector could mixin a Parameterizer object that will declare
-  a [parameterizeFor] method for every type of connector
+//
 
-### don't add url to connectorsUrlModel anymore
-  - this._connectorsUrlModel.add('subscribe', name) - this call should be removed
  */
 
 // RTF Api Manager implementation
@@ -231,6 +225,31 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.connectorsManager.startConnectors({
       initialParameters: ChannelsList.toStringifiedJson()
     });
+    return this;
+  },
+
+  stopUpdates: function() {
+    this.connectorsManager.stopConnectors();
+    return this;
+  },
+
+  resumeUpdates: function() {
+    this.connectorsManager.startConnectors();
+    return this;
+  },
+
+  shutdown: function(optUrl) {
+    var modelUrl, connector = this.connectorsManager.getActiveConnector();
+    if ( connector ) {
+      connector.sendMessage('closeConnection');
+    } else {
+      modelUrl = this._connectorsUrlModel.toQueryString()
+        + '&closeConnection=true';
+
+      connector = XHRWrapper.create({
+        url: optUrl || Config.urls.xhr + modelUrl
+      }).sendMessage();
+    }
   },
 
   addChannel: function(channel) {
@@ -248,6 +267,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       // if ( connector = this.connectorsManager.getActiveConnector() )
         this.sendMessage(ChannelsList.toStringifiedJson());
     }
+    return this;
   },
   
   removeChannel: function(name) {
@@ -255,10 +275,16 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     ChannelsList.removeChannel(name);
     // send message back to server
     this.sendMessage('closeSubscription:{' + name + '}');
+    return this;
   },
 
   getChannelsListObject: function() {
     return ChannelsList;
+  },
+
+  // ??????
+  disconnect: function() {
+    //
   },
 
 
@@ -266,10 +292,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     Connectors Commands
    */
   
-
-  stopActiveConnector: function() {
-    this.connectorsManager.stopConnectors();
-  },
 
   switchToNextConnector: function() {
     this.connectorsManager.switchToNextConnector();
