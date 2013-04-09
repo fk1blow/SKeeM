@@ -27,8 +27,8 @@ var XHRConnector = BaseConnector.extend({
     this.buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
     
-    if ( opt.updateWrapperDelegate ) {
-      paramMessage = opt.updateWrapperDelegate.parameterizeForWS();
+    if ( opt.initialParameters ) {
+      paramMessage = this.parameterizeForXHR(opt.initialParameters);
       Logger.debug('%csending parameters', 'color:red', paramMessage);
     }
 
@@ -57,17 +57,22 @@ var XHRConnector = BaseConnector.extend({
    */
   
 
-  sendSubscribeRequest: function(subscribeName, subscribeParams) {
+  // @todo remove or find where it's still used
+  /*sendSubscribeRequest: function(subscribeName, subscribeParams) {
     var json = {};
     json[subscribeName] = subscribeParams;
     var subscribeParamsAsStr = JSON.stringify(json).replace(/\"|\'/g, '');
 
     this.transport.sendMessage(subscribeParamsAsStr);
-  },
+  },*/
 
   sendMessage: function(message) {
     Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', message);
     this.transport.sendMessage(message);
+  },
+
+  sendParameters: function(parametersList) {
+    this.sendMessage(this.parameterizeForXHR(parametersList));
   },
 
   
