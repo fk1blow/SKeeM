@@ -1,30 +1,17 @@
 /*
 
-1 Subscription / Channels
------------------------
+### add connector [beforeBeginUpdate] method
+  - this method should take care of the beginUpdate and channes/params issues
+  - invokes this method or produce a callback
 
-# 1.1 Adding
+### parameterize channels/parameters
+  - the parameterization(i guess) of the channels list, must be made
+  from a delegates object
+  - every connector could mixin a Parameterizer object that will declare
+  a [parameterizeFor] method for every type of connector
 
-  - if a subscription was added, the server api will respond with
-  either a confirmation message, telling that a subscription was added,
-  or by triggering a [message:error], meaning that something went wrong.
-
-  - A "message:error" event is triggered when:
-      1. the subscription name is incorrect
-      2. the subscription params are incorrect
-
-  - Basically, the widget client can assume that a subscription has been
-  successfully registered as long as it doesn't receive an error
-
-
-
-# 1.2 Updating / altering 
-  
-  - on handleBeforeNextSequence
-  - on handleAfterStartConnector
-
-
-
+### don't add url to connectorsUrlModel anymore
+  - this._connectorsUrlModel.add('subscribe', name) - this call should be removed
  */
 
 // RTF Api Manager implementation
@@ -88,6 +75,9 @@ var ChannelsList = {
     if ( name in this._currentList ) {
       delete this._currentList[name];
     }
+    if ( name in this._confirmedList ) {
+      delete this._confirmedList[name];
+    }
   },
 
   confirmSubscription: function(channelName, willConfirm) {
@@ -103,31 +93,14 @@ var ChannelsList = {
   hasSubscribedAndConfirmed: function(name) {
     var list = this._currentList;
     var hasSubscribed = false;
-
     if ( list ) {
       hasSubscribed = (name in list);
     }
     return hasSubscribed;
   },
 
-  parameterizeForXHR: function() {
-    var parameterized = JSON.stringify(this._currentList).replace(/\'|\"/g, '');
-    return parameterized;
-  },
-
-  parameterizeForWS : function() {
-    var item, first = true, parameterized = 'subscribe:{';
-    var list = this._currentList;
-    for ( item in list ) {
-      if (!first) {
-        parameterized+= ',';
-      }
-      parameterized += item;
-      first = false;
-    }
-    parameterized += '}';
-    parameterized += 'params:' + this.parameterizeForXHR();
-    return parameterized;
+  getCurrentList: function() {
+    return this._currentList;
   }
 };
 
@@ -240,9 +213,10 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     for ( var channel in initialChannels ) {
       ChannelsList.addChannel(initialChannels[channel]);
     }
+
     // Start the connectors, if any available
     this._connectorsManager.startConnectors({
-      updateWrapperDelegate: ChannelsList
+      initialParameters: ChannelsList.getCurrentList()
     });
   },
 
@@ -254,28 +228,30 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     if ( ChannelsList.hasSubscribedAndConfirmed(name) ) {
       Logger.error(resubscribeMessage);
     } else {
-      // get active connector
-      connector = this._connectorsManager.getActiveConnector();
+      // @todo remove
       // Added to the connector url model
-      this._connectorsUrlModel.add('subscribe', name);
+      // this._connectorsUrlModel.add('subscribe', name);
       // Add subscription
       ChannelsList.addSubscription(name, optParams);
-      // send a different message for every connector type
-      if ( connector.getType() == 'WebSocket' ) {
+      
+      // @todo the connector should declare a sendParameters method
+      // that will build the channel/parameters accordingly
+      /*if ( connector.getType() == 'WebSocket' ) {
         connector.sendMessage(ChannelsList.parameterizeForWS());
       } else if ( connector.getType() == 'XHR' ) {
         connector.sendMessage(ChannelsList.parameterizeForXHR());
-      }
+      }*/
+      if ( connector = this._connectorsManager.getActiveConnector() )
+        connector.sendParameters(ChannelsList.getCurrentList());
     }
   },
   
   // @todo implement feature
   removeChannel: function(name) {
-    cl(this._connectorsUrlModel)
-    // it shouldn't fire, instead, it should(somehow) remove 
-    // the channel from ChannelsList collection
-    // this.fire('removed:subscription', name);
-    // this._connectorsUrlModel.alter(name, );
+    // remove from Channels list
+    ChannelsList.removeChannel(name);
+    // send message back to server
+    this.sendMessage('unsubscribe:{' + name + '}');
   },
 
   getChannelsList: function() {
@@ -322,14 +298,18 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
   },
 
-  handleBeforeNextSequence: function() {
+
+  // @todo in current implementation, this removing/resetting the connectors
+  // url model for the 'subscribe' key, is useless  
+  /*handleBeforeNextSequence: function() {
     this._connectorsUrlModel.reset('subscribe');
-  },
+  },*/
 
   // @todo subscribe doesn't resides on the connectorUrlsModel
   // instead, remove it from the ChannelsList
   // Actually, it doesn't need to remove the channel name because it will be confirmed
-  // and remove from the [ChannelsList._currentList] collection
+  // and remove from the [ChannelsList._currentList] collection automatically
+  // when it received a confirmation message
   /*handleAfterStartConnector: function() {
     this._connectorsUrlModel.remove('subscribe');
   },*/
@@ -349,16 +329,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     // this.sendMessage('batchId:{' + batchId + '}');
     this.sendMessage('batchId:{' + batchId + '}');
   },
-
-
-  // - adauga urmatoarele linii, in documentatie:
-  // - daca am primit confirmarea unei subscriptii, nu fac nimic
-  // - daca nu se primeste, atunci widgetul poate presupune ca a survenit o eroare
-
-  // @todo handle confirmation and batch id different for every connector type
-  // If current connector is XHR, prepare both batchID and
-  // Reconfirmation messages, before sendinf them using [sendMessage]
-
 
 
   /*
@@ -392,8 +362,10 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       this.handleConnectorDeactivated, this);
 
     // reset subscriptions before next sequence begins
-    this._connectorsManager.on('before:nextSequence',
-      this.handleBeforeNextSequence, this);
+    // @todo remove - don't need to reset the url model's subscribe key
+    // because 'subscribe' won't be added to the url anymore
+    /*this._connectorsManager.on('before:nextSequence',
+      this.handleBeforeNextSequence, this);*/
 
     // remove subscribtions after every connector has began update
     this._connectorsManager.on('after:startConnector',
