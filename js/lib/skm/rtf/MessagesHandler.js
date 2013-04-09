@@ -67,7 +67,7 @@ var MessagesHandler = {
       'color:red', confirmedList);
 
     for ( subscription in confirmedList ) {
-      Logger.debug('%cconfirmed subscription : ', 'color:red', subscription);
+      Logger.debug('confirmed subscription : ', subscription);
       confirm = confirmedList[subscription];
       this.getChannelsList().confirmSubscription(subscription, confirm);
     }
