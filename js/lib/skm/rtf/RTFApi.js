@@ -207,6 +207,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this._createConnectorManager();
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
+    // prepare before unload auto disconnect
+    this._prepareSyncOnUnload();
     // start the beacon
     // this._startBeaconTimer();
   },
@@ -354,6 +356,13 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     /*this._beaconTimer = SKMTimer.create({
       tickInterval: //
     })*/
+  },
+
+  _prepareSyncOnUnload: function() {
+    var that = this;
+    window.onbeforeunload = function() {
+      that.shutdown();
+    }
   }
 });
 
