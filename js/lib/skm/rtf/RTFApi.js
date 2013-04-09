@@ -90,11 +90,11 @@ var ChannelsList = {
     }
   },
 
-  hasSubscribedAndConfirmed: function(name) {
-    var list = this._currentList;
+  hasSubscribedAndConfirmed: function(channelObj) {
+    var list = this._confirmedList;
     var hasSubscribed = false;
     if ( list ) {
-      hasSubscribed = (name in list);
+      hasSubscribed = (channelObj['name'] in list);
     }
     return hasSubscribed;
   },
@@ -187,9 +187,9 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   _connectorsUrlModel: null,
 
-  _connectorsManager: null,
-
   _messagesHandler: null,
+
+  connectorsManager: null,
 
   initialize: function(options) {
     Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
@@ -214,23 +214,23 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       ChannelsList.addChannel(initialChannels[channel]);
     }
     // Start the connectors, if any available
-    this._connectorsManager.startConnectors({
+    this.connectorsManager.startConnectors({
       initialParameters: ChannelsList.getCurrentList()
     });
   },
 
-  addChannel: function(name, optParams) {
+  addChannel: function(channel) {
     var connector = null;
     var resubscribeMessage = 'Channel "' + name + '" already subscribed.'
       + ' Unsubscribe then subscribe again.';
 
-    if ( ChannelsList.hasSubscribedAndConfirmed(name) ) {
+    if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
       Logger.error(resubscribeMessage);
     } else {
       // Add subscription
-      ChannelsList.addChannel(name);
+      ChannelsList.addChannel(channel);
       // send message to connector
-      if ( connector = this._connectorsManager.getActiveConnector() )
+      if ( connector = this.connectorsManager.getActiveConnector() )
         connector.sendParameters(ChannelsList.getCurrentList());
     }
   },
@@ -252,12 +252,12 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
   
 
-  stopUpdates: function() {
-    this._connectorsManager.stopConnectors();
+  stopConnectors: function() {
+    this.connectorsManager.stopConnectors();
   },
 
   switchToNextConnector: function() {
-    this._connectorsManager.switchToNextConnector();
+    this.connectorsManager.switchToNextConnector();
   },
 
   addUrlParameter: function(name, value) {
@@ -266,56 +266,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   },
 
   sendMessage: function(message) {
-    this._connectorsManager.sendMessage(message);
-  },
-
-
-  /*
-    Handlers
-   */
-  
-
-  /**
-   * Handles when a connector has been deactivated
-   * 
-   * @description Usually, this means the transport could not be
-   * initialized or has tried to reconnect unsuccesfully
-   * For the time being, just log the event
-   */
-  handleConnectorDeactivated: function() {
-    Logger.debug('%cApiHandlersDelegate.handleConnectorDeactivated', 'color:red');
-  },
-
-
-  // @todo in current implementation, this removing/resetting the connectors
-  // url model for the 'subscribe' key, is useless  
-  /*handleBeforeNextSequence: function() {
-    this._connectorsUrlModel.reset('subscribe');
-  },*/
-
-  // @todo subscribe doesn't resides on the connectorUrlsModel
-  // instead, remove it from the ChannelsList
-  // Actually, it doesn't need to remove the channel name because it will be confirmed
-  // and remove from the [ChannelsList._currentList] collection automatically
-  // when it received a confirmation message
-  /*handleAfterStartConnector: function() {
-    this._connectorsUrlModel.remove('subscribe');
-  },*/
-
-  // @todo add handler from ChannelsHandler
-  handleMbeanMessage: function(message) {
-    Logger.debug('%cApiHandlersDelegate.handleMbeanMessage',
-      'color:red', message);
-  },
-
-  handleUpdateBatchId: function(batchId) {
-    Logger.debug('RTFApi.handleUpdateBatchId', batchId);
-    this._connectorsUrlModel.alter('batchId', batchId);
-    // Dude, you must set the current object property too, so when you'll
-    // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
-    this._batchId = batchId;
-    // this.sendMessage('batchId:{' + batchId + '}');
-    this.sendMessage('batchId:{' + batchId + '}');
+    this.connectorsManager.sendMessage(message);
   },
 
 
@@ -325,7 +276,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
  
   _createConnectorManager: function() {
-    var manager = this._connectorsManager = ConnectorManager.create({
+    var manager = this.connectorsManager = ConnectorManager.create({
       sequence: Config.sequence
     });
 
@@ -346,21 +297,15 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   _attachConnectorManagerHandlers: function() {
     // Handle when manager has been deactivated - next/sequence switch
     // or transport issues - issues handled by the manager
-    this._connectorsManager.on('connector:deactivated',
+    this.connectorsManager.on('connector:deactivated',
       this.handleConnectorDeactivated, this);
 
-    // reset subscriptions before next sequence begins
-    // @todo remove - don't need to reset the url model's subscribe key
-    // because 'subscribe' won't be added to the url anymore
-    /*this._connectorsManager.on('before:nextSequence',
-      this.handleBeforeNextSequence, this);*/
-
     // remove subscribtions after every connector has began update
-    this._connectorsManager.on('after:startConnector',
+    this.connectorsManager.on('after:startConnector',
       this.handleAfterStartConnector, this);
 
     // handle the raw incoming message
-    this._connectorsManager.on('update', this.handleMessage, this);
+    this.connectorsManager.on('update', this.handleMessage, this);
   },
 
   _getIncrementedBatchId: function() {
@@ -370,21 +315,23 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 });
 
 
+var ApiSingleton = (function() {
+  var instance = null;
+
+  return {
+    getInstance: function() {
+      if ( instance == null ) {
+        instance = RTFApi.create();
+      }
+      return instance;
+    }
+  }
+}());
+
+
 return {
   Config: Config,
-
-  Api: (function() {
-    var instance = null;
-
-    return {
-      get: function() {
-        if ( instance == null ) {
-          instance = RTFApi.create();
-        }
-        return instance;
-      }
-    }
-  }())
+  Api: ApiSingleton
 };
 
 
