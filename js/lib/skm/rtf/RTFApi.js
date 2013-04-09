@@ -203,7 +203,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this._attachConnectorManagerHandlers();
   },
 
-  startUpdates: function(initialChannels) {
+  startWithChannels: function(initialChannels) {
     // if no channelList sent, hit them with an error
     if ( !initialChannels || typeof initialChannels !== 'object' ) {
       throw new TypeError('RTFApi.startUpdates :: unable to start updates'
@@ -213,7 +213,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     for ( var channel in initialChannels ) {
       ChannelsList.addChannel(initialChannels[channel]);
     }
-
     // Start the connectors, if any available
     this._connectorsManager.startConnectors({
       initialParameters: ChannelsList.getCurrentList()
@@ -228,30 +227,19 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     if ( ChannelsList.hasSubscribedAndConfirmed(name) ) {
       Logger.error(resubscribeMessage);
     } else {
-      // @todo remove
-      // Added to the connector url model
-      // this._connectorsUrlModel.add('subscribe', name);
       // Add subscription
-      ChannelsList.addSubscription(name, optParams);
-      
-      // @todo the connector should declare a sendParameters method
-      // that will build the channel/parameters accordingly
-      /*if ( connector.getType() == 'WebSocket' ) {
-        connector.sendMessage(ChannelsList.parameterizeForWS());
-      } else if ( connector.getType() == 'XHR' ) {
-        connector.sendMessage(ChannelsList.parameterizeForXHR());
-      }*/
+      ChannelsList.addChannel(name);
+      // send message to connector
       if ( connector = this._connectorsManager.getActiveConnector() )
         connector.sendParameters(ChannelsList.getCurrentList());
     }
   },
   
-  // @todo implement feature
   removeChannel: function(name) {
     // remove from Channels list
     ChannelsList.removeChannel(name);
     // send message back to server
-    this.sendMessage('unsubscribe:{' + name + '}');
+    this.sendMessage('closeSubscription:{' + name + '}');
   },
 
   getChannelsList: function() {
