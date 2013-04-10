@@ -142,7 +142,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   pingInterval: 10 * 1000, // 10 seconds
 
   /**
-   * Represents the native socket instance 
+   * Represents the native WebSocket instance 
    * @type {WebSocket}
    */
   _nativeSocket: null,
