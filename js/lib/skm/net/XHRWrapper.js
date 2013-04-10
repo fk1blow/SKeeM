@@ -59,6 +59,8 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	httpMethod: 'POST',
 
 	dataType: 'JSON',
+	
+	async: true,
 
 	_wrapper: null,
 
@@ -140,6 +142,10 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 			context: this,
 
 			type: methodType,
+			
+			async: false,
+			
+			timeout: 0,
 
 			// The type of data that you're expecting back from the server
 			dataType: dataType,

@@ -240,16 +240,18 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     return this;
   },
 
-  shutdown: function(optUrl) {
+  shutdown: function(options) {
+  var opt = options || {};
     var modelUrl, connector = this.connectorsManager.getActiveConnector();
-    if ( connector ) {
+    if ( false ) {
       connector.sendMessage('closeConnection');
     } else {
       modelUrl = this._connectorsUrlModel.toQueryString()
         + '&closeConnection=true';
 
       connector = XHRWrapper.create({
-        url: optUrl || Config.urls.xhr + modelUrl
+        url: opt.url || Config.urls.xhr + modelUrl,
+        async: false
       }).sendMessage();
     }
   },
@@ -282,11 +284,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   getChannelsListObject: function() {
     return ChannelsList;
-  },
-
-  // ??????
-  disconnect: function() {
-    //
   },
 
 
@@ -361,7 +358,13 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   _prepareSyncOnUnload: function() {
     var that = this;
     window.onbeforeunload = function() {
-      that.shutdown();
+      that.shutdown({ async: true });
+      var delay = 10;
+      var start = new Date().getTime();
+//      confirm('shutdown');
+//      while (new Date().getTime() < start + delay){
+        //do Nothing // wait
+//      };
     }
   }
 });
