@@ -5,10 +5,9 @@ define(['skm/k/Object',
   'skm/util/Logger',
   'skm/util/Subscribable',
   'skm/util/Timer',
-  'skm/net/WSNativeWrapper',
   'skm/net/WSHandler'],
   function(SKMObject, SKMLogger, Subscribable,
-    SKMTimer, WSNativeWrapper, WSHandler)
+    SKMTimer, WSHandler)
 {
 'use strict';
 
@@ -22,6 +21,10 @@ var WebsocketStates = {
   CLOSING: 2,
   CLOSED: 3
 };
+
+
+var NoNativeImplementation = 'No native WebSocket implementation found;'
++ ' WebSocket not available!';
 
 
 var iDevice = function() {
@@ -139,16 +142,14 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   pingInterval: 10 * 1000, // 10 seconds
 
   /**
-   * The native wrapper implementation object
-   * @type {WSNativeWrapper}
-   * @private
+   * Represents the native socket instance 
+   * @type {WebSocket}
    */
-  _nativeWrapper: null,
+  _nativeSocket: null,
 
   /**
    * Event handler/delegate object
    * @type {WSHandler}
-   * @private
    */
   _connectionHandler: null,
 
@@ -158,7 +159,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     Logger.debug('%cnew WSWrapper', 'color:#A2A2A2');
     this._timerPing = Timer.create({ tickInterval: this.pingInterval, ticks: 0 });
     this._timerPing.on('tick', this.ping, this);
-    this._initNativeWrapper();
+    this._nativeSocket = null;
     this._initConnectionHandler();
   },
 
@@ -185,7 +186,7 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   },
 
   send: function(message) {
-    var socketObject = this._nativeWrapper.getSocketObject();
+    var socketObject = this._nativeSocket;
     // If the socket is not ready or not created yet
     if ( socketObject === null || !this.isOpened() ) {
       Logger.info('WSWrapper.send : unable to send message; invalid'
@@ -221,21 +222,27 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
   /**
    * Queries
    */
+  
+  getConnectionState: function() {
+    if ( this._nativeSocket )
+      return this._nativeSocket.readyState;
+    return null;
+  },
 
   isConnecting: function() {
-    return this._nativeWrapper.getConnectionState() === 0;
+    return this.getConnectionState() === 0;
   },
 
   isOpened: function() {
-    return this._nativeWrapper.getConnectionState() === 1;
+    return this.getConnectionState() === 1;
   },
 
   isClosing: function() {
-    return this._nativeWrapper.getConnectionState() === 2;
+    return this.getConnectionState() === 2;
   },
 
   isClosed: function() {
-    return this._nativeWrapper.getConnectionState() === 3;
+    return this.getConnectionState() === 3;
   },
 
   isReconnecting: function() {
@@ -247,24 +254,23 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
    */
   
   _startConnecting: function() {
-    var socket = this._nativeWrapper.createSocket(this.url, this.protocols);
+    var socket = this._createNativeSocket(this.url, this.protocols);
     if ( socket == null )
       this.fire('implementation:missing')._stopConnecting();
     else {
-      this._connectionHandler
-        .attachListenersTo(socket)
+      this._connectionHandler.attachListenersTo(socket)
         .startConnectingAttempt();
     }
   },
 
   _stopConnecting: function() {
     this._connectionHandler.stopConnectingAttempt();
-    this._nativeWrapper.destroySocket();
+    this._destroyNativeSocket();
   },
 
   _startReconnecting: function() {
     this._connectionHandler.holdConnectingAttempt();
-    this._nativeWrapper.destroySocket();
+    this._destroyNativeSocket();
   },
 
   _initPingTimer: function() {
@@ -277,8 +283,42 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     }
   },
 
-  _initNativeWrapper: function(url, protocols) {
-    this._nativeWrapper = WSNativeWrapper.create();
+  _getProperNativeConstructor: function() {
+    var c = null;
+    if ('WebSocket' in window)
+      c = WebSocket;
+    else if ('MozWebSocket' in window)
+      c = MozWebSocket;
+    return c;
+  },
+
+  _createNativeSocket: function(url, protocols) {
+    var ctor = null
+    // if no url given, throw error
+    if ( !arguments.length ) {
+      throw new TypeError(ErrorMessages.MISSSING_URL);
+    }
+    // check the designated constructor
+    ctor = this._getProperNativeConstructor();
+    if ( ctor === null ) {
+      Logger.debug('%cWSWrapper._createNativeSocket : '
+        + NoNativeImplementation, 'red');
+    }
+    // If no native implementation found, return null
+    if ( ctor == null )
+      return ctor;
+    // assign the native socket and return it
+    return this._nativeSocket = (protocols)
+      ? new ctor(url, protocols) 
+      : new ctor(url);
+  },
+
+  _destroyNativeSocket: function() {
+    if ( !this._nativeSocket )
+      return false;
+    this._nativeSocket.close();
+    this._nativeSocket = null;
+    return true;
   },
 
   _initConnectionHandler: function() {
