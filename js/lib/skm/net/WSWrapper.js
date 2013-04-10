@@ -308,9 +308,8 @@ var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
     if ( ctor == null )
       return ctor;
     // assign the native socket and return it
-    return this._nativeSocket = (protocols)
-      ? new ctor(url, protocols) 
-      : new ctor(url);
+    this._nativeSocket = (protocols) ? new ctor(url, protocols) : new ctor(url);
+    return this._nativeSocket;
   },
 
   _destroyNativeSocket: function() {
