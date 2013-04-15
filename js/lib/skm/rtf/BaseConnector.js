@@ -30,10 +30,10 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   transport: null,
 
   /**
-   * Base url for the given transport
-   * @type {String}
+   * Transport's own configuration options
+   * @type {Object}
    */
-  urlBase: null,
+  transportOptions: null,
 
   /**
    * Object that models the url and 
@@ -41,11 +41,6 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    * @type {Object}
    */
   urlParamModel: null,
-
-  initialize: function() {
-    console.log('%cnew Connector', 'color:#a2a2a2');
-    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
-  },
 
   /**
    * @abstract
@@ -114,12 +109,12 @@ var BaseConnector = SKMObject.extend(Subscribable, {
 
   /**
    * Builds the transport utl, based on
-   * urlParams and urlBase fields
+   * urlParams and transportBaseUrl fields
    */
   buildTransportUrl: function() {
     // console.log('%cConnector.buildTransportUrl : ', 'color:red', this._typeName);
     var qs = this.urlParamModel.toQueryString();
-    this.transport.url = this.urlBase + qs;
+    this.transport.url = this.transportOptions.url + qs;
   },
 
   getType: function() {
