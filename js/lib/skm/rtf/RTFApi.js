@@ -10,14 +10,12 @@ define(['skm/k/Object',
   'skm/util/Logger',
   'skm/util/Timer',
   'skm/util/Subscribable',
-  'skm/net/WSWrapper',
-  'skm/net/XHRWrapper',
   'skm/rtf/ConnectorManager',
   'skm/rtf/XHRConnector',
   'skm/rtf/WSConnector',
   'skm/rtf/MessagesHandler'],
-  function(SKMObject, SKMLogger, SKMTimer, Subscribable, WSWrapper, XHRWrapper,
-           ConnectorManager, XHRConnector, WSConnector, MessagesHandler)
+  function(SKMObject, SKMLogger, SKMTimer, Subscribable, ConnectorManager, 
+    XHRConnector, WSConnector, MessagesHandler)
 {
 'use strict';
 
@@ -223,6 +221,10 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
   
 
+  /**
+   * Stops the connectors updates
+   * @return {Object} current context
+   */
   startUpdates: function() {
     this.connectorsManager.startConnectors();
     return this;
@@ -237,18 +239,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
   stopUpdates: function() {
     this.connectorsManager.stopConnectors();
-    return this;
-  },
-
-  /**
-   * Resumes the connectors updates
-   * 
-   * @description tries to resume update by re/starting the 
-   * connector and its transport
-   * @return {Objet} current context
-   */
-  resumeUpdates: function() {
-    this.connectorsManager.startConnectors();
     return this;
   },
 
@@ -314,8 +304,9 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     return ChannelsList;
   },
 
-  getConnectorsUrlModel: function() {
-    return this._connectorsUrlModel;
+  addUrlParameter: function(name, value) {
+    this._connectorsUrlModel.add(name, value);
+    return this;
   },
 
 
@@ -338,10 +329,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.connectorsManager.on('connector:deactivated',
       this.handleConnectorDeactivated, this);
 
-    // remove subscribtions after every connector has began update
-    this.connectorsManager.on('after:startConnector',
-      this.handleAfterStartConnector, this);
-
     // handle the raw incoming message
     this.connectorsManager.on('update', this.handleMessage, this);
 
@@ -363,6 +350,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       name = ConnectorsAvailable[item]['name'];
       // sequence connector constructor function
       type = ConnectorsAvailable[item]['reference'];
+      
       // if connector not already registered
       if ( manager.getConnector(name) == null ) {
         // create the connector and register to manage
@@ -371,7 +359,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
           transportOptions: Config[name]
         }));
       }
-    
     }
   },
 
