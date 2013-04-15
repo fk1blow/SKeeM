@@ -112,9 +112,12 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    * urlParams and transportBaseUrl fields
    */
   buildTransportUrl: function() {
-    // console.log('%cConnector.buildTransportUrl : ', 'color:red', this._typeName);
-    var qs = this.urlParamModel.toQueryString();
-    this.transport.url = this.transportOptions.url + qs;
+    // @todo add below condition when lazy-instantiate
+    // transport and transport wrappers
+    // if ( this.transport ) {
+      var qs = this.urlParamModel.toQueryString();
+      this.transport.url = this.transportOptions.url + qs;
+    // }
   },
 
   getType: function() {
