@@ -25,18 +25,9 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-// var xxx_ConnectorsAvailable = {
-//   name: 'WebSocket',
-//   reference: WSConnector
-// }, {
-//   name: 'XHR',
-//   reference: XHRConnector
-// }];
-
-
 var ConnectorsAvailable = {
-  'WebSocket': {name: 'WebSocket', reference: WSConnector},
-  'XHR': {name: 'XHR', reference: XHRConnector}
+  'WebSocket': {name: 'WebSocket', reference: WSConnector, activated: false},
+  'XHR': {name: 'XHR', reference: XHRConnector, activated: false}
 };
 
 
@@ -220,14 +211,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this._connectorsUrlModel.add('batchId', this._batchId);
     // creates the connector manager
     this._buildConnectorManager();
-
-    // @todo remove declaration from initialize method
-    // build connectors and add them to the manager
-    // this._buildConnectorsList();
-    
-
-    // attaches connector handlers
-    this._attachConnectorManagerHandlers();
+    // build connectors and register them
+    this._buildConnectorsList();
     // prepare before unload auto disconnect
     this._prepareSyncOnUnload();
   },
@@ -239,8 +224,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   
 
   startUpdates: function() {
-    this._buildConnectorsList();
-    // this.connectorsManager.startConnectors();
+    this.connectorsManager.startConnectors();
   },
 
   /**
@@ -301,25 +285,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
 
 
-   // @todo refactor/rebuild
-  xxx_startWithChannels: function(channelsList) {
-    // if no channelList sent, hit them with an error
-    if ( !channelsList || typeof channelsList !== 'object' ) {
-      throw new TypeError('RTFApi.startUpdates :: unable to start updates'
-        + ' without a subscription list');
-    }
-    // Add every channel in list to the ChannelList collection object
-    for ( var channel in channelsList ) {
-      ChannelsList.addChannel(channelsList[channel]);
-    }
-    // Start the connectors, if any available
-    this.connectorsManager.startConnectors({
-      initialParameters: ChannelsList.toStringifiedJson()
-    });
-
-    return this;
-  },
-
   addChannel: function(channel) {
     var activeConnector = null;
     // @todo trigger an event that tells the widget
@@ -335,25 +300,6 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
         activeConnector.sendMessage(ChannelsList.toStringifiedJson());
     }
   },
-
-  xxx_addChannel: function(channel) {
-    var connector = null;
-    var resubscribeMessage = 'Channel "' + channel + '" already subscribed.'
-      + ' Unsubscribe then subscribe again.';
-
-    if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
-      // @todo trigger an event that tells the widget
-      // that the channel was already subscribed/confirmed
-      Logger.error(resubscribeMessage);
-    } else {
-      // Add subscription
-      ChannelsList.addChannel(channel);
-      // send message to connector
-      if ( connector = this.connectorsManager.getActiveConnector() )
-        connector.sendMessage(ChannelsList.toStringifiedJson());
-    }
-    return this;
-  },
   
   removeChannel: function(name) {
     // remove from Channels list
@@ -367,15 +313,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     return ChannelsList;
   },
 
-
-
-
-
-
-
-  addUrlParameter: function(name, value) {
-    this._connectorsUrlModel.add(name, value);
-    return this;
+  getConnectorsUrlModel: function() {
+    return this._connectorsUrlModel;
   },
 
 
@@ -388,41 +327,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.connectorsManager = ConnectorManager.create({
       sequence: Config.sequence
     });
-  },
-
-  _buildConnectorsList: function() {
-    var connectorList = {}, urlModel = this._connectorsUrlModel,
-      manager = this.connectorsManager;
-    var item, name = null, type = null;
-    var len = Config.sequence.length;
-
-
-    for ( var i = 0; i < len; i++ ) {
-      item = Config.sequence[i];
-      name = ConnectorsAvailable[item]['name'];
-      type = ConnectorsAvailable[item]['reference'];
-
-       manager.registerConnector(name, type.create({
-        urlParamModel: urlModel,
-        transportOptions: Config[name]
-      })); 
-    }
-
-    // @todo remove
-    /*this.connectorsManager.registerConnector('WebSocket', WSConnector.create({
-      urlBase: Config.urls.ws,
-      urlParamModel: this._connectorsUrlModel
-    })).addTransport(WSWrapper.create({
-      reconnectAttempts: Config.wsReconnectAttempts,
-      pingServer: true
-    }));
-
-
-    // @todo remove
-    manager.registerConnector('XHR', XHRConnector.create({
-      urlBase: Config.urls.xhr,
-      urlParamModel: this._connectorsUrlModel
-    })).addTransport(XHRWrapper.create());*/
+    // attach the manager event handlers
+    this._attachConnectorManagerHandlers();
   },
 
   _attachConnectorManagerHandlers: function() {
@@ -439,7 +345,33 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.connectorsManager.on('update', this.handleMessage, this);
 
     // now parse and send channels list
-    this.connectorsManager.on('ready', this.handleConnectorReady, this);
+    this.connectorsManager.on('connector:ready',
+      this.handleConnectorReady, this);
+  },
+
+  _buildConnectorsList: function() {
+    var urlModel = this._connectorsUrlModel,
+        manager = this.connectorsManager;
+    var item, active = false, name = null, type = null;
+    var len = Config.sequence.length;
+    
+    // iterate over the sequence
+    for ( var i = 0; i < len; i++ ) {
+      item = Config.sequence[i];
+      // sequence connector name
+      name = ConnectorsAvailable[item]['name'];
+      // sequence connector constructor function
+      type = ConnectorsAvailable[item]['reference'];
+      // if connector not already registered
+      if ( manager.getConnector(name) == null ) {
+        // create the connector and register to manage
+        manager.registerConnector(name, type.create({
+          urlParamModel: urlModel,
+          transportOptions: Config[name]
+        }));
+      }
+    
+    }
   },
 
   _getIncrementedBatchId: function() {
