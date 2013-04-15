@@ -225,6 +225,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   startUpdates: function() {
     this.connectorsManager.startConnectors();
+    return this;
   },
 
   /**
