@@ -3,8 +3,9 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/rtf/BaseConnector'],
-  function(SKMObject, SKMLogger, BaseConnector)
+  'skm/rtf/BaseConnector',
+  'skm/net/XHRWrapper'],
+  function(SKMObject, SKMLogger, BaseConnector, XHRWrapper)
 {
 'use strict';
 
@@ -21,6 +22,12 @@ var ConnectorErrors = {
 
 var XHRConnector = BaseConnector.extend({
   _typeName: 'XHR',
+
+  initialize: function() {
+    Logger.debug('%cnew XHRConnector', 'color:#a2a2a2');
+    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+    this.addTransport(XHRWrapper.create(this.transportOptions));
+  },
 
   beginUpdate: function(options) {
     var opt = options || {}, paramMessage = null;

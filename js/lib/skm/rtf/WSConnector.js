@@ -3,8 +3,9 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/rtf/BaseConnector'],
-  function(SKMObject, SKMLogger, BaseConnector)
+  'skm/rtf/BaseConnector',
+  'skm/net/WSWrapper'],
+  function(SKMObject, SKMLogger, BaseConnector, WSWrapper)
 {
 'use strict';
 
@@ -19,11 +20,28 @@ var ConnectorErrors = {
 }
 
 
-var WebSocketConnector = BaseConnector.extend({
+var WSConnector = BaseConnector.extend({
   _typeName: 'WebSocket',
 
+  initialize: function() {
+    Logger.debug('%cnew WSConnector', 'color:#a2a2a2');
+    // create the transport wrapper
+    // @todo create transport on demand - @beginUpdate
+    // check if transport was instantiated, else create it 
+    this.addTransport(WSWrapper.create(this.transportOptions));
+    // attach url param model events
+    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+  },
+
   beginUpdate: function(options) {
+    Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
+    this.transport.connect();
+    return this;
+  },
+
+  xxx_beginUpdate: function(options) {
     var opt = options || {}, paramMessage = null;
+
     this.buildTransportUrl();
     Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
 
@@ -57,6 +75,8 @@ var WebSocketConnector = BaseConnector.extend({
   addTransportListeners: function() {
     // connection dropped by server
     this.transport.on('link:closed', this.hanleLinkClosed, this);
+    // connection established
+    this.transport.on('link:opened', this.handleLinkOpened, this);
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
     // unable to connect through provided transport(various reasons)
@@ -81,10 +101,6 @@ var WebSocketConnector = BaseConnector.extend({
     Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
     this.transport.send(message);
   },
-
-  /*sendParameters: function(parametersList) {
-    this.sendMessage(this.parameterizeForWS(parametersList));
-  },*/
 
   
   /*
@@ -138,11 +154,22 @@ var WebSocketConnector = BaseConnector.extend({
       this.fire('api:error', message);
     }
     this.fire('api:error');
+  },
+
+  /**
+   * Triggered when the transport is ready
+   *
+   * @description when the transport is ready to send messages
+   * this methods signals this by triggerring a 'api:ready'
+   * @return {[type]} [description]
+   */
+  handleLinkOpened: function() {
+    this.fire('connector:ready');
   }
 });
 
 
-return WebSocketConnector;
+return WSConnector;
 
 
 });
