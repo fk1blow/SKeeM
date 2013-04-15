@@ -79,9 +79,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * using default method type - 'GET'
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	sendMessage: function(message) {
+	sendMessage: function(message, options) {
 		Logger.info('XHRWrapper.send');
-		this._doRequest(message);
+		this._doRequest(message, options);
 		return this;
 	},
 
@@ -89,9 +89,11 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * Send a message using a GET request
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	sendGetRequest: function(message) {
+	sendGetRequest: function(message, options) {
 		Logger.info('XHRWrapper.sendGetRequest');
-		this._doRequest(message, { httpMethod: 'GET' });
+		var opt = options || {};
+		opt.httpMethod = 'GET';
+		this._doRequest(message, opt);
 		return this;
 	},
 
@@ -99,9 +101,11 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * Sends a message using a POST request
 	 * @param  {Object} messageObj the message to be sened
 	 */
-	sendPostRequest: function(message) {
+	sendPostRequest: function(message, options) {
 		Logger.info('XHRWrapper.sendPostRequest');
-		this._doRequest(message, { httpMethod: 'POST' });
+		var opt = options || {};
+		opt.httpMethod = 'POST';
+		this._doRequest(message, opt);
 		return this;
 	},
 
@@ -130,8 +134,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	_doRequest: function(messageData, options) {
 		var opt = options || {};
-		var methodType = opt.httpMethod || this.httpMethod;
-		var dataType = this.dataType;
+		var httpMethod = opt.httpMethod || this.httpMethod;
+		var dataType = opt.dataType || this.dataType;
+		var async = opt.async || this.async;
 
 		// Abort the request if there is one in progress
 		this.abortRequest();
@@ -141,26 +146,16 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 			context: this,
 
-			type: methodType,
+			// http method
+			type: httpMethod,
 			
-			async: false,
-			
-			timeout: 0,
+			async: async,
 
 			// The type of data that you're expecting back from the server
 			dataType: dataType,
 
-			// Data to be sent to the server
-			// data: JSON.stringify({ 'params': { a: 'a', b: 'b' } }),
-			
-			// data: { params: JSON.stringify(messageData) },
-
+			// Data sent to the server
 			data: messageData,
-
-			// data: {
-			// 	'subscribe':'{test,detail}',
-			// 	'params':'{test:{eu:10}}' 
-			// },
 
 			error: function (err) {
 				this.handleOnError(err);
