@@ -89,6 +89,19 @@ var MessagesHandler = {
     Logger.debug('%cMessagesHandler.handleConnectorDeactivated', 'color:red');
   },
 
+  /**
+   * Handler when a connector has becom ready
+   * 
+   * @description usually, triggered whenever a connector
+   * has become ready to send messages
+   */
+  handleConnectorReady: function() {
+    Logger.debug('%cMessagesHandler.handleConnectorReady', 'color:red');
+    // if connector is available
+    if ( this.getChannelsListObject().getCurrentList() )
+      this.sendMessage(this.getChannelsListObject().toStringifiedJson());
+  },
+
   // @todo add handler from ChannelsHandler
   handleMbeanMessage: function(message) {
     Logger.debug('%cMessagesHandler.handleMbeanMessage',
