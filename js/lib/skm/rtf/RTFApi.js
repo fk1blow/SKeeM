@@ -267,7 +267,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       + '&closeConnection=true';
 
     connector = XHRWrapper.create({
-      url: opt.url || Config.XHR.urlModel + modelUrl,
+      url: opt.url || Config.XHR.url + modelUrl,
       async: opt.async
     }).sendMessage();
   },
