@@ -19,20 +19,24 @@ var ManagerDelegates = {
   },
 
   handleConnectorApiError: function() {
-    this.fire('api:error');
+    this.fire('error');
     this._stopCurrentSequence();
   },
 
   handleConnectorApiUpdate: function(message) {
     this.fire('update', message);
+  },
+
+  handleConnectorReady: function() {
+    this.fire('connector:ready');
   }
-}
+};
 
 
 var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   /**
    * List of connector object instances
-   * @type {Object Connector}
+   * @type {Object} a connector instance
    */
   _connectors: null,
 
@@ -51,12 +55,6 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   _activeSequenceIdx: 0,
 
   /**
-   * State of the rtf
-   * @type {Boolean}
-   */
-  started: false,
-
-  /**
    * The default sequence of the connectors
    * @type {Array}
    */
@@ -66,6 +64,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
 
 
   initialize: function() {
+    Logger.debug('%cnew Manager', 'color:#a2a2a2');
     this._connectors = null;
     this._activeConnector = null;
   },
@@ -75,10 +74,13 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * Starts the connectors [beginUpdate]
    * and creates the transports available
    */
-  startConnectors: function(startParams) {
+  startConnectors: function() {
     Logger.info('ConnectorManager.startConnectors');
-    this._startInitialSequence(startParams);
-    this.started = true;
+    if ( this.getActiveConnector() )
+      Logger.error('Unable to start a sequence; connectors already started!');
+    else
+      this._startInitialSequence();
+          
   },
 
   /**
@@ -89,9 +91,9 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    */
   stopConnectors: function() {
     Logger.info('ConnectorManager.stopConnectors');
-    this._stopCurrentSequence();
+    if ( this.getActiveConnector() )
+      this._stopCurrentSequence();
     this._activeConnector = null;
-    this.started = false;
   },
   
   /**
@@ -120,7 +122,11 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * @return {Object}      connector instance
    */
   getConnector: function(type) {
-    return this._connectors[type];
+    var connector = null;
+    if ( this._connectors && type in this._connectors ) {
+      connector = this._connectors[type];
+    }
+    return connector;
   },
 
   /**
@@ -144,6 +150,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * @param  {Object}   context  context object in which
    * handler is being called
    */
+  // @todo remove unused method
   eachConnector: function(callback, context) {
     var connector, list = this._connectors;
     for ( connector in list ) {
@@ -179,21 +186,20 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
    * Starts the initial update sequence
    * when the connectors is at 0(zero) index
    */
-  _startInitialSequence: function(options) {
+  _startInitialSequence: function() {
     var nextConnector, list = this._connectors;
     this._activeSequenceIdx = 0;
     
     if ( list === null || ( list && ! ( this.sequence[0] in list ) ) ) {
       Logger.info('%cConnectorManager : connector list is empty or null',
         'color:red');
-      this.started = false;
       return;
     }
 
     this.fire('before:initialSequence');
 
     this._activeConnector = list[this.sequence[0]];
-    this._startConnector(this._activeConnector, options);
+    this._startConnector(this._activeConnector);
 
     this.fire('after:initialSequence');
   },
@@ -216,7 +222,6 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     } else {
       Logger.debug('ConnectorManager : sequence complete!');
       this._activeConnector = null;
-      this.started = false;
     }
 
     this.fire('after:nextSequence');
@@ -242,7 +247,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     return this.sequence[this._activeSequenceIdx + 1];
   },
 
-  _startConnector: function(connector, options) {
+  _startConnector: function(connector) {
     this.fire('before:startConnector');
     // Stop current connectors and start next one
     connector.on('transport:deactivated',
@@ -251,8 +256,10 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     connector.on('api:error', this.handleConnectorApiError, this);
     // notify of update...
     connector.on('api:update', this.handleConnectorApiUpdate, this);
+    // when is ready to being
+    connector.on('connector:ready', this.handleConnectorReady, this);
     // Begin update connector
-    connector.beginUpdate(options);
+    connector.beginUpdate();
     // ...aaaaaaand, be gone
     this.fire('after:startConnector');
   }
