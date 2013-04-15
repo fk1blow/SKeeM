@@ -25,15 +25,35 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
+// var xxx_ConnectorsAvailable = {
+//   name: 'WebSocket',
+//   reference: WSConnector
+// }, {
+//   name: 'XHR',
+//   reference: XHRConnector
+// }];
+
+
+var ConnectorsAvailable = {
+  'WebSocket': {name: 'WebSocket', reference: WSConnector},
+  'XHR': {name: 'XHR', reference: XHRConnector}
+};
+
+
 var Config = {
   sequence: ['WebSocket', 'XHR'],
 
-  urls: {
-    ws: 'ws://localhost:8080/testws',
-    xhr: 'http://localhost:8080/testajax'
+  // single type config
+  WebSocket: {
+    url: 'ws://localhost:8080/testws',
+    reconnectAttempts: 1,
+    pingServer: true
   },
 
-  wsReconnectAttempts: 3
+  // single type config
+  XHR: {
+    url: 'http://localhost:8080/testajax'
+  }
 };
 
 
@@ -61,10 +81,10 @@ var ChannelsList = {
 
   removeChannel: function(name) {
     var subscription = null;
-    if ( name in this._currentList ) {
+    if ( this._currentList && name in this._currentList ) {
       delete this._currentList[name];
     }
-    if ( name in this._confirmedList ) {
+    if ( this._confirmedList && name in this._confirmedList ) {
       delete this._confirmedList[name];
     }
   },
@@ -191,73 +211,134 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   _connectorsUrlModel: null,
 
-  _messagesHandler: null,
-
-  _beaconTimer: null,
-
   connectorsManager: null,
 
   initialize: function(options) {
-    Logger.debug('%cnew RTFApi', 'color:#A2A2A2');
     // Create the parameters list object
     this._connectorsUrlModel = UrlModel.create();
     // Prepare batchId and add it to the parameterizer
     this._connectorsUrlModel.add('batchId', this._batchId);
     // creates the connector manager
-    this._createConnectorManager();
+    this._buildConnectorManager();
+
+    // @todo remove declaration from initialize method
+    // build connectors and add them to the manager
+    // this._buildConnectorsList();
+    
+
     // attaches connector handlers
     this._attachConnectorManagerHandlers();
     // prepare before unload auto disconnect
     this._prepareSyncOnUnload();
-    // start the beacon
-    // this._startBeaconTimer();
   },
 
-  startWithChannels: function(initialChannels) {
-    // if no channelList sent, hit them with an error
-    if ( !initialChannels || typeof initialChannels !== 'object' ) {
-      throw new TypeError('RTFApi.startUpdates :: unable to start updates'
-        + ' without a subscription list');
-    }
-    // Add every channel in list to the ChannelList collection object
-    for ( var channel in initialChannels ) {
-      ChannelsList.addChannel(initialChannels[channel]);
-    }
-    // Start the connectors, if any available
-    this.connectorsManager.startConnectors({
-      initialParameters: ChannelsList.toStringifiedJson()
-    });
-    return this;
+
+  /*
+    Manager operations
+   */
+  
+
+  startUpdates: function() {
+    this._buildConnectorsList();
+    // this.connectorsManager.startConnectors();
   },
 
+  /**
+   * Stops the connectors updates
+   * 
+   * @description stops the updates and disconnects/interrupts 
+   * current transport, making it avaiable for a resume call.
+   * @return {Object} current context
+   */
   stopUpdates: function() {
     this.connectorsManager.stopConnectors();
     return this;
   },
 
+  /**
+   * Resumes the connectors updates
+   * 
+   * @description tries to resume update by re/starting the 
+   * connector and its transport
+   * @return {Objet} current context
+   */
   resumeUpdates: function() {
     this.connectorsManager.startConnectors();
     return this;
   },
 
+  /**
+   * Shuts down server updates communication
+   * 
+   * @description shuts down communication, stops every connector
+   * and sends a proper message to the server.
+   * @param  {Object} options optionsl shutdown parameters
+   */
   shutdown: function(options) {
-  var opt = options || {};
+    var opt = options || {};
     var modelUrl, connector = this.connectorsManager.getActiveConnector();
-    if ( false ) {
-      connector.sendMessage('closeConnection');
-    } else {
-      modelUrl = this._connectorsUrlModel.toQueryString()
-        + '&closeConnection=true';
+    
+    modelUrl = this._connectorsUrlModel.toQueryString()
+      + '&closeConnection=true';
 
-      connector = XHRWrapper.create({
-        url: opt.url || Config.urls.xhr + modelUrl,
-        async: false
-      }).sendMessage();
+    connector = XHRWrapper.create({
+      url: opt.url || Config.urls.xhr + modelUrl,
+      async: false
+    }).sendMessage();
+  },
+
+  switchToNextConnector: function() {
+    this.connectorsManager.switchToNextConnector();
+  },
+
+  sendMessage: function(message) {
+    this.connectorsManager.sendMessage(message);
+  },
+
+
+  /*
+    Channel operations
+   */
+
+
+   // @todo refactor/rebuild
+  xxx_startWithChannels: function(channelsList) {
+    // if no channelList sent, hit them with an error
+    if ( !channelsList || typeof channelsList !== 'object' ) {
+      throw new TypeError('RTFApi.startUpdates :: unable to start updates'
+        + ' without a subscription list');
     }
+    // Add every channel in list to the ChannelList collection object
+    for ( var channel in channelsList ) {
+      ChannelsList.addChannel(channelsList[channel]);
+    }
+    // Start the connectors, if any available
+    this.connectorsManager.startConnectors({
+      initialParameters: ChannelsList.toStringifiedJson()
+    });
+
+    return this;
   },
 
   addChannel: function(channel) {
-    var resubscribeMessage = 'Channel "' + name + '" already subscribed.'
+    var activeConnector = null;
+    // @todo trigger an event that tells the widget
+    if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
+      // that the channel was already subscribed/confirmed
+      Logger.error('Channel "' + channel + '" already subscribed.'
+        + ' Unsubscribe then subscribe again.');
+    } else {
+      // Add subscription
+      ChannelsList.addChannel(channel);
+      // send message to connector, if a connector is available
+      if ( activeConnector = this.connectorsManager.getActiveConnector() )
+        activeConnector.sendMessage(ChannelsList.toStringifiedJson());
+    }
+  },
+
+  xxx_addChannel: function(channel) {
+    var connector = null;
+    var resubscribeMessage = 'Channel "' + channel + '" already subscribed.'
       + ' Unsubscribe then subscribe again.';
 
     if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
@@ -268,8 +349,8 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       // Add subscription
       ChannelsList.addChannel(channel);
       // send message to connector
-      // if ( connector = this.connectorsManager.getActiveConnector() )
-        this.sendMessage(ChannelsList.toStringifiedJson());
+      if ( connector = this.connectorsManager.getActiveConnector() )
+        connector.sendMessage(ChannelsList.toStringifiedJson());
     }
     return this;
   },
@@ -287,18 +368,10 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   },
 
 
-  /*
-    Connectors Commands
-   */
-  
 
-  switchToNextConnector: function() {
-    this.connectorsManager.switchToNextConnector();
-  },
 
-  sendMessage: function(message) {
-    this.connectorsManager.sendMessage(message);
-  },
+
+
 
   addUrlParameter: function(name, value) {
     this._connectorsUrlModel.add(name, value);
@@ -310,13 +383,33 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     Privates
    */
 
- 
-  _createConnectorManager: function() {
-    var manager = this.connectorsManager = ConnectorManager.create({
+  
+  _buildConnectorManager: function() {
+    this.connectorsManager = ConnectorManager.create({
       sequence: Config.sequence
     });
+  },
 
-    manager.registerConnector('WebSocket', WSConnector.create({
+  _buildConnectorsList: function() {
+    var connectorList = {}, urlModel = this._connectorsUrlModel,
+      manager = this.connectorsManager;
+    var item, name = null, type = null;
+    var len = Config.sequence.length;
+
+
+    for ( var i = 0; i < len; i++ ) {
+      item = Config.sequence[i];
+      name = ConnectorsAvailable[item]['name'];
+      type = ConnectorsAvailable[item]['reference'];
+
+       manager.registerConnector(name, type.create({
+        urlParamModel: urlModel,
+        transportOptions: Config[name]
+      })); 
+    }
+
+    // @todo remove
+    /*this.connectorsManager.registerConnector('WebSocket', WSConnector.create({
       urlBase: Config.urls.ws,
       urlParamModel: this._connectorsUrlModel
     })).addTransport(WSWrapper.create({
@@ -324,10 +417,12 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       pingServer: true
     }));
 
+
+    // @todo remove
     manager.registerConnector('XHR', XHRConnector.create({
       urlBase: Config.urls.xhr,
       urlParamModel: this._connectorsUrlModel
-    })).addTransport(XHRWrapper.create());
+    })).addTransport(XHRWrapper.create());*/
   },
 
   _attachConnectorManagerHandlers: function() {
@@ -342,17 +437,14 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
     // handle the raw incoming message
     this.connectorsManager.on('update', this.handleMessage, this);
+
+    // now parse and send channels list
+    this.connectorsManager.on('ready', this.handleConnectorReady, this);
   },
 
   _getIncrementedBatchId: function() {
     var bid = this._batchId++
     return bid;
-  },
-
-  _startBeaconTimer: function() {
-    /*this._beaconTimer = SKMTimer.create({
-      tickInterval: //
-    })*/
   },
 
   _prepareSyncOnUnload: function() {
