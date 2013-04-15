@@ -23,6 +23,11 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
+var isObject = function(obj) {
+  return Object.prototype.toString.apply(obj) === '[object Object]';
+};
+
+
 var ConnectorsAvailable = {
   'WebSocket': {name: 'WebSocket', reference: WSConnector, activated: false},
   'XHR': {name: 'XHR', reference: XHRConnector, activated: false}
@@ -42,6 +47,10 @@ var Config = {
   // single type config
   XHR: {
     url: 'http://localhost:8080/testajax'
+  },
+
+  Errors: {
+    'add_channel_err': 'RTFApi.addChannel - invalid or malformed channel declaration'
   }
 };
 
@@ -53,8 +62,8 @@ var ChannelsList = {
   
   addChannel: function(channel) {
     var list = this._currentList = this._currentList || {},
-        channelItem, paramItem,
-        channelParams = channel['params'],
+        channelItem, paramItem;
+    var channelParams = channel['params'],
         channelName = channel['name'];
 
     if ( channelName in list ) {
@@ -258,7 +267,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
     connector = XHRWrapper.create({
       url: opt.url || Config.urls.xhr + modelUrl,
-      async: false
+      async: opt.async
     }).sendMessage();
   },
 
@@ -278,6 +287,11 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   addChannel: function(channel) {
     var activeConnector = null;
+   
+    // check if it's an object and has ['name'] inside
+    if ( ! isObject(channel) || ! ('name' in channel) ) {
+      throw new TypeError(Config.Errors.add_channel_err);
+    }
     // @todo trigger an event that tells the widget
     if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
       // that the channel was already subscribed/confirmed
@@ -370,13 +384,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   _prepareSyncOnUnload: function() {
     var that = this;
     window.onbeforeunload = function() {
-      that.shutdown({ async: true });
-      var delay = 10;
-      var start = new Date().getTime();
-//      confirm('shutdown');
-//      while (new Date().getTime() < start + delay){
-        //do Nothing // wait
-//      };
+      that.shutdown({ async: false });
     }
   }
 });
