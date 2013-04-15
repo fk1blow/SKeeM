@@ -10,12 +10,13 @@ define(['skm/k/Object',
   'skm/util/Logger',
   'skm/util/Timer',
   'skm/util/Subscribable',
+  'skm/net/XHRWrapper',
   'skm/rtf/ConnectorManager',
   'skm/rtf/XHRConnector',
   'skm/rtf/WSConnector',
   'skm/rtf/MessagesHandler'],
-  function(SKMObject, SKMLogger, SKMTimer, Subscribable, ConnectorManager, 
-    XHRConnector, WSConnector, MessagesHandler)
+  function(SKMObject, SKMLogger, SKMTimer, Subscribable, XHRWrapper,
+    ConnectorManager, XHRConnector, WSConnector, MessagesHandler)
 {
 'use strict';
 
@@ -266,7 +267,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       + '&closeConnection=true';
 
     connector = XHRWrapper.create({
-      url: opt.url || Config.urls.xhr + modelUrl,
+      url: opt.url || Config.XHR.urlModel + modelUrl,
       async: opt.async
     }).sendMessage();
   },
