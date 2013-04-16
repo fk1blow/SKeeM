@@ -46,7 +46,6 @@ var WrapperMessageDelegates = {
         this._makeReconnectAttempt();
       }
       else {
-        cl('b')
         this.fire('connecting:stopped');
         this._makeReconnectAttempt();
       }
