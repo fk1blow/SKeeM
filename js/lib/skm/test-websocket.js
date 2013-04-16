@@ -16,7 +16,7 @@ console.log('-------------------------------------------------------------------
 
 
 
-var ws = WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 1 });
+var ws = WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 3 });
 
 
 ws.on('all', function() {
