@@ -42,10 +42,11 @@ var WrapperMessageDelegates = {
       }
       // if has been opened before
       else if ( this._linkWasOpened ) {
-        this._isReconnecting = false;
         this.fire('link:interrupted');
+        this._makeReconnectAttempt();
       }
       else {
+        cl('b')
         this.fire('connecting:stopped');
         this._makeReconnectAttempt();
       }
@@ -177,7 +178,7 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   },
   
   _handleAutoReconnect: function() {
-    Logger.debug('autoreconnect attempt #', this._reconnectionAttempt);
+    Logger.debug('handling autoreconnect attempt #', this._reconnectionAttempt);
     this._stopTimers();
     this._closeExpected = false;
     this.fire('reconnecting:started');
