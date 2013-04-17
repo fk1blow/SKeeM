@@ -23,23 +23,19 @@ var ConnectorErrors = {
 var XHRConnector = BaseConnector.extend({
   _typeName: 'XHR',
 
-  initialize: function() {
+  // @todo remove
+  /*initialize: function() {
     Logger.debug('%cnew XHRConnector', 'color:#a2a2a2');
-    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
     this.addTransport(XHRWrapper.create(this.transportOptions));
-  },
+    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+  },*/
 
-  beginUpdate: function(options) {
-    var opt = options || {}, paramMessage = null;
-    this.buildTransportUrl();
+  beginUpdate: function() {
+    // ensure transport type and transport url creation
+    this.ensureTransportCreated(XHRWrapper).buildTransportUrl();
     Logger.debug('XHRConnector.beginUpdate\n', this.transport.url);
-    
-    if ( opt.initialParameters ) {
-      paramMessage = opt.initialParameters;
-      Logger.debug('%csending parameters', 'color:red', paramMessage);
-    }
-
-    this.sendMessage(paramMessage);
+    // because xhr is ready after being instantiated
+    this.fire('connector:ready');
     return this;
   },
 
@@ -64,25 +60,12 @@ var XHRConnector = BaseConnector.extend({
    */
   
 
-  // @todo remove or find where it's still used
-  /*sendSubscribeRequest: function(subscribeName, subscribeParams) {
-    var json = {};
-    json[subscribeName] = subscribeParams;
-    var subscribeParamsAsStr = JSON.stringify(json).replace(/\"|\'/g, '');
-
-    this.transport.sendMessage(subscribeParamsAsStr);
-  },*/
-
   sendMessage: function(message) {
     Logger.debug('%cXHRConnector.sendMessage : ', 'color:red', message);
     this.transport.sendMessage({ message: message });
   },
 
-  /*sendParameters: function(parametersList) {
-    this.sendMessage(this.parameterizeForXHR(parametersList));
-  },*/
 
-  
   /*
     Handlers
   */
