@@ -145,18 +145,11 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
   },
 
   /**
-   * Connectors list iterator
-   * 
-   * @param  {Function} callback handler of iteration
-   * @param  {Object}   context  context object in which
-   * handler is being called
+   * Checks if a connector was registered to connectors list
+   * @return {Boolean} [_connector]
    */
-  // @todo remove unused method
-  eachConnector: function(callback, context) {
-    var connector, list = this._connectors;
-    for ( connector in list ) {
-      callback.call(context || this, list[connector]);
-    }
+  noRegisteredConnectors: function() {
+    return !(this._connectors);
   },
 
   /**
