@@ -42,6 +42,12 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    */
   urlParamModel: null,
 
+  initialize: function() {
+    Logger.debug('%cnew BaseConnector::' + this.getType(), 'color:#a2a2a2');
+    // attach url param model events
+    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+  },
+
   /**
    * @abstract
    * 
@@ -97,6 +103,17 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   },
 
   /**
+   * Ensures the presence of a transport type
+   * @param  {Object} transportType Reference to the transport
+   * used by this particular connecgtor(WSWrapper, XHRWrapper, etc)
+   */
+  ensureTransportCreated: function(transportType) {
+    if ( this.transport == null )
+      this.addTransport(transportType.create(this.transportOptions));
+    return this;
+  },
+
+  /**
    * Destroys the object
    * @description nullifies every field
    * and removes any events bound to that particular field
@@ -112,12 +129,11 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    * urlParams and transportBaseUrl fields
    */
   buildTransportUrl: function() {
-    // @todo add below condition when lazy-instantiate
-    // transport and transport wrappers
-    // if ( this.transport ) {
-      var qs = this.urlParamModel.toQueryString();
+    var qs = '';
+    if ( this.transport ) {
+      qs = this.urlParamModel.toQueryString();
       this.transport.url = this.transportOptions.url + qs;
-    // }
+    }
   },
 
   getType: function() {
