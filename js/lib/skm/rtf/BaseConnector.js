@@ -44,7 +44,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
 
   initialize: function() {
     Logger.debug('%cnew BaseConnector::' + this.getType(), 'color:#a2a2a2');
-    
+    // after transport created, add trnasport and urlparam listeners
     this.on('transport:added', function() {
       // add transport listeners
       this.addTransportListeners();
