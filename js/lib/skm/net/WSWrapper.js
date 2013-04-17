@@ -33,7 +33,7 @@ var iDevice = function() {
 }
 
 
-var HandlerEventDelegates = {
+var ConnectionDelegates = {
   _attachConnectionEvents: function() {
     var connection = this._connectionHandler;
 
@@ -103,7 +103,7 @@ var HandlerEventDelegates = {
 }
 
 
-var WSWrapper = SKMObject.extend(Subscribable, HandlerEventDelegates, {
+var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
   /**
    * URL of the WebSocket server
    * @type {String}
