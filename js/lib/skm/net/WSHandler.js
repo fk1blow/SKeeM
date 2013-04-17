@@ -50,7 +50,7 @@ var WrapperMessageDelegates = {
         this._makeReconnectAttempt();
       }
     }
-
+    
     this._linkWasOpened = false;
     this._closeExpected = false;
   },
