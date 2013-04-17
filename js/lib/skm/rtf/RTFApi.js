@@ -41,7 +41,7 @@ var Config = {
   // single type config
   WebSocket: {
     url: 'ws://localhost:8080/testws',
-    reconnectAttempts: 1,
+    reconnectAttempts: 10,
     pingServer: true
   },
 
@@ -208,15 +208,15 @@ var UrlModel = SKMObject.extend(Subscribable, {
 var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   _batchId: 0,
 
-  _connectorsUrlModel: null,
+  urlModel: null,
 
   connectorsManager: null,
 
   initialize: function(options) {
     // Create the parameters list object
-    this._connectorsUrlModel = UrlModel.create();
+    this.urlModel = UrlModel.create();
     // Prepare batchId and add it to the parameterizer
-    this._connectorsUrlModel.add('batchId', this._batchId);
+    this.urlModel.add('batchId', this._batchId);
     // creates the connector manager
     this._buildConnectorManager();
     // build connectors and register them
@@ -263,7 +263,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     var opt = options || {};
     var modelUrl, connector = this.connectorsManager.getActiveConnector();
     
-    modelUrl = this._connectorsUrlModel.toQueryString()
+    modelUrl = this.urlModel.toQueryString()
       + '&closeConnection=true';
 
     connector = XHRWrapper.create({
@@ -320,7 +320,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   },
 
   addUrlParameter: function(name, value) {
-    this._connectorsUrlModel.add(name, value);
+    this.urlModel.add(name, value);
     return this;
   },
 
@@ -353,7 +353,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   },
 
   _buildConnectorsList: function() {
-    var urlModel = this._connectorsUrlModel,
+    var urlModel = this.urlModel,
         manager = this.connectorsManager;
     var item, active = false, name = null, type = null;
     var len = Config.sequence.length;
