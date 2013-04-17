@@ -44,8 +44,13 @@ var BaseConnector = SKMObject.extend(Subscribable, {
 
   initialize: function() {
     Logger.debug('%cnew BaseConnector::' + this.getType(), 'color:#a2a2a2');
-    // attach url param model events
-    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+    
+    this.on('transport:added', function() {
+      // add transport listeners
+      this.addTransportListeners();
+      // attach url param model events
+      this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+    }, this);
   },
 
   /**
@@ -94,7 +99,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   addTransport: function(transportObject) {
     if ( this.transport == null ) {
       this.transport = transportObject;
-      this.addTransportListeners();
+      this.fire('transport:added');
     } else {
       throw new Error('BaseConnector.addTransport : ' + 
         'transport object already exists');
