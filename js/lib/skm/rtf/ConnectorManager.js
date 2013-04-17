@@ -56,12 +56,13 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
 
   /**
    * The default sequence of the connectors
+   * 
+   * @description usual configuration is ['WebSocket', 'XHR']
+   * and those strings should map directly to connector
+   * instances inside [this._connectors] list
    * @type {Array}
    */
-  sequence: [
-    'WebSocket', 'XHR'
-  ],
-
+  sequence: null,
 
   initialize: function() {
     Logger.debug('%cnew Manager', 'color:#a2a2a2');
