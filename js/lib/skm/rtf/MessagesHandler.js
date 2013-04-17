@@ -110,7 +110,7 @@ var MessagesHandler = {
 
   handleUpdateBatchId: function(batchId) {
     Logger.debug('MessagesHandler.handleUpdateBatchId', batchId);
-    this._connectorsUrlModel.alter('batchId', batchId);
+    this.urlModel.alter('batchId', batchId);
     // Dude, you must set the current object property too, so when you'll
     // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
     this._batchId = batchId;
