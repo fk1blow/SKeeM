@@ -36,7 +36,7 @@ var WSConnector = BaseConnector.extend({
 
   beginUpdate: function(options) {
     // ensure transport type and transport url creation
-    this.ensureTransportCreated(WSWrapper).buildTransportUrl()
+    this.ensureTransportCreated(WSWrapper).buildTransportUrl();
     Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
     // after connect, a ["connector:ready"] event will trigger
     this.transport.connect();
