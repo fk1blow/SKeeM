@@ -219,7 +219,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.urlModel.add('batchId', this._batchId);
     // creates the connector manager
     this._buildConnectorManager();
-    // build connectors and register them
+    // build and register available connectors
     this._buildConnectorsList();
     // prepare before unload auto disconnect
     this._prepareSyncOnUnload();
@@ -361,6 +361,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     // iterate over the sequence
     for ( var i = 0; i < len; i++ ) {
       item = Config.sequence[i];
+
       // sequence connector name
       name = ConnectorsAvailable[item]['name'];
       // sequence connector constructor function
