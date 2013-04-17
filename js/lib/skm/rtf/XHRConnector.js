@@ -23,13 +23,6 @@ var ConnectorErrors = {
 var XHRConnector = BaseConnector.extend({
   _typeName: 'XHR',
 
-  // @todo remove
-  /*initialize: function() {
-    Logger.debug('%cnew XHRConnector', 'color:#a2a2a2');
-    this.addTransport(XHRWrapper.create(this.transportOptions));
-    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
-  },*/
-
   beginUpdate: function() {
     // ensure transport type and transport url creation
     this.ensureTransportCreated(XHRWrapper).buildTransportUrl();
