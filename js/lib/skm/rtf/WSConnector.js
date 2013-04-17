@@ -23,17 +23,6 @@ var ConnectorErrors = {
 var WSConnector = BaseConnector.extend({
   _typeName: 'WebSocket',
 
-  // @todo remove
-  /*initialize: function() {
-    Logger.debug('%cnew WSConnector', 'color:#a2a2a2');
-    // create the transport wrapper
-    // @todo create transport on demand - @beginUpdate
-    // check if transport was instantiated, else create it 
-    // this.addTransport(WSWrapper.create(this.transportOptions));
-    // attach url param model events
-    this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
-  },*/
-
   beginUpdate: function(options) {
     // ensure transport type and transport url creation
     this.ensureTransportCreated(WSWrapper).buildTransportUrl();
@@ -42,28 +31,6 @@ var WSConnector = BaseConnector.extend({
     this.transport.connect();
     return this;
   },
-
-  // @todo remove
-  /*xxx_beginUpdate: function(options) {
-    var opt = options || {}, paramMessage = null;
-
-    this.buildTransportUrl();
-    Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
-
-    if ( opt.initialParameters ) {
-      // paramMessage = this.parameterizeForWS(opt.initialParameters);
-      paramMessage = opt.initialParameters;
-      // after link established, build the parameter object
-      // and send it through the transport
-      this.transport.on('link:opened', function() {
-        Logger.debug('%csending parameters', 'color:red', paramMessage);
-        this.send(paramMessage);
-      });
-    }
-
-    this.transport.connect();
-    return this;
-  },*/
 
   endUpdate: function() {
     Logger.debug('WSConnector.endUpdate');
