@@ -130,7 +130,7 @@ var ChannelsList = {
 };
 
 
-var UrlModel = SKMObject.extend(Subscribable, {
+var ConnectorUrlModel = SKMObject.extend(Subscribable, {
   _parameterizerList: null,
 
   getList: function() {
@@ -214,7 +214,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   initialize: function(options) {
     // Create the parameters list object
-    this.urlModel = UrlModel.create();
+    this.urlModel = ConnectorUrlModel.create();
     // Prepare batchId and add it to the parameterizer
     this.urlModel.add('batchId', this._batchId);
     // creates the connector manager
@@ -345,7 +345,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       this.handleConnectorDeactivated, this);
 
     // handle the raw incoming message
-    this.connectorsManager.on('update', this.handleMessage, this);
+    this.connectorsManager.on('api:update', this.handleMessage, this);
 
     // now parse and send channels list
     this.connectorsManager.on('connector:ready',

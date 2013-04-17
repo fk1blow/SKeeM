@@ -72,12 +72,6 @@ var MessagesHandler = {
       }
   },
 
-  // @todo move method definition to RTFApi.js
-  handleApiError: function() {
-    Logger.warn('%cMessagesHandler.handleApiProtocolsError '
-      + 'An api or protocol error has been triggered', 'color:red');
-  },
-
   /**
    * Handles when a connector has been deactivated
    * 
@@ -87,6 +81,7 @@ var MessagesHandler = {
    */
   handleConnectorDeactivated: function() {
     Logger.debug('%cMessagesHandler.handleConnectorDeactivated', 'color:red');
+    this.fire('deactivated:connector');
   },
 
   /**
@@ -102,7 +97,7 @@ var MessagesHandler = {
       this.sendMessage(this.getChannelsListObject().toStringifiedJson());
   },
 
-  // @todo add handler from ChannelsHandler
+  // @todo return something useful
   handleMbeanMessage: function(message) {
     Logger.debug('%cMessagesHandler.handleMbeanMessage',
       'color:red', message);
