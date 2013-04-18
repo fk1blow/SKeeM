@@ -47,12 +47,17 @@ var WSConnector = BaseConnector.extend({
   addTransportListeners: function() {
     // connection dropped by server
     this.transport.on('link:closed', this.hanleLinkClosed, this);
+    
     // connection established
     this.transport.on('link:opened', this.handleLinkOpened, this);
+    
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
-    // unable to connect through provided transport(various reasons)
-    this.transport.on('link:interrupted', this.handleReconnectingStopped, this);
+    
+    // an open link was interrupted, from various reasons
+    this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
+
+    // reconnection attempt has stopped or implementation not found
     this.transport.on('reconnecting:stopped implementation:missing',
       this.handleReconnectingStopped, this);
     return this;
@@ -97,15 +102,29 @@ var WSConnector = BaseConnector.extend({
   /**
    * Handles ws re/connection attempt
    *
-   * @description handles the event where a connection
-   * is being closed after a reconnecting attempt or the
-   * transport cannot be initialized.
+   * @description handles the event where the WebSocket
+   * is being closed after a reconnecting attempt
+   * or the native implementation is missing.
    * After this, usually, the connector manager should 
    * swtich to the next available connector, if any.
    */
   handleReconnectingStopped: function() {
     Logger.info('WSConnector.handleReconnectingStopped');
     this.fire('transport:deactivated');
+  },
+
+  /**
+   * Handles the interruption of a a opened link/connection
+   *
+   * @description triggered when a currently opened connection
+   * is interrupted, for reasons other than server close message.
+   * In this case, the manager shouldn't do anything because
+   * the WSWrapper will try to reconnect as per [reconnectAttempts]
+   * If it's not able to connect, it will fire 
+   * a reconnecting:stopped event.
+   */
+  handleLinkInterrupted: function() {
+    Logger.info('WSConnector.handleLinkInterrupted'); 
   },
   
   /**
