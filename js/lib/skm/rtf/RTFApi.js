@@ -1,8 +1,3 @@
-/*
-
-//
-
- */
 
 // RTF Api Manager implementation
 
@@ -261,13 +256,13 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
   shutdown: function(options) {
     var opt = options || {};
-    var modelUrl, connector = this.connectorsManager.getActiveConnector();
+    var url, connector = this.connectorsManager.getActiveConnector();
     
-    modelUrl = this.urlModel.toQueryString()
+    url = this.urlModel.toQueryString()
       + '&closeConnection=true';
 
     connector = XHRWrapper.create({
-      url: opt.url || Config.XHR.url + modelUrl,
+      url: opt.url || Config.XHR.url + url,
       async: opt.async
     }).sendMessage();
   },
@@ -306,7 +301,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
         activeConnector.sendMessage(ChannelsList.toStringifiedJson());
     }
   },
-  
+
   removeChannel: function(name) {
     // remove from Channels list
     ChannelsList.removeChannel(name);

@@ -30,8 +30,14 @@ var MessagesHandler = {
           this.handleMbeanMessage(itemVal);
         else if ( itemKey == 'error' )
           this.fire('error:' + itemKey, itemVal);
-        else
-          this.fire('message:' + itemKey, itemVal);
+        else {
+          try {
+            this.fire('message:' + itemKey, itemVal);
+          } catch(err) {
+            Logger.error('Error when sending message' + itemKey, err);
+            this.fire('message:' + itemKey, { error: 'update handler error' });
+          }
+        }
       }
     }
   },

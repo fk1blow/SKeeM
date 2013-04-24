@@ -20,7 +20,83 @@ var ConnectorErrors = {
 }
 
 
-var WSConnector = BaseConnector.extend({
+var ConnectorHandler = {
+  /**
+   * Handles a message received from server api
+   *
+   * @description handles the server's update message
+   * and passes it to the subscribers/clients of rtf api
+   * 
+   * @param  {Object} message JSON message send by rtf server api
+   */
+  handleReceivedMessage: function(message) {
+    // Logger.info('WSConnector.handleReceivedMessage');
+    message = JSON.parse(message);
+    this.fire('api:update', message);
+  },
+  
+  /**
+   * Handles ws re/connection attempt
+   *
+   * @description handles the event where the WebSocket
+   * is being closed after a reconnecting attempt
+   * or the native implementation is missing.
+   * After this, usually, the connector manager should 
+   * swtich to the next available connector, if any.
+   */
+  handleReconnectingStopped: function() {
+    Logger.info('WSConnector.handleReconnectingStopped');
+    this.fire('transport:deactivated');
+  },
+
+  /**
+   * Handles the interruption of an opened link/connection
+   *
+   * @description triggered when a currently opened connection
+   * is interrupted, for reasons other than server close message.
+   * In this case, the manager shouldn't do anything because
+   * the WSWrapper will try to reconnect as per [reconnectAttempts]
+   * If it's not able to connect, it will fire 
+   * a reconnecting:stopped event.
+   */
+  handleLinkInterrupted: function() {
+    Logger.info('WSConnector.handleLinkInterrupted'); 
+  },
+  
+  /**
+   * Handles ws link:closed
+   *
+   * @description if server api closes the link, it sends a message
+   * describing the reason for the close.
+   * Usually, the server api will close the link because of a problem
+   * involving protocols or for network issues.
+   * Anything else is not interpreted!
+   * 
+   * @param  {Object} message JSON message sent by rtf server api
+   */
+  hanleLinkClosed: function(message) {
+    Logger.info('WSConnector.hanleLinkClosed');
+    // if the message is string you got an exception, thats baaad!!!
+    if ( message ) {
+      this.fire('api:error', message);
+    }
+    this.fire('api:error');
+  },
+
+  /**
+   * Triggered when the transport is ready
+   *
+   * @description when the transport is ready to send messages
+   * this methods signals this by triggerring a 'api:ready'
+   * @return {[type]} [description]
+   */
+  handleLinkOpened: function() {
+    this.fire('connector:ready');
+  }
+}
+
+
+var WSConnector = BaseConnector.extend(ConnectorHandler, {
   _typeName: 'WebSocket',
 
   beginUpdate: function(options) {
@@ -70,92 +146,13 @@ var WSConnector = BaseConnector.extend({
   
 
   /**
-   * [sendMessage description]
+   * Sends a message through/using the transport
    * 
-   * @param  {String} messageKey   [description]
+   * @param  {String} message   the message to be sent to endpoint
    */
   sendMessage: function(message) {
     Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
     this.transport.send(message);
-  },
-
-  
-  /*
-    Handlers
-  */
-  
-
-  /**
-   * Handles a message received from server api
-   *
-   * @description handles the server's update message
-   * and passes it to the subscribers/clients of rtf api
-   * 
-   * @param  {Object} message JSON message send by rtf server api
-   */
-  handleReceivedMessage: function(message) {
-    // Logger.info('WSConnector.handleReceivedMessage');
-    message = JSON.parse(message);
-    this.fire('api:update', message);
-  },
-  
-  /**
-   * Handles ws re/connection attempt
-   *
-   * @description handles the event where the WebSocket
-   * is being closed after a reconnecting attempt
-   * or the native implementation is missing.
-   * After this, usually, the connector manager should 
-   * swtich to the next available connector, if any.
-   */
-  handleReconnectingStopped: function() {
-    Logger.info('WSConnector.handleReconnectingStopped');
-    this.fire('transport:deactivated');
-  },
-
-  /**
-   * Handles the interruption of a a opened link/connection
-   *
-   * @description triggered when a currently opened connection
-   * is interrupted, for reasons other than server close message.
-   * In this case, the manager shouldn't do anything because
-   * the WSWrapper will try to reconnect as per [reconnectAttempts]
-   * If it's not able to connect, it will fire 
-   * a reconnecting:stopped event.
-   */
-  handleLinkInterrupted: function() {
-    Logger.info('WSConnector.handleLinkInterrupted'); 
-  },
-  
-  /**
-   * Handles ws link:closed
-   *
-   * @description if server api closes the link, it sends a message
-   * describing the reason for the close.
-   * Usually, the server api will close the link because of a problem
-   * involving protocols or for network issues.
-   * Anything else is not interpreted!
-   * 
-   * @param  {Object} message JSON message sent by rtf server api
-   */
-  hanleLinkClosed: function(message) {
-    Logger.info('WSConnector.hanleLinkClosed');
-    // if the message is string you got an exception, thats baaad!!!
-    if ( message ) {
-      this.fire('api:error', message);
-    }
-    this.fire('api:error');
-  },
-
-  /**
-   * Triggered when the transport is ready
-   *
-   * @description when the transport is ready to send messages
-   * this methods signals this by triggerring a 'api:ready'
-   * @return {[type]} [description]
-   */
-  handleLinkOpened: function() {
-    this.fire('connector:ready');
   }
 });
 

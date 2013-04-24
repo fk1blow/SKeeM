@@ -22,9 +22,9 @@ var Logger = SKMLogger.create();
  * as a mixin Object.
  * @type {Object}
  */
-var WrapperMessageDelegates = {
+var WSEventsHandler = {
   handleOnClose: function(event) {
-    Logger.info('WrapperMessageDelegates.handleOnClose');
+    Logger.info('WSEventsHandler.handleOnClose');
     Logger.debug('wasClean, code, reason : ', event.wasClean, event.code, event.reason);
 
     // stop all timers
@@ -43,11 +43,13 @@ var WrapperMessageDelegates = {
       // if has been opened before
       else if ( this._linkWasOpened ) {
         this.fire('link:interrupted');
-        this._makeReconnectAttempt();
+        // @todo move reconnect feature to WSConnector
+        /*this._makeReconnectAttempt();*/
       }
       else {
         this.fire('connecting:stopped');
-        this._makeReconnectAttempt();
+        // @todo move reconnect feature to WSConnector
+        /*this._makeReconnectAttempt();*/
       }
     }
     
@@ -56,7 +58,7 @@ var WrapperMessageDelegates = {
   },
 
   handleOnOpen: function() {
-    Logger.info('WrapperMessageDelegates.handleOnOpen');
+    Logger.info('WSEventsHandler.handleOnOpen');
     this._stopTimers();
     this._reconnectionAttempt = 0;
     this._linkWasOpened = true;
@@ -86,7 +88,7 @@ var WrapperMessageDelegates = {
 /**
  * Object that handle a WebSocket connection's events and state
  */
-var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
+var WSDelegates = SKMObject.extend(Subscribable, WSEventsHandler, {
   connectionTimeout: 1500,
 
   reconnectDelay: 3000,
@@ -106,7 +108,7 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   _linkWasOpened: false,
 
   initialize: function() {
-    Logger.debug('%cnew WSHandler', 'color:#A2A2A2');
+    Logger.debug('%cnew WSDelegates', 'color:#A2A2A2');
     // Creates auto-disconnect and reconnect, timers
     this._createTimers();
   },
@@ -141,21 +143,21 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   },
 
   startConnectingAttempt: function() {
-    Logger.info('WSHandler.startConnectingAttempt');
+    Logger.info('WSDelegates.startConnectingAttempt');
     this._timerAutoDisconnect.start();
     this._closeExpected = false;
     return this;
   },
 
   stopConnectingAttempt: function() {
-    Logger.info('WSHandler.stopConnectingAttempt');
+    Logger.info('WSDelegates.stopConnectingAttempt');
     this._stopTimers();
     this._closeExpected = true;
     return this;
   },
 
   holdConnectingAttempt: function() {
-    Logger.info('WSHandler.holdConnectingAttempt');
+    Logger.info('WSDelegates.holdConnectingAttempt');
     this._stopTimers();
     this._closeExpected = false;
     return this;
@@ -167,7 +169,8 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
   
   _stopTimers: function() {
     this._timerAutoDisconnect.stop();
-    this._timerAutoReconnect.stop();
+    // @todo move reconnect feature to WSConnector
+    /*this._timerAutoReconnect.stop();*/
   },
   
   _handleAutoDisconnect: function() {
@@ -176,6 +179,7 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
     this.fire('connecting:timeout');
   },
   
+  // @todo move reconnect feature to WSConnector
   _handleAutoReconnect: function() {
     Logger.debug('handling autoreconnect attempt #', this._reconnectionAttempt);
     this._stopTimers();
@@ -189,10 +193,11 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
       tickInterval: this.connectionTimeout
     }).on('tick', this._handleAutoDisconnect, this);
 
+    // @todo move reconnect feature to WSConnector
     // Tries to reconnect after a specified delay
-    this._timerAutoReconnect = SKMTimer.create({
+    /*this._timerAutoReconnect = SKMTimer.create({
       tickInterval: this.reconnectDelay
-    }).on('tick', this._handleAutoReconnect, this);
+    }).on('tick', this._handleAutoReconnect, this);*/
   },
 
   _makeReconnectAttempt: function() {
@@ -212,7 +217,7 @@ var WSHandler = SKMObject.extend(Subscribable, WrapperMessageDelegates, {
 });
 
 
-return WSHandler;
+return WSDelegates;
 
 
 });

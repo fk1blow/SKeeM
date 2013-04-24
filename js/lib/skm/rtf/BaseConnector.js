@@ -49,7 +49,8 @@ var BaseConnector = SKMObject.extend(Subscribable, {
       // add transport listeners
       this.addTransportListeners();
       // attach url param model events
-      this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+      if ( this.urlParamModel )
+        this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
     }, this);
   },
 
@@ -135,7 +136,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    */
   buildTransportUrl: function() {
     var qs = '';
-    if ( this.transport ) {
+    if ( this.transport && this.urlParamModel ) {
       qs = this.urlParamModel.toQueryString();
       this.transport.url = this.transportOptions.url + qs;
     }

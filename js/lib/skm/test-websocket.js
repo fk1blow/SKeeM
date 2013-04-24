@@ -18,12 +18,16 @@ console.log('-------------------------------------------------------------------
 
 var ws = WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 3 });
 
+var wsconnector = WSConnector.create();
+wsconnector.addTransport(ws);
+wsconnector.beginUpdate();
 
-ws.on('all', function() {
-  cl(arguments)
-})
 
-ws.connect()
+// ws.on('all', function() {
+//   cl(arguments)
+// })
+
+// ws.connect()
 
 // cl(ws)
 

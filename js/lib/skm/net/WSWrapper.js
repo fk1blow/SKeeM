@@ -43,7 +43,8 @@ var ConnectionDelegates = {
     
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      this._startReconnecting();
+      // @todo move reconnect feature to WSConnector
+      /*this._startReconnecting();*/
       this.fire('connecting:timeout');
     }, this);
 
@@ -52,17 +53,19 @@ var ConnectionDelegates = {
       this.fire('connecting:stopped');
     }, this);
 
+    // @todo move reconnect feature to WSConnector
     // One reconnecting cycle started
-    connection.on('reconnecting:started', function() {
+    /*connection.on('reconnecting:started', function() {
       this._startConnecting();
       this.fire('reconnecting:started');
-    }, this);
+    }, this);*/
 
+    // @todo move reconnect feature to WSConnector
     // When maximum reconnecting attempts reached
-    connection.on('reconnecting:stopped', function() {
+    /*connection.on('reconnecting:stopped', function() {
       this._stopConnecting();
       this.fire('reconnecting:stopped');
-    }, this);
+    }, this);*/
 
     /**
      * Link handlers
@@ -89,7 +92,7 @@ var ConnectionDelegates = {
         Logger.debug('%cWSWrapper : pong', 'color:blue');
       else
         this.fire('message', message);
-    }, this)
+    }, this);
 
 
     /**
@@ -168,14 +171,15 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
    */
 
   connect: function() {
-    if ( this.isOpened() ) {
+    if ( this.getConnectionState() == 1 ) {
       Logger.error('WSWrapper.connect : ws already open.');
       return false;
     }
-    if ( this.isReconnecting() ) {
+    // @todo move reconnect feature to WSConnector
+    /*if ( this.isReconnecting() ) {
       Logger.error('WSWrapper.connect : ws already trying to reconnect.');
       return false;
-    }
+    }*/
     this._startConnecting();
     return this;
   },
@@ -187,26 +191,26 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
 
   send: function(message) {
     var socketObject = this._nativeSocket;
+    // @todo remove below condition
     // If the socket is not ready or not created yet
-    if ( socketObject === null || !this.isOpened() ) {
+    /*if ( socketObject === null || !this.isOpened() ) {
       Logger.info('WSWrapper.send : unable to send message; invalid'
         + ' wrapper state or connection not yet opened.');
       return;
-    }
-    // Wrap inside a timeout if iDevice browser detected
-    if ( iDevice ) {
-      setTimeout(function() {
+    }*/
+    if ( this.getConnectionState() == 1 ) {
+      if ( iDevice ) {// Wrap inside a timeout if iDevice browser detected
+        setTimeout(function() {
+          socketObject.send(message);
+        }, 0);
+      } else {
         socketObject.send(message);
-      }, 0);
-    } else {
-      socketObject.send(message);
+      }
     }
     return this;
   },
 
-  /**
-   * @todo Refactor conditions
-   */
+  // @todo move/remove ping from WSWrapper
   ping: function() {
     if ( ! this.isOpened() ) {
       Logger.info('WSWrapper.ping : cannot ping server or'
@@ -229,7 +233,8 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
     return null;
   },
 
-  isConnecting: function() {
+  // @todo remove all these methods except [getConnectionState]
+  /*isConnecting: function() {
     return this.getConnectionState() === 0;
   },
 
@@ -243,11 +248,11 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
 
   isClosed: function() {
     return this.getConnectionState() === 3;
-  },
+  },*/
 
-  isReconnecting: function() {
+  /*isReconnecting: function() {
     return this._connectionHandler.isReconnecting();
-  },
+  },*/
 
   /**
    * Private
@@ -258,8 +263,7 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
     if ( socket == null )
       this.fire('implementation:missing')._stopConnecting();
     else {
-      this._connectionHandler.attachListenersTo(socket)
-        .startConnectingAttempt();
+      this._connectionHandler.attachListenersTo(socket).startConnectingAttempt();
     }
   },
 
@@ -268,6 +272,7 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
     this._destroyNativeSocket();
   },
 
+  // @todo move reconnect feature to WSConnector
   _startReconnecting: function() {
     this._connectionHandler.holdConnectingAttempt();
     this._destroyNativeSocket();
