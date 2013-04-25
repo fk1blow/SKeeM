@@ -3,11 +3,9 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Subscribable',
   'skm/rtf/BaseConnector',
-  'skm/net/WSWrapper',
-  'skm/util/Timer'],
-  function(SKMObject, SKMLogger, Subscribable, BaseConnector, WSWrapper, SKMTimer)
+  'skm/net/WSWrapper'],
+  function(SKMObject, SKMLogger, BaseConnector, WSWrapper)
 {
 'use strict';
 
@@ -36,33 +34,13 @@ var EventsDelegates = {
     message = JSON.parse(message);
     this.fire('api:update', message);
   },
-  
-  /**
-   * Handles ws re/connection attempt
-   *
-   * @description handles the event where the WebSocket
-   * is being closed after a reconnecting attempt
-   * or the native implementation is missing.
-   * After this, usually, the connector manager should 
-   * swtich to the next available connector, if any.
-   */
-  handleReconnectingStopped: function() {
-    Logger.info('Connector.handleReconnectingStopped');
-    this.fire('transport:deactivated');
-  },
 
   /**
-   * Handles the interruption of an opened link/connection
-   *
-   * @description triggered when a currently opened connection
-   * is interrupted, for reasons other than server close message.
-   * In this case, the manager shouldn't do anything because
-   * the WSWrapper will try to reconnect as per [reconnectAttempts]
-   * If it's not able to connect, it will fire 
-   * a reconnecting:stopped event.
+   * Handled when the native WebSocket is not present
    */
-  handleLinkInterrupted: function() {
-    Logger.info('Connector.handleLinkInterrupted'); 
+  handleImplementationMissing: function() {
+    Logger.info('Connector.handleImplementationMissing');
+    this.fire('transport:deactivated');
   },
   
   /**
@@ -78,7 +56,7 @@ var EventsDelegates = {
    */
   hanleLinkClosed: function(message) {
     Logger.info('Connector.hanleLinkClosed');
-    // if the message is string you got an exception, thats baaad!!!
+    // if the message is a string, you got an exception and that's baaad!!!
     if ( message ) {
       this.fire('api:error', message);
     }
@@ -96,6 +74,14 @@ var EventsDelegates = {
     this.fire('connector:ready');
   },
 
+  /**
+   * Handled while trying to establish a link
+   *
+   * @description this handler is called whenever the websocket wrapper
+   * tries to establish a connection but fails to do that.
+   * It cand fail if the wrapper auto-disconnects the attemp,
+   * or if the native wrapper triggers the close event.
+   */
   handleConnectingStopped: function() {
     var that = this;
 
@@ -107,11 +93,9 @@ var EventsDelegates = {
       // Try to begin update and reconnect after [this.reconnectDelay]
       setTimeout(function() {
         Logger.debug('Connector : attempt #', that._currentAttempt);
-
         // is reconnecting and increment current attempt
         that._isReconnecting = true;
         that._currentAttempt += 1;
-
         // try to re-establish connection by calling [beginUpdate]
         that.beginUpdate();
       }, this.reconnectDelay);
@@ -123,6 +107,9 @@ var EventsDelegates = {
       // has stopped reconnecting and reset current attempt
       this._isReconnecting = false;
       this._currentAttempt = 0;
+
+      // tell the manager the transport has been deactivated
+      this.fire('transport:deactivated');
     }
   }
 };
@@ -137,7 +124,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
 
   maxReconnectAttempts: 2,
 
-  reconnectDelay: 10000,
+  reconnectDelay: 3000,
 
   beginUpdate: function() {
     // ensure transport type and transport url creation
@@ -161,37 +148,26 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     that an error has ocured - this error will be sent to the widget
   */
   addTransportListeners: function() {
-    // connection dropped by server
-    this.transport.on('link:closed', this.hanleLinkClosed, this);
-    
     // connection established
     this.transport.on('link:opened', this.handleLinkOpened, this);
-    
+
+    // connection dropped by server
+    this.transport.on('link:closed', this.hanleLinkClosed, this);
+
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
-    
-    // an open link was interrupted, from various reasons
-    this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
 
-    // reconnection attempt has stopped or implementation not found
-    // @todo remove "reconnecting:stopped" event - reconnection will be
-    // implemented through the connector
-    this.transport.on('reconnecting:stopped implementation:missing',
-      this.handleReconnectingStopped, this);
+    // WebSocket native implementation not found
+    this.transport.on('implementation:missing',
+      this.handleImplementationMissing, this);
 
-
-    // Try to reconnect when "stopped" or "timeout"
-    this.transport.on('connecting:stopped connecting:timeout',
+    // Try to reconnect when "stopped", "timeout" or "interrupted"
+    // will reconnect
+    this.transport.on('connecting:stopped connecting:timeout link:interrupted',
       this.handleConnectingStopped, this);
 
     return this;
   },
-
-
-  /*
-    Message senders
-   */
-  
 
   /**
    * Sends a message through/using the transport
@@ -201,37 +177,6 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   sendMessage: function(message) {
     Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
     this.transport.send(message);
-  },
-
-  xxx__beginReconnectAttempt: function() {
-    Logger.info('WSConnector.beginReconnectAttempt');
-     // in :',
-      // this.reconnectDelay + 'ms');
-
-    var that = this;
-   
-    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
-      Logger.debug('WSConnector : attempt : ', this._currentAttempt);
-      Logger.debug('________________________________');
-
-      this._isReconnecting = true;
-      this._currentAttempt += 1;
-      
-      // Try to begin update and reconnect after [this.reconnectDelay]
-      setTimeout(function() {
-        that.beginUpdate();
-      }, this.reconnectDelay);
-    } else {
-      Logger.debug('WSConnector : maxReconnectAttempts of ' 
-        + this.maxReconnectAttempts + ' reached!');
-      Logger.debug('________________________________');
-
-      this._isReconnecting = false;
-      this._currentAttempt = 0;
-
-      // stop reconnecting
-      // this.fire('reconnecting:stopped');
-    }
   }
 });
 
