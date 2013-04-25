@@ -43,34 +43,14 @@ var EventsDelegates = {
     
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      // @todo move reconnect feature to WSConnector
-      /*this._startReconnecting();*/
-      
-      // debugger;
-      
       this._stopConnecting();
       this.fire('connecting:timeout');
-
     }, this);
 
     // A connecting attempt stopped
     connection.on('connecting:stopped', function() {
       this.fire('connecting:stopped');
     }, this);
-
-    // @todo move reconnect feature to WSConnector
-    // One reconnecting cycle started
-    /*connection.on('reconnecting:started', function() {
-      this._startConnecting();
-      this.fire('reconnecting:started');
-    }, this);*/
-
-    // @todo move reconnect feature to WSConnector
-    // When maximum reconnecting attempts reached
-    /*connection.on('reconnecting:stopped', function() {
-      this._stopConnecting();
-      this.fire('reconnecting:stopped');
-    }, this);*/
 
     /**
      * Link handlers
@@ -98,18 +78,6 @@ var EventsDelegates = {
       else
         this.fire('message', message);
     }, this);
-
-
-    /**
-     * Error handler
-     */
-
-    // @todo remove
-    // this event is already being handled by more complex and concrete
-    // handlers like disconnected, auto-disconnected, timeout, etc
-    /*connection.on('error', function() {
-      this.fire('error');
-    }, this);*/
   }
 };
 
@@ -199,15 +167,6 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
 
   send: function(message) {
     var socketObject = this._nativeSocket;
-    
-    // @todo remove below condition
-    // If the socket is not ready or not created yet
-    /*if ( socketObject === null || !this.isOpened() ) {
-      Logger.info('WSWrapper.send : unable to send message; invalid'
-        + ' wrapper state or connection not yet opened.');
-      return;
-    }*/
-
     // if is opened
     if ( this.getConnectionState() == 1 ) {
       if ( iDevice ) {// Wrap inside a timeout if iDevice browser detected
@@ -244,27 +203,6 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
     return null;
   },
 
-  // @todo remove all these methods except [getConnectionState]
-  /*isConnecting: function() {
-    return this.getConnectionState() === 0;
-  },
-
-  isOpened: function() {
-    return this.getConnectionState() === 1;
-  },
-
-  isClosing: function() {
-    return this.getConnectionState() === 2;
-  },
-
-  isClosed: function() {
-    return this.getConnectionState() === 3;
-  },*/
-
-  /*isReconnecting: function() {
-    return this._connectionHandler.isReconnecting();
-  },*/
-
   /**
    * Private
    */
@@ -282,12 +220,6 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
     this._connectionHandler.stopConnectingAttempt();
     this._destroyNativeSocket();
   },
-
-  // @todo move reconnect feature to WSConnector
-  /*_startReconnecting: function() {
-    this._connectionHandler.holdConnectingAttempt();
-    this._destroyNativeSocket();
-  },*/
 
   _initPingTimer: function() {
     if ( !this.pingServer )
