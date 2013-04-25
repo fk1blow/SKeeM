@@ -3,9 +3,11 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
+  'skm/util/Subscribable',
   'skm/rtf/BaseConnector',
-  'skm/net/WSWrapper'],
-  function(SKMObject, SKMLogger, BaseConnector, WSWrapper)
+  'skm/net/WSWrapper',
+  'skm/util/Timer'],
+  function(SKMObject, SKMLogger, Subscribable, BaseConnector, WSWrapper, SKMTimer)
 {
 'use strict';
 
@@ -20,7 +22,7 @@ var ConnectorErrors = {
 }
 
 
-var ConnectorHandler = {
+var EventsDelegates = {
   /**
    * Handles a message received from server api
    *
@@ -45,7 +47,7 @@ var ConnectorHandler = {
    * swtich to the next available connector, if any.
    */
   handleReconnectingStopped: function() {
-    Logger.info('WSConnector.handleReconnectingStopped');
+    Logger.info('Connector.handleReconnectingStopped');
     this.fire('transport:deactivated');
   },
 
@@ -60,7 +62,7 @@ var ConnectorHandler = {
    * a reconnecting:stopped event.
    */
   handleLinkInterrupted: function() {
-    Logger.info('WSConnector.handleLinkInterrupted'); 
+    Logger.info('Connector.handleLinkInterrupted'); 
   },
   
   /**
@@ -75,7 +77,7 @@ var ConnectorHandler = {
    * @param  {Object} message JSON message sent by rtf server api
    */
   hanleLinkClosed: function(message) {
-    Logger.info('WSConnector.hanleLinkClosed');
+    Logger.info('Connector.hanleLinkClosed');
     // if the message is string you got an exception, thats baaad!!!
     if ( message ) {
       this.fire('api:error', message);
@@ -92,24 +94,62 @@ var ConnectorHandler = {
    */
   handleLinkOpened: function() {
     this.fire('connector:ready');
+  },
+
+  handleConnectingStopped: function() {
+    var that = this;
+
+    Logger.info('Connector.handleConnectingStopped');
+
+    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
+      Logger.debug('Connector : will make attempt in', this.reconnectDelay, 'ms');
+
+      // Try to begin update and reconnect after [this.reconnectDelay]
+      setTimeout(function() {
+        Logger.debug('Connector : attempt #', that._currentAttempt);
+
+        // is reconnecting and increment current attempt
+        that._isReconnecting = true;
+        that._currentAttempt += 1;
+
+        // try to re-establish connection by calling [beginUpdate]
+        that.beginUpdate();
+      }, this.reconnectDelay);
+    } else {
+      Logger.debug('Connector : maxReconnectAttempts of ' 
+        + this.maxReconnectAttempts + ' reached!');
+      Logger.debug('________________________________');
+
+      // has stopped reconnecting and reset current attempt
+      this._isReconnecting = false;
+      this._currentAttempt = 0;
+    }
   }
-}
+};
 
 
-var WSConnector = BaseConnector.extend(ConnectorHandler, {
+var WSConnector = BaseConnector.extend(EventsDelegates, {
   _typeName: 'WebSocket',
 
-  beginUpdate: function(options) {
+  _currentAttempt: 1,
+
+  _isReconnecting: false,
+
+  maxReconnectAttempts: 2,
+
+  reconnectDelay: 10000,
+
+  beginUpdate: function() {
     // ensure transport type and transport url creation
     this.ensureTransportCreated(WSWrapper).buildTransportUrl();
-    Logger.debug('WSConnector.beginUpdate \n', this.transport.url);
+    Logger.info('Connector.beginUpdate \n', this.transport.url);
     // after connect, a ["connector:ready"] event will trigger
     this.transport.connect();
     return this;
   },
 
   endUpdate: function() {
-    Logger.debug('WSConnector.endUpdate');
+    Logger.debug('Connector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
     return this;
@@ -134,8 +174,16 @@ var WSConnector = BaseConnector.extend(ConnectorHandler, {
     this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
 
     // reconnection attempt has stopped or implementation not found
+    // @todo remove "reconnecting:stopped" event - reconnection will be
+    // implemented through the connector
     this.transport.on('reconnecting:stopped implementation:missing',
       this.handleReconnectingStopped, this);
+
+
+    // Try to reconnect when "stopped" or "timeout"
+    this.transport.on('connecting:stopped connecting:timeout',
+      this.handleConnectingStopped, this);
+
     return this;
   },
 
@@ -153,6 +201,37 @@ var WSConnector = BaseConnector.extend(ConnectorHandler, {
   sendMessage: function(message) {
     Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
     this.transport.send(message);
+  },
+
+  xxx__beginReconnectAttempt: function() {
+    Logger.info('WSConnector.beginReconnectAttempt');
+     // in :',
+      // this.reconnectDelay + 'ms');
+
+    var that = this;
+   
+    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
+      Logger.debug('WSConnector : attempt : ', this._currentAttempt);
+      Logger.debug('________________________________');
+
+      this._isReconnecting = true;
+      this._currentAttempt += 1;
+      
+      // Try to begin update and reconnect after [this.reconnectDelay]
+      setTimeout(function() {
+        that.beginUpdate();
+      }, this.reconnectDelay);
+    } else {
+      Logger.debug('WSConnector : maxReconnectAttempts of ' 
+        + this.maxReconnectAttempts + ' reached!');
+      Logger.debug('________________________________');
+
+      this._isReconnecting = false;
+      this._currentAttempt = 0;
+
+      // stop reconnecting
+      // this.fire('reconnecting:stopped');
+    }
   }
 });
 

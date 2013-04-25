@@ -22,6 +22,10 @@ var wsconnector = WSConnector.create();
 wsconnector.addTransport(ws);
 wsconnector.beginUpdate();
 
+// wsconnector.transport.on('all', function() {
+//   cl('-> transpot all : ', arguments)
+// })
+
 
 // ws.on('all', function() {
 //   cl(arguments)

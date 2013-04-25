@@ -33,7 +33,7 @@ var iDevice = function() {
 }
 
 
-var ConnectionDelegates = {
+var EventsDelegates = {
   _attachConnectionEvents: function() {
     var connection = this._connectionHandler;
 
@@ -45,7 +45,12 @@ var ConnectionDelegates = {
     connection.on('connecting:timeout', function() {
       // @todo move reconnect feature to WSConnector
       /*this._startReconnecting();*/
+      
+      // debugger;
+      
+      this._stopConnecting();
       this.fire('connecting:timeout');
+
     }, this);
 
     // A connecting attempt stopped
@@ -99,14 +104,17 @@ var ConnectionDelegates = {
      * Error handler
      */
 
-    connection.on('error', function() {
+    // @todo remove
+    // this event is already being handled by more complex and concrete
+    // handlers like disconnected, auto-disconnected, timeout, etc
+    /*connection.on('error', function() {
       this.fire('error');
-    }, this);
+    }, this);*/
   }
-}
+};
 
 
-var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
+var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
   /**
    * URL of the WebSocket server
    * @type {String}
@@ -191,6 +199,7 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
 
   send: function(message) {
     var socketObject = this._nativeSocket;
+    
     // @todo remove below condition
     // If the socket is not ready or not created yet
     /*if ( socketObject === null || !this.isOpened() ) {
@@ -198,6 +207,8 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
         + ' wrapper state or connection not yet opened.');
       return;
     }*/
+
+    // if is opened
     if ( this.getConnectionState() == 1 ) {
       if ( iDevice ) {// Wrap inside a timeout if iDevice browser detected
         setTimeout(function() {
@@ -273,10 +284,10 @@ var WSWrapper = SKMObject.extend(Subscribable, ConnectionDelegates, {
   },
 
   // @todo move reconnect feature to WSConnector
-  _startReconnecting: function() {
+  /*_startReconnecting: function() {
     this._connectionHandler.holdConnectingAttempt();
     this._destroyNativeSocket();
-  },
+  },*/
 
   _initPingTimer: function() {
     if ( !this.pingServer )

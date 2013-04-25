@@ -97,6 +97,7 @@ Timer = SKMObject.extend(Subscribable, {
       val = 1;
     }
     this.ticks = val;
+    return this;
   },
 
   getTicksCounter: function() {
