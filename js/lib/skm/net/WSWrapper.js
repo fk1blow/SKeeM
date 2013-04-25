@@ -4,10 +4,9 @@
 define(['skm/k/Object',
   'skm/util/Logger',
   'skm/util/Subscribable',
-  'skm/util/Timer',
-  'skm/net/WSHandler'],
+  'skm/util/Timer'],
   function(SKMObject, SKMLogger, Subscribable,
-    SKMTimer, WSHandler)
+    SKMTimer)
 {
 'use strict';
 
@@ -33,6 +32,9 @@ var iDevice = function() {
 }
 
 
+/**
+ * WSWrapper events delegates
+ */
 var EventsDelegates = {
   _attachConnectionEvents: function() {
     var connection = this._connectionHandler;
@@ -82,6 +84,134 @@ var EventsDelegates = {
 };
 
 
+/**
+ * Native WebSocket connection delegates
+ */
+var NativeDelegates = SKMObject.extend(Subscribable, {
+  connectionTimeout: 1500,
+
+  _timerAutoDisconnect: null,
+
+  _closeExpected: false,
+
+  _linkWasOpened: false,
+
+  initialize: function() {
+    // Creates auto-disconnect and reconnect, timers
+    this._timerAutoDisconnect = SKMTimer.create({
+      tickInterval: this.connectionTimeout
+    }).on('tick', this._handleAutoDisconnect, this);
+  },
+
+  /**
+   * Attaches the socket events to a handler
+   * @param  {WebSoclet} connection WebSocket connection reference
+   */
+  attachListenersTo: function(connection) {
+    var that = this;
+    connection.onopen = function() {
+      that.handleOnOpen.apply(that, arguments);
+    }
+    connection.onerror = function() {
+      that.handleOnError.apply(that, arguments);
+    }
+    connection.onclose = function() {
+      that.handleOnClose.apply(that, arguments);
+    }
+    connection.onmessage = function() {
+      that.handleOnMessage.apply(that, arguments);
+    }
+    return this;
+  },
+
+  
+  /*
+    Commands
+   */
+  
+  
+  startConnectingAttempt: function() {
+    Logger.info('NativeDelegates.startConnectingAttempt');
+    this._timerAutoDisconnect.start();
+    this._closeExpected = false;
+    return this;
+  },
+
+  stopConnectingAttempt: function() {
+    Logger.info('NativeDelegates.stopConnectingAttempt');
+    this._timerAutoDisconnect.stop();
+    this._closeExpected = true;
+    return this;
+  },
+
+  /*
+    Handlers
+   */
+
+
+  handleOnClose: function(event) {
+    Logger.info('NativeDelegates.handleOnClose');
+    Logger.debug('NativeDelegates : event state : ', 'wasClean:', event.wasClean,
+      ' code:', event.code, ' reason:', event.reason);
+
+    // stop all timers
+    this._timerAutoDisconnect.stop();
+
+    // If the socket connection is closed by the server
+    if ( event.wasClean ) {
+      this.fire('link:closed', event);
+    } else {
+      // manually closed by the user, no need to trigger events
+      if ( this._closeExpected ) {
+        Logger.debug('NativeDelegates : close expected or manually invoked');
+      }
+      // if has been opened before
+      else if ( this._linkWasOpened ) {
+        this.fire('link:interrupted');
+      }
+      else {
+        this.fire('connecting:stopped');
+      }
+    }
+    
+    this._linkWasOpened = false;
+    this._closeExpected = false;
+  },
+
+  handleOnOpen: function() {
+    Logger.info('NativeDelegates.handleOnOpen');
+    this._timerAutoDisconnect.stop();
+    this._reconnectionAttempt = 0;
+    this._linkWasOpened = true;
+    this.fire('link:opened');
+  },
+
+  handleOnError: function(event) {
+    this.fire('error', event);
+  },
+ 
+  handleOnMessage: function(message) {
+    var data = message.data;
+    switch( data ) {
+      case 'server:pong':
+        this.fire('server:pong');
+        break;
+      // case 'server:close':
+      //   this.fire('server:close');
+      //   break;
+      default:
+        this.fire('message', data);
+    }
+  },
+  
+  _handleAutoDisconnect: function() {
+    Logger.debug('NativeDelegates : auto-disconnect triggered after:',
+      this._timerAutoDisconnect.tickInterval + ' ms');
+    this.fire('connecting:timeout');
+  }
+});
+
+
 var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
   /**
    * URL of the WebSocket server
@@ -99,16 +229,6 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
    * How long before aborting the connection attempt
    */
   timeout: 1500,
-
-  /**
-   * Amount of time, before trying to reconnect
-   */
-  reconnectDelay: 3000,
-
-  /**
-   * The number of times will attempt to reconnect
-   */
-  reconnectAttempts: 1,
 
   /**
    * If will try to ping the server or not
@@ -151,11 +271,6 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
       Logger.error('WSWrapper.connect : ws already open.');
       return false;
     }
-    // @todo move reconnect feature to WSConnector
-    /*if ( this.isReconnecting() ) {
-      Logger.error('WSWrapper.connect : ws already trying to reconnect.');
-      return false;
-    }*/
     this._startConnecting();
     return this;
   },
@@ -269,7 +384,7 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
   },
 
   _initConnectionHandler: function() {
-    this._connectionHandler = WSHandler.create({
+    this._connectionHandler = NativeDelegates.create({
       connectionTimeout: this.timeout,
       reconnectDelay: this.reconnectDelay,
       maxReconnectAttempts: this.reconnectAttempts
