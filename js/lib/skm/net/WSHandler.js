@@ -87,14 +87,6 @@ var WSDelegates = SKMObject.extend(Subscribable, {
     return this;
   },
 
-  holdConnectingAttempt: function() {
-    Logger.info('WSDelegates.holdConnectingAttempt');
-    this._timerAutoDisconnect.stop();
-    this._closeExpected = false;
-    return this;
-  },
-
-
   /*
     Handlers
    */
@@ -121,13 +113,9 @@ var WSDelegates = SKMObject.extend(Subscribable, {
       // if has been opened before
       else if ( this._linkWasOpened ) {
         this.fire('link:interrupted');
-        // @todo move reconnect feature to WSConnector
-        /*this._makeReconnectAttempt();*/
       }
       else {
         this.fire('connecting:stopped');
-        // @todo move reconnect feature to WSConnector
-        /*this._makeReconnectAttempt();*/
       }
     }
     
@@ -160,59 +148,12 @@ var WSDelegates = SKMObject.extend(Subscribable, {
         this.fire('message', data);
     }
   },
-
-
-  /**
-   * Private
-   */
-  
-  // _stopTimers: function() {
-  //   this._timerAutoDisconnect.stop();
-  //   // @todo move reconnect feature to WSConnector
-  //   /*this._timerAutoReconnect.stop();*/
-  // },
   
   _handleAutoDisconnect: function() {
     Logger.debug('WSDelegates : auto-disconnect triggered after:',
       this._timerAutoDisconnect.tickInterval + ' ms');
     this.fire('connecting:timeout');
-  },
-  
-  // @todo move reconnect feature to WSConnector
-  /*_handleAutoReconnect: function() {
-    Logger.debug('handling autoreconnect attempt #', this._reconnectionAttempt);
-    this._stopTimers();
-    this._closeExpected = false;
-    this.fire('reconnecting:started');
-  },*/
-  
-  // _createTimers: function() {
-  //   // Stops the connecting attempt after specified interval
-  //   // this._timerAutoDisconnect = SKMTimer.create({
-  //   //   tickInterval: this.connectionTimeout
-  //   // }).on('tick', this._handleAutoDisconnect, this);
-
-  //   // @todo move reconnect feature to WSConnector
-  //   // Tries to reconnect after a specified delay
-  //   /*this._timerAutoReconnect = SKMTimer.create({
-  //     tickInterval: this.reconnectDelay
-  //   }).on('tick', this._handleAutoReconnect, this);*/
-  // },
-
-  /*_makeReconnectAttempt: function() {
-    if ( this._reconnectionAttempt > this.maxReconnectAttempts - 1 ) {
-      Logger.info('WebSocketHandler Max reconnection attempts reached');
-      this._reconnectionAttempt = 0;
-      this._isReconnecting = false;
-      this.fire('reconnecting:stopped');
-    } else {
-      Logger.info('WebSocketHandler will try to reconnect in ' + 
-        this._timerAutoReconnect.tickInterval + ' ms');
-      this._isReconnecting = true;
-      this._reconnectionAttempt++;
-      this._timerAutoReconnect.start();
-    }
-  }*/
+  }
 });
 
 
