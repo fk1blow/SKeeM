@@ -39,7 +39,7 @@ var EventsDelegates = {
    * Handled when the native WebSocket is not present
    */
   handleImplementationMissing: function() {
-    Logger.info('Connector.handleImplementationMissing');
+    Logger.info('WSConnector.handleImplementationMissing');
     this.fire('transport:deactivated');
   },
   
@@ -55,7 +55,7 @@ var EventsDelegates = {
    * @param  {Object} message JSON message sent by rtf server api
    */
   hanleLinkClosed: function(message) {
-    Logger.info('Connector.hanleLinkClosed');
+    Logger.info('WSConnector.hanleLinkClosed');
     // if the message is a string, you got an exception and that's baaad!!!
     if ( message ) {
       this.fire('api:error', message);
@@ -85,14 +85,15 @@ var EventsDelegates = {
   handleConnectingStopped: function() {
     var that = this;
 
-    Logger.info('Connector.handleConnectingStopped');
+    Logger.info('WSConnector.handleConnectingStopped');
 
     if ( this._currentAttempt <= this.maxReconnectAttempts ) {
-      Logger.debug('Connector : will make attempt in', this.reconnectDelay, 'ms');
+      Logger.debug('WSConnector : will make attempt in', this.reconnectDelay, 'ms');
 
       // Try to begin update and reconnect after [this.reconnectDelay]
       setTimeout(function() {
-        Logger.debug('Connector : attempt #', that._currentAttempt);
+        Logger.debug('_____________________________________________');
+        Logger.debug('WSConnector : attempt #', that._currentAttempt);
         // is reconnecting and increment current attempt
         that._isReconnecting = true;
         that._currentAttempt += 1;
@@ -100,9 +101,8 @@ var EventsDelegates = {
         that.beginUpdate();
       }, this.reconnectDelay);
     } else {
-      Logger.debug('Connector : maxReconnectAttempts of ' 
+      Logger.debug('WSConnector : maxReconnectAttempts of ' 
         + this.maxReconnectAttempts + ' reached!');
-      Logger.debug('________________________________');
 
       // has stopped reconnecting and reset current attempt
       this._isReconnecting = false;
@@ -129,14 +129,14 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   beginUpdate: function() {
     // ensure transport type and transport url creation
     this.ensureTransportCreated(WSWrapper).buildTransportUrl();
-    Logger.info('Connector.beginUpdate \n', this.transport.url);
+    Logger.info('WSConnector.beginUpdate \n', this.transport.url);
     // after connect, a ["connector:ready"] event will trigger
     this.transport.connect();
     return this;
   },
 
   endUpdate: function() {
-    Logger.debug('Connector.endUpdate');
+    Logger.debug('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
     return this;
