@@ -7,7 +7,7 @@ require(['skm/net/WSWrapper',
          'skm/rtf/ConnectorManager',
          'skm/rtf/XHRConnector',
          'skm/rtf/WSConnector'],
-  function(WSWrapper, XHRWrapper, SKMObject, RTFManager, XHRConnector, WSConnector)
+  function(WSWrapper, XHRWrapper, SKMObject, ConnectorManager, XHRConnector, WSConnector)
 {
 
 
@@ -16,11 +16,14 @@ console.log('-------------------------------------------------------------------
 
 
 
-var ws = WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 3 });
+var manager = ConnectorManager.create({ sequence: ['WebSocket'] });
+var wstransport = WSWrapper.create({ reconnectAttempts: 3 });
+var wsconnector = WSConnector.create({ transportOptions: { url: 'ws://10.0.3.98:3000' } });
 
-var wsconnector = window.wsconnector = WSConnector.create();
-wsconnector.addTransport(ws);
-wsconnector.beginUpdate();
+manager.registerConnector('WebSocket', wsconnector);
+
+window.manager = manager;
+
 
 // wsconnector.transport.on('all', function() {
 //   cl('-> transpot all : ', arguments)
@@ -30,11 +33,6 @@ wsconnector.beginUpdate();
 // ws.on('all', function() {
 //   cl(arguments)
 // })
-
-// ws.connect()
-
-// cl(ws)
-
 
 
 /**
