@@ -87,7 +87,18 @@ var MessagesHandler = {
    */
   handleConnectorDeactivated: function() {
     Logger.debug('%cMessagesHandler.handleConnectorDeactivated', 'color:red');
-    this.fire('deactivated:connector');
+    this.fire('connector:deactivated');
+  },
+
+  /**
+   * Handled when the connector was closed by the server
+   * 
+   * @description usually, the server will send a message,
+   * alongside the close command
+   */
+  handleConnectorClosed: function() {
+    Logger.debug('%cMessagesHandler.handleConnectorClosed', 'color:red');
+    this.fire('connector:closed');
   },
 
   /**
