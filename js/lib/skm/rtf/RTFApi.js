@@ -331,7 +331,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
 
   _attachConnectorManagerHandlers: function() {
     // handle the raw incoming message
-    this.connectorsManager.on('api:update', this.handleMessage, this);
+    this.connectorsManager.on('api:message', this.handleMessage, this);
 
     // now parse and send channels list
     this.connectorsManager.on('connector:ready',
