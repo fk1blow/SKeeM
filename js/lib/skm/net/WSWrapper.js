@@ -89,9 +89,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     connection.onopen = function() {
       that.handleOnOpen.apply(that, arguments);
     }
-    connection.onerror = function() {
-      that.handleOnError.apply(that, arguments);
-    }
     connection.onclose = function() {
       that.handleOnClose.apply(that, arguments);
     }
@@ -164,10 +161,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     this._linkWasOpened = true;
     this.fire('link:opened');
   },
-
-  handleOnError: function(event) {
-    this.fire('error', event);
-  },
  
   handleOnMessage: function(message) {
     var data = message.data;
@@ -175,9 +168,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       case 'server:pong':
         this.fire('server:pong');
         break;
-      // case 'server:close':
-      //   this.fire('server:close');
-      //   break;
       default:
         this.fire('message', data);
     }
