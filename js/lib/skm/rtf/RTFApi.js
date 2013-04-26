@@ -19,17 +19,6 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var isObject = function(obj) {
-  return Object.prototype.toString.apply(obj) === '[object Object]';
-};
-
-
-var ConnectorsAvailable = {
-  'WebSocket': {name: 'WebSocket', reference: WSConnector, activated: false},
-  'XHR': {name: 'XHR', reference: XHRConnector, activated: false}
-};
-
-
 var Config = {
   sequence: ['WebSocket', 'XHR'],
 
@@ -42,12 +31,19 @@ var Config = {
 
   // single type config
   XHR: {
-    url: 'http://localhost:8080/testajax'
+    url: 'http://localhost:8080/testajax',
+    reconnectAttempts: 10,
   },
 
   Errors: {
     'add_channel_err': 'RTFApi.addChannel - invalid or malformed channel declaration'
   }
+};
+
+
+var ConnectorsAvailable = {
+  'WebSocket': { name: 'WebSocket', reference: WSConnector },
+  'XHR': { name: 'XHR', reference: XHRConnector }
 };
 
 
@@ -285,7 +281,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     var activeConnector = null;
    
     // check if it's an object and has ['name'] inside
-    if ( ! isObject(channel) || ! ('name' in channel) ) {
+    if ( channel || ! ('name' in channel) ) {
       throw new TypeError(Config.Errors.add_channel_err);
     }
     // @todo trigger an event that tells the widget
@@ -356,12 +352,10 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     // iterate over the sequence
     for ( var i = 0; i < len; i++ ) {
       item = Config.sequence[i];
-
       // sequence connector name
       name = ConnectorsAvailable[item]['name'];
       // sequence connector constructor function
       type = ConnectorsAvailable[item]['reference'];
-      
       // if connector not already registered
       if ( manager.getConnector(name) == null ) {
         // create the connector and register to manage
