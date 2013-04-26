@@ -13,13 +13,6 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var ConnectorErrors = {
-  INACTIVE: 'Innactive connection',
-  LIST_TO_BIG: 'Confirmation Message Sent list is too big',
-  READY_LIST_TO_BIG: 'Ready To send Message list is too big'
-}
-
-
 var EventsDelegates = {
   /**
    * Handles a message received from server api
