@@ -64,6 +64,8 @@ var EventsDelegates = {
    * @return {[type]} [description]
    */
   handleLinkOpened: function() {
+    this._isReconnecting = false;
+    this._currentAttempt = 1;
     this.fire('connector:ready');
   },
 
@@ -96,11 +98,9 @@ var EventsDelegates = {
     } else {
       Logger.debug('WSConnector : maxReconnectAttempts of ' 
         + this.maxReconnectAttempts + ' reached!');
-
       // has stopped reconnecting and reset current attempt
       this._isReconnecting = false;
-      this._currentAttempt = 0;
-
+      this._currentAttempt = 1;
       // tell the manager the transport has been deactivated
       this.fire('transport:deactivated');
     }
@@ -115,7 +115,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
 
   _isReconnecting: false,
 
-  maxReconnectAttempts: 2,
+  maxReconnectAttempts: 3,
 
   reconnectDelay: 3000,
 
@@ -133,6 +133,16 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     // disconnect and remove events
     this.transport.disconnect();
     return this;
+  },
+
+  /**
+   * Sends a message through/using the transport
+   * 
+   * @param  {String} message   the message to be sent to endpoint
+   */
+  sendMessage: function(message) {
+    Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
+    this.transport.send(message);
   },
 
   /*
@@ -160,16 +170,6 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
       this.handleConnectingStopped, this);
 
     return this;
-  },
-
-  /**
-   * Sends a message through/using the transport
-   * 
-   * @param  {String} message   the message to be sent to endpoint
-   */
-  sendMessage: function(message) {
-    Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
-    this.transport.send(message);
   }
 });
 
