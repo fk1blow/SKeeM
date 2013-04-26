@@ -29,58 +29,35 @@ var NoNativeImplementation = 'No native WebSocket implementation found;'
 var iDevice = function() {
   return typeof navigator !== 'undefined'
     && /iPad|iPhone|iPod/i.test(navigator.userAgent);
-}
+};
 
 
-/**
- * WSWrapper events delegates
- */
-var EventsDelegates = {
-  _attachConnectionEvents: function() {
-    var connection = this._connectionHandler;
+var getNativeConstructor = function() {
+  var c = null;
+  if ('WebSocket' in window)
+    c = WebSocket;
+  else if ('MozWebSocket' in window)
+    c = MozWebSocket;
+  return c;
+};
 
-    /**
-     * Connecting handlers
-     */
-    
-    // Connecting timeout triggered
-    connection.on('connecting:timeout', function() {
-      this._stopConnecting();
-      this.fire('connecting:timeout');
-    }, this);
 
-    // A connecting attempt stopped
-    connection.on('connecting:stopped', function() {
-      this.fire('connecting:stopped');
-    }, this);
-
-    /**
-     * Link handlers
-     */
-
-    connection.on('link:opened', function() {
-      this.fire('link:opened');
-      this._initPingTimer();
-    }, this)
-    .on('link:closed', function(evt) {
-      this._stopConnecting();
-      this.fire('link:closed', evt);
-    }, this)
-    .on('link:interrupted', function(evt) {
-      this.fire('link:interrupted', evt);
-    }, this);
-
-    /**
-     * Message and pong listeners
-     */
-
-    connection.on('message', function(message) {
-      if ( message == 'pong' )
-        Logger.debug('%cWSWrapper : pong', 'color:blue');
-      else
-        this.fire('message', message);
-    }, this);
+var createNativeSocket = function(url, protocols) {
+  var ctor = null
+  // if no url given, throw error
+  if ( !arguments.length ) {
+    throw new TypeError(ErrorMessages.MISSSING_URL);
   }
+  // check the designated constructor
+  ctor = getNativeConstructor();
+  if ( ctor === null ) {
+    Logger.debug('%ccreateNativeSocket :', NoNativeImplementation, 'red');
+  }
+  // If no native implementation found, return null
+  if ( ctor == null )
+    return ctor;
+  // assign the native socket and return it
+  return (protocols) ? new ctor(url, protocols) : new ctor(url);
 };
 
 
@@ -131,14 +108,14 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   
   
   startConnectingAttempt: function() {
-    Logger.info('NativeDelegates.startConnectingAttempt');
+    Logger.info('NativeWebSocketHandler.startConnectingAttempt');
     this._timerAutoDisconnect.start();
     this._closeExpected = false;
     return this;
   },
 
   stopConnectingAttempt: function() {
-    Logger.info('NativeDelegates.stopConnectingAttempt');
+    Logger.info('NativeWebSocketHandler.stopConnectingAttempt');
     this._timerAutoDisconnect.stop();
     this._closeExpected = true;
     return this;
@@ -150,9 +127,9 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 
 
   handleOnClose: function(event) {
-    Logger.info('NativeDelegates.handleOnClose');
-    Logger.debug('NativeDelegates : event state : ', 'wasClean:', event.wasClean,
-      ' code:', event.code, ' reason:', event.reason);
+    Logger.info('NativeWebSocketHandler.handleOnClose');
+    Logger.debug('NativeWebSocketHandler : event state : ', 
+      'wasClean:', event.wasClean, ' code:', event.code, ' reason:', event.reason);
 
     // stop all timers
     this._timerAutoDisconnect.stop();
@@ -163,13 +140,15 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     } else {
       // manually closed by the user, no need to trigger events
       if ( this._closeExpected ) {
-        Logger.debug('NativeDelegates : close expected or manually invoked');
+        Logger.debug('NativeWebSocketHandler : close expected or manually invoked');
       }
       // if has been opened before
       else if ( this._linkWasOpened ) {
+        Logger.debug('NativeWebSocketHandler : connection interrupted');
         this.fire('link:interrupted');
       }
       else {
+        Logger.debug('NativeWebSocketHandler : connection stopped');
         this.fire('connecting:stopped');
       }
     }
@@ -179,7 +158,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   },
 
   handleOnOpen: function() {
-    Logger.info('NativeDelegates.handleOnOpen');
+    Logger.info('NativeWebSocketHandler.handleOnOpen');
     this._timerAutoDisconnect.stop();
     this._reconnectionAttempt = 0;
     this._linkWasOpened = true;
@@ -205,14 +184,14 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   },
   
   _handleAutoDisconnect: function() {
-    Logger.debug('NativeDelegates : auto-disconnect triggered after:',
+    Logger.debug('NativeWebSocketHandler : auto-disconnect triggered after:',
       this._timerAutoDisconnect.tickInterval + ' ms');
     this.fire('connecting:timeout');
   }
 });
 
 
-var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
+var WSWrapper = SKMObject.extend(Subscribable, {
   /**
    * URL of the WebSocket server
    * @type {String}
@@ -297,7 +276,7 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
 
   // @todo move/remove ping from WSWrapper
   ping: function() {
-    if ( ! this.isOpened() ) {
+    if ( ! this.getConnectionState() == 1 ) {
       Logger.info('WSWrapper.ping : cannot ping server or'
         + ' connection is closed. Stopping ping timer.');
       this._timerPing.stop();
@@ -323,16 +302,19 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
    */
   
   _startConnecting: function() {
-    var socket = this._createNativeSocket(this.url, this.protocols);
-    if ( socket == null )
+    this._nativeSocket = createNativeSocket(this.url, this.protocols);
+    if ( this._nativeSocket == null )
       this.fire('implementation:missing')._stopConnecting();
     else {
-      this._connectionHandler.attachListenersTo(socket).startConnectingAttempt();
+      this._connectionHandler.attachListenersTo(this._nativeSocket)
+        .startConnectingAttempt();
     }
   },
 
   _stopConnecting: function() {
-    this._connectionHandler.stopConnectingAttempt();
+    // only stop if the connection is not closed
+    if ( this.getConnectionState() != 3 )
+      this._connectionHandler.stopConnectingAttempt();
     this._destroyNativeSocket();
   },
 
@@ -346,40 +328,11 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
     }
   },
 
-  _getProperNativeConstructor: function() {
-    var c = null;
-    if ('WebSocket' in window)
-      c = WebSocket;
-    else if ('MozWebSocket' in window)
-      c = MozWebSocket;
-    return c;
-  },
-
-  _createNativeSocket: function(url, protocols) {
-    var ctor = null
-    // if no url given, throw error
-    if ( !arguments.length ) {
-      throw new TypeError(ErrorMessages.MISSSING_URL);
-    }
-    // check the designated constructor
-    ctor = this._getProperNativeConstructor();
-    if ( ctor === null ) {
-      Logger.debug('%cWSWrapper._createNativeSocket : '
-        + NoNativeImplementation, 'red');
-    }
-    // If no native implementation found, return null
-    if ( ctor == null )
-      return ctor;
-    // assign the native socket and return it
-    this._nativeSocket = (protocols) ? new ctor(url, protocols) : new ctor(url);
-    return this._nativeSocket;
-  },
-
   _destroyNativeSocket: function() {
-    if ( !this._nativeSocket )
-      return false;
-    this._nativeSocket.close();
-    this._nativeSocket = null;
+    if ( this._nativeSocket ) {
+      this._nativeSocket.close();
+      this._nativeSocket = null;
+    }
     return true;
   },
 
@@ -391,6 +344,44 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
     });
     // Disconnect and auto reconnect bindings
     this._attachConnectionEvents();
+  },
+
+  _attachConnectionEvents: function() {
+    var connection = this._connectionHandler;
+
+    // Connecting timeout triggered
+    connection.on('connecting:timeout', function() {
+      this._stopConnecting();
+      this.fire('connecting:timeout');
+    }, this);
+
+    // A connecting attempt stopped
+    connection.on('connecting:stopped', function() {
+      this._stopConnecting();
+      this.fire('connecting:stopped');
+    }, this);
+
+    // link has been established
+    connection.on('link:opened', function() {
+      this.fire('link:opened');
+      this._initPingTimer();
+    }, this)
+    .on('link:closed', function(evt) {
+      this._stopConnecting();
+      this.fire('link:closed', evt);
+    }, this)
+    .on('link:interrupted', function(evt) {
+      this._stopConnecting();
+      this.fire('link:interrupted', evt);
+    }, this);
+
+    // message received from the server
+    connection.on('message', function(message) {
+      if ( message == 'pong' )
+        Logger.debug('%cWSWrapper : pong', 'color:blue');
+      else
+        this.fire('message', message);
+    }, this);
   }
 });
 
