@@ -130,7 +130,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   endUpdate: function() {
-    Logger.debug('WSConnector.endUpdate');
+    Logger.info('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
     return this;
@@ -142,7 +142,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
    * @param  {String} message   the message to be sent to endpoint
    */
   sendMessage: function(message) {
-    Logger.debug('%cWSConnector.sendMessage : ', 'color:red', message);
+    Logger.debug('%cWSConnector.sendMessage : ', 'color:green', message);
     this.transport.send(message);
   },
 
