@@ -281,7 +281,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     var activeConnector = null;
    
     // check if it's an object and has ['name'] inside
-    if ( channel || ! ('name' in channel) ) {
+    if ( ! channel || ! ('name' in channel) ) {
       throw new TypeError(Config.Errors.add_channel_err);
     }
     // @todo trigger an event that tells the widget
@@ -330,17 +330,21 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
   },
 
   _attachConnectorManagerHandlers: function() {
-    // Handle when manager has been deactivated - next/sequence switch
-    // or transport issues - issues handled by the manager
-    this.connectorsManager.on('connector:deactivated',
-      this.handleConnectorDeactivated, this);
-
     // handle the raw incoming message
     this.connectorsManager.on('api:update', this.handleMessage, this);
 
     // now parse and send channels list
     this.connectorsManager.on('connector:ready',
       this.handleConnectorReady, this);
+
+    // Handle when manager has been deactivated - next/sequence switch
+    // or transport issues - issues handled by the manager
+    this.connectorsManager.on('connector:deactivated',
+      this.handleConnectorDeactivated, this);
+
+    // when the server closes the link
+    this.connectorsManager.on('connector:closed',
+      this.handleConnectorClosed, this);
   },
 
   _buildConnectorsList: function() {
