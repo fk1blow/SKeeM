@@ -23,6 +23,11 @@ var ManagerDelegates = {
     this._stopCurrentSequence();
   },
 
+  handleConnectorApiClosed: function() {
+    this.fire('api:closed');
+    this._stopCurrentSequence();
+  },
+
   handleConnectorApiUpdate: function(message) {
     this.fire('api:update', message);
   },
@@ -81,7 +86,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
       Logger.error('Unable to start a sequence; connectors already started!');
     else
       this._startInitialSequence();
-          
+    return this;
   },
 
   /**
@@ -95,6 +100,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     if ( this.getActiveConnector() )
       this._stopCurrentSequence();
     this._activeConnector = null;
+    return this;
   },
   
   /**
@@ -107,6 +113,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     Logger.info('ConnectorManager.switchToNextConnector');
     this._stopCurrentSequence();
     this._startNextSequence();
+    return this;
   },
 
   /**
@@ -214,7 +221,7 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     if ( this._activeConnector != undefined ) {
       this._startConnector(this._activeConnector);
     } else {
-      Logger.debug('ConnectorManager : sequence complete!');
+      Logger.info('ConnectorManager : sequence complete!');
       this._activeConnector = null;
     }
 
@@ -246,10 +253,12 @@ var Manager = SKMObject.extend(Subscribable, ManagerDelegates, {
     // Stop current connectors and start next one
     connector.on('transport:deactivated',
       this.handleConnectorTransportDeactivated, this);
-    // Stop and clean current connector
+    // Server closed the connection; stop and clean current connector
     connector.on('api:error', this.handleConnectorApiError, this);
+    // When the server has closed the connection but no message was given
+    connector.on('api:closed', this.handleConnectorApiClosed, this);
     // notify of update...
-    connector.on('api:update', this.handleConnectorApiUpdate, this);
+    connector.on('api:message', this.handleConnectorApiUpdate, this);
     // when is ready to being
     connector.on('connector:ready', this.handleConnectorReady, this);
     // Begin update connector
