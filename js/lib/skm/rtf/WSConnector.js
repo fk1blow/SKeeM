@@ -25,7 +25,7 @@ var EventsDelegates = {
   handleReceivedMessage: function(message) {
     // Logger.info('WSConnector.handleReceivedMessage');
     message = JSON.parse(message);
-    this.fire('api:update', message);
+    this.fire('api:message', message);
   },
 
   /**
@@ -53,7 +53,7 @@ var EventsDelegates = {
     if ( message ) {
       this.fire('api:error', message);
     }
-    this.fire('api:error');
+    this.fire('api:closed');
   },
 
   /**
@@ -122,7 +122,8 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   beginUpdate: function() {
     // ensure transport type and transport url creation
     this.ensureTransportCreated(WSWrapper).buildTransportUrl();
-    Logger.info('WSConnector.beginUpdate \n', this.transport.url);
+    Logger.info('WSConnector.beginUpdate');
+    Logger.debug('WSConnector : transport url :', this.transport.url);
     // after connect, a ["connector:ready"] event will trigger
     this.transport.connect();
     return this;
