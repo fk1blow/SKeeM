@@ -87,7 +87,7 @@ var EventsDelegates = {
 /**
  * Native WebSocket connection delegates
  */
-var NativeDelegates = SKMObject.extend(Subscribable, {
+var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   connectionTimeout: 1500,
 
   _timerAutoDisconnect: null,
@@ -384,7 +384,7 @@ var WSWrapper = SKMObject.extend(Subscribable, EventsDelegates, {
   },
 
   _initConnectionHandler: function() {
-    this._connectionHandler = NativeDelegates.create({
+    this._connectionHandler = NativeWebSocketHandler.create({
       connectionTimeout: this.timeout,
       reconnectDelay: this.reconnectDelay,
       maxReconnectAttempts: this.reconnectAttempts
