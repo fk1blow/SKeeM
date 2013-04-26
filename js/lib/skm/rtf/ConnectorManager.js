@@ -19,12 +19,12 @@ var ManagerDelegates = {
   },
 
   handleConnectorApiError: function() {
-    this.fire('api:error');
+    this.fire('connector:closed');
     this._stopCurrentSequence();
   },
 
   handleConnectorApiClosed: function() {
-    this.fire('api:closed');
+    this.fire('connector:closed');
     this._stopCurrentSequence();
   },
 
