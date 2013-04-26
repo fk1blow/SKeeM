@@ -18,7 +18,7 @@ console.log('-------------------------------------------------------------------
 
 var ws = WSWrapper.create({ url: 'ws://10.0.3.98:3000', reconnectAttempts: 3 });
 
-var wsconnector = WSConnector.create();
+var wsconnector = window.wsconnector = WSConnector.create();
 wsconnector.addTransport(ws);
 wsconnector.beginUpdate();
 
