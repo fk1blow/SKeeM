@@ -25,7 +25,7 @@ var ConnectorState = {
 var BaseConnector = SKMObject.extend(Subscribable, {
   /**
    * Transport type object
-   * @type {WSWrapper, XHRWrapper} an instance of a Transport type
+   * @type {Transport} an instance of a Transport type
    */
   transport: null,
 
@@ -36,17 +36,30 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   transportOptions: null,
 
   /**
+   * Maximum reconnect attempts
+   * @type {Number}
+   */
+  maxReconnectAttempts: 3,
+
+  /**
+   * Delay after a reconnect attemp will begin
+   * @type {Number}
+   */
+  reconnectDelay: 3000,
+
+  /**
    * Object that models the url and 
    * its parameters
    * @type {Object}
    */
   urlParamModel: null,
 
+  _currentAttempt: 1,
+
+  _isReconnecting: false,
+
   initialize: function() {
-    Logger.debug('%cnew BaseConnector::' + this.getType(), 'color:#a2a2a2');
-    
-    // create the reconnect handler object
-    // this._creadReconnectHandler();
+    Logger.debug('%cnew BaseConnector', 'color:#a2a2a2');
     
     // after transport created, add trnasport and urlparam listeners
     this.on('transport:added', function() {
@@ -54,41 +67,11 @@ var BaseConnector = SKMObject.extend(Subscribable, {
       this.addTransportListeners();
       // attach url param model events
       if ( this.urlParamModel )
-        this.urlParamModel.on('added altered removed', this.buildTransportUrl, this);
+        this.urlParamModel.on('added altered removed', this._buildTransportUrl, this);
     }, this);
   },
 
   /**
-   * @abstract
-   * 
-   * Begins update by opening the transport's connection
-   */
-  beginUpdate: function() {},
-
-  /**
-   * @abstract
-   *
-   * Stops updates for this transport by aborting connection
-   */
-  endUpdate: function() {},
-
-  /**
-   * @abstract
-   * 
-   * Sends a message to the RTF server
-   */
-  sendMessage: function(message) {},
-
-  /**
-   * @abstract
-   * 
-   * Listens to transport events
-   */
-  addTransportListeners: function() {},
-
-  /**
-   * @abstract
-   *
    * Removes transport listeners
    */
   removeTransportListeners: function() {
@@ -113,17 +96,6 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   },
 
   /**
-   * Ensures the presence of a transport type
-   * @param  {Object} transportType Reference to the transport
-   * used by this particular connecgtor(WSWrapper, XHRWrapper, etc)
-   */
-  ensureTransportCreated: function(transportType) {
-    if ( this.transport == null )
-      this.addTransport(transportType.create(this.transportOptions));
-    return this;
-  },
-
-  /**
    * Destroys the object
    * @description nullifies every field
    * and removes any events bound to that particular field
@@ -135,10 +107,21 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   },
 
   /**
+   * Ensures the presence of a transport type
+   * @param  {Object} transportType Reference to the transport
+   * used by this particular connecgtor(WSWrapper, XHRWrapper, etc)
+   */
+  _ensureTransportCreated: function(transportType) {
+    if ( this.transport == null )
+      this.addTransport(transportType.create(this.transportOptions));
+    return this;
+  },
+
+  /**
    * Builds the transport utl, based on
    * urlParams and transportBaseUrl fields
    */
-  buildTransportUrl: function() {
+  _buildTransportUrl: function() {
     var qs = '';
     if ( this.transport && this.urlParamModel ) {
       qs = this.urlParamModel.toQueryString();
@@ -146,8 +129,41 @@ var BaseConnector = SKMObject.extend(Subscribable, {
     }
   },
 
-  getType: function() {
-    return this._typeName;
+  /**
+   * Handled while trying to establish a link
+   *
+   * @description this handler is called whenever the websocket wrapper
+   * tries to establish a connection but fails to do that.
+   * It cand fail if the wrapper auto-disconnects the attemp,
+   * or if the native wrapper triggers the close event.
+   */
+  _makeReconnectAttempt: function() {
+    var that = this;
+    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
+      Logger.debug('Connector : will make attempt in', this.reconnectDelay, 'ms');
+      // After delay, call being update and increment current attempt
+      // 
+      setTimeout(function() {
+        Logger.debug('-------------------------------------------');
+        Logger.debug('Connector : attempt #', that._currentAttempt);
+        // is reconnecting and increment current attempt
+        that._isReconnecting = true;
+        that._currentAttempt += 1;
+
+        // start connecting by calling beginUpdate
+        that.beginUpdate();
+      }, this.reconnectDelay);
+    } else {
+      Logger.debug('Connector : maxReconnectAttempts of ' 
+        + this.maxReconnectAttempts + ' reached!');
+
+      // has stopped reconnecting and reset current attempt
+      this._isReconnecting = false;
+      this._currentAttempt = 1;
+
+      // tell the manager the transport has been deactivated
+      this.fire('transport:deactivated');
+    }
   }
 });
 
