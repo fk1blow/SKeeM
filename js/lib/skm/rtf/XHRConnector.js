@@ -50,55 +50,27 @@ var EventsDelegates = {
       this.fire('api:error', err.responseText);
     } else {
       this.handleConnectingStopped();
-      // this.fire('transport:deactivated');
     }
   },
 
+  /**
+   * Handled while trying to establish a link
+   *
+   * @description this handler is called whenever the websocket wrapper
+   * tries to establish a connection but fails to do that.
+   * It cand fail if the wrapper auto-disconnects the attemp,
+   * or if the native wrapper triggers the close event.
+   */
   handleConnectingStopped: function() {
-    var that = this;
-
     Logger.info('Connector.handleConnectingStopped');
-
-    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
-      Logger.debug('Connector : will make attempt in', this.reconnectDelay, 'ms');
-      // Try to begin update and reconnect after [this.reconnectDelay]
-      setTimeout(function() {
-        Logger.debug('_____________________________________________');
-        Logger.debug('Connector : attempt #', that._currentAttempt);
-        // is reconnecting and increment current attempt
-        that._isReconnecting = true;
-        that._currentAttempt += 1;
-        // try to re-establish connection by calling [beginUpdate]
-        that.beginUpdate();
-      }, this.reconnectDelay);
-    } else {
-      Logger.debug('Connector : maxReconnectAttempts of ' 
-        + this.maxReconnectAttempts + ' reached!');
-      // has stopped reconnecting and reset current attempt
-      this._isReconnecting = false;
-      this._currentAttempt = 1;
-
-      // tell the manager the transport has been deactivated
-      this.fire('transport:deactivated');
-    }
+    this._makeReconnectAttempt();
   }
 };
 
 
 var XHRConnector = BaseConnector.extend(EventsDelegates, {
-  _typeName: 'XHR',
-
-  _currentAttempt: 1,
-
-  _isReconnecting: false,
-
-  maxReconnectAttempts: 3,
-
-  reconnectDelay: 3000,
-
   beginUpdate: function() {
-    // ensure transport type and transport url creation
-    this.ensureTransportCreated(XHRWrapper).buildTransportUrl();
+    this._ensureTransportCreated(XHRWrapper)._buildTransportUrl();
     Logger.info('Connector.beginUpdate');
     Logger.debug('Connector : transport url :', this.transport.url);
     // because xhr is ready after being instantiated

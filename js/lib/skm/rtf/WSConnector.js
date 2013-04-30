@@ -78,50 +78,15 @@ var EventsDelegates = {
    * or if the native wrapper triggers the close event.
    */
   handleConnectingStopped: function() {
-    var that = this;
-
-    Logger.info('WSConnector.handleConnectingStopped');
-
-    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
-      Logger.debug('WSConnector : will make attempt in', this.reconnectDelay, 'ms');
-
-      // Try to begin update and reconnect after [this.reconnectDelay]
-      setTimeout(function() {
-        Logger.debug('_____________________________________________');
-        Logger.debug('WSConnector : attempt #', that._currentAttempt);
-        // is reconnecting and increment current attempt
-        that._isReconnecting = true;
-        that._currentAttempt += 1;
-        // try to re-establish connection by calling [beginUpdate]
-        that.beginUpdate();
-      }, this.reconnectDelay);
-    } else {
-      Logger.debug('WSConnector : maxReconnectAttempts of ' 
-        + this.maxReconnectAttempts + ' reached!');
-      // has stopped reconnecting and reset current attempt
-      this._isReconnecting = false;
-      this._currentAttempt = 1;
-      // tell the manager the transport has been deactivated
-      this.fire('transport:deactivated');
-    }
+    Logger.info('Connector.handleConnectingStopped');
+    this._makeReconnectAttempt();
   }
 };
 
 
 var WSConnector = BaseConnector.extend(EventsDelegates, {
-  _typeName: 'WebSocket',
-
-  _currentAttempt: 1,
-
-  _isReconnecting: false,
-
-  maxReconnectAttempts: 3,
-
-  reconnectDelay: 3000,
-
   beginUpdate: function() {
-    // ensure transport type and transport url creation
-    this.ensureTransportCreated(WSWrapper).buildTransportUrl();
+    this._ensureTransportCreated(WSWrapper)._buildTransportUrl();
     Logger.info('WSConnector.beginUpdate');
     Logger.debug('WSConnector : transport url :', this.transport.url);
     // after connect, a ["connector:ready"] event will trigger
