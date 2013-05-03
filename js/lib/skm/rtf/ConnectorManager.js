@@ -2,13 +2,59 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Subscribable'],
-  function(SKMObject, SKMLogger, Subscribable)
+  'skm/util/Subscribable',
+  'skm/rtf/XHRConnector',
+  'skm/rtf/WSConnector'],
+  function(SKMObject, SKMLogger, Subscribable, XHRConnector, WSConnector)
 {
 'use strict';
 
 
 var Logger = SKMLogger.create();
+
+
+var ConnectorsAvailable = {
+  'WebSocket': { name: 'WebSocket', reference: WSConnector },
+  'XHR': { name: 'XHR', reference: XHRConnector }
+};
+
+
+var ConnectorsFactory = {
+  connectorsOptions: null,
+
+  connectorsUrlParamModel: null,
+
+  connectorsManager: null,
+
+  buildConnectorsForSequence: function(sequence) {
+    // var manager = this.connectorsManager;
+    var item, name = null, type = null;
+    var len = sequence.length;
+    
+    // iterate over the sequence
+    for ( var i = 0; i < len; i++ ) {
+      item = sequence[i];
+      // sequence connector name
+      name = ConnectorsAvailable[item]['name'];
+      // sequence connector constructor function
+      type = ConnectorsAvailable[item]['reference'];
+      // if connector not already registered
+      this.buildAndRegisterConnector(name, type);
+    }
+  },
+
+  buildAndRegisterConnector: function(type_name, type_reference) {
+    var manager = this.connectorsManager;
+
+    if ( manager.getConnector(type_name) == null ) {
+      // create the connector and register to manage
+      manager.registerConnector(type_name, type_reference.create({
+        urlParamModel: this.connectorsUrlParamModel,
+        transportOptions: this.connectorsOptions[type_name]
+      }));
+    }
+  }
+};
 
 
 var Manager = SKMObject.extend(Subscribable, {
@@ -33,6 +79,18 @@ var Manager = SKMObject.extend(Subscribable, {
   _activeSequenceIdx: 0,
 
   /**
+   * Connector url parameter model
+   * @type {Object}
+   */
+  connectorsUrlParamModel: null,
+
+  /**
+   * Connectors and transports options
+   * @type {Object}
+   */
+  connectorsOptions: null,
+
+  /**
    * The default sequence of the connectors
    * 
    * @description usual configuration is ['WebSocket', 'XHR']
@@ -46,8 +104,8 @@ var Manager = SKMObject.extend(Subscribable, {
     Logger.debug('%cnew Manager', 'color:#a2a2a2');
     this._connectors = null;
     this._activeConnector = null;
+    this._prepareConnectors();
   },
-
 
   /**
    * Starts the connectors [beginUpdate]
@@ -125,14 +183,6 @@ var Manager = SKMObject.extend(Subscribable, {
   },
 
   /**
-   * Checks if a connector was registered to connectors list
-   * @return {Boolean} [_connector]
-   */
-  noRegisteredConnectors: function() {
-    return !(this._connectors);
-  },
-
-  /**
    * Sends a message through a connector
    * @param  {Mixed} message a string or plain json of
    * the message sent to the server
@@ -155,6 +205,16 @@ var Manager = SKMObject.extend(Subscribable, {
    * Private
    */
   
+
+  /**
+   * Prepares the connectors for this sequence
+   */
+  _prepareConnectors: function() {
+    ConnectorsFactory.connectorsOptions = this.connectorsOptions;
+    ConnectorsFactory.connectorsUrlParamModel = this.connectorsUrlParamModel;
+    ConnectorsFactory.connectorsManager = this;
+    ConnectorsFactory.buildConnectorsForSequence(this.sequence);
+  },
 
   /**
    * Starts the initial update sequence
@@ -213,6 +273,8 @@ var Manager = SKMObject.extend(Subscribable, {
   },
 
   _startConnector: function(connector) {
+    cl('_startConnector', connector)
+
     // Stop current connectors and start next one
     connector.on('transport:deactivated', function() {
       this.fire('connector:deactivated');
