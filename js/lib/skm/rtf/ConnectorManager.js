@@ -170,12 +170,8 @@ var Manager = SKMObject.extend(Subscribable, {
       return;
     }
 
-    this.fire('before:initialSequence');
-
     this._activeConnector = list[this.sequence[0]];
     this._startConnector(this._activeConnector);
-
-    this.fire('after:initialSequence');
   },
 
   /**
@@ -184,9 +180,6 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   _startNextSequence: function() {
     Logger.debug('ConnectorManager : starting next sequence');
-
-    // tell that a next sequence is about the be started
-    this.fire('before:nextSequence');
 
     this._activeSequenceIdx = this._getNextSequence();
     this._activeConnector = this._connectors[this._activeSequenceIdx];
@@ -197,8 +190,6 @@ var Manager = SKMObject.extend(Subscribable, {
       Logger.info('ConnectorManager : sequence complete!');
       this._activeConnector = null;
     }
-
-    this.fire('after:nextSequence');
   },
 
   /**
