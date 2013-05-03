@@ -142,7 +142,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
     if ( this._currentAttempt <= this.maxReconnectAttempts ) {
       Logger.debug('Connector : will make attempt in', this.reconnectDelay, 'ms');
       // After delay, call being update and increment current attempt
-      // 
+      
       setTimeout(function() {
         Logger.debug('-------------------------------------------');
         Logger.debug('Connector : attempt #', that._currentAttempt);
