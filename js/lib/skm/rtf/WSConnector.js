@@ -23,7 +23,6 @@ var EventsDelegates = {
    * @param  {Object} message JSON message send by rtf server api
    */
   handleReceivedMessage: function(message) {
-    // Logger.info('WSConnector.handleReceivedMessage');
     message = JSON.parse(message);
     this.fire('api:message', message);
   },
@@ -107,13 +106,13 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
    * @param  {String} message   the message to be sent to endpoint
    */
   sendMessage: function(message) {
-    Logger.debug('%cWSConnector.sendMessage : ', 'color:green', message);
+    Logger.debug('%cWSConnector : sending message : ', 'color:green', message);
     this.transport.send(message);
   },
 
   /*
     - define the list of events that a connector can trigger
-    - for ex, if the link is being interrupted, make sure you notify the manager
+    - par ex, if the link is being interrupted, make sure you notify the manager
     that an error has ocured - this error will be sent to the widget
   */
   addTransportListeners: function() {

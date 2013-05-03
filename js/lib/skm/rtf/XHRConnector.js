@@ -82,7 +82,6 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('Connector.endUpdate');
     // disconnect and remove events
     this.transport.abortRequest();
-    // this.removeTransportListeners();
     return this;
   },
 
