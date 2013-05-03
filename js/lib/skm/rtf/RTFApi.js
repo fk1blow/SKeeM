@@ -7,11 +7,9 @@ define(['skm/k/Object',
   'skm/util/Subscribable',
   'skm/net/XHRWrapper',
   'skm/rtf/ConnectorManager',
-  'skm/rtf/XHRConnector',
-  'skm/rtf/WSConnector',
-  'skm/rtf/ApiEventsDelegates'],
+  'skm/rtf/RTFEventsDelegates'],
   function(SKMObject, SKMLogger, SKMTimer, Subscribable, XHRWrapper,
-    ConnectorManager, XHRConnector, WSConnector, EventsDelegates)
+    ConnectorManager, EventsDelegates)
 {
 'use strict';
 
@@ -20,30 +18,24 @@ var Logger = SKMLogger.create();
 
 
 var Config = {
-  sequence: ['WebSocket', 'XHR'],
+  Sequence: ['WebSocket', 'XHR'],
 
-  // single type config
-  WebSocket: {
-    url: 'ws://localhost:8080/testws',
-    reconnectAttempts: 10,
-    pingServer: true
-  },
+  Connectors : {
+    WebSocket: {
+      url: 'ws://localhost:8080/testws',
+      reconnectAttempts: 10,
+      pingServer: true
+    },
 
-  // single type config
-  XHR: {
-    url: 'http://localhost:8080/testajax',
-    reconnectAttempts: 10,
+    XHR: {
+      url: 'http://localhost:8080/testajax',
+      reconnectAttempts: 10,
+    }
   },
 
   Errors: {
-    'add_channel_err': 'RTFApi.addChannel - invalid or malformed channel declaration'
+    INVALID_CHANNEL_DECLARATION: 'Invalid or malformed channel declaration'
   }
-};
-
-
-var ConnectorsAvailable = {
-  'WebSocket': { name: 'WebSocket', reference: WSConnector },
-  'XHR': { name: 'XHR', reference: XHRConnector }
 };
 
 
@@ -210,8 +202,6 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
     this.urlModel.add('batchId', this._batchId);
     // creates the connector manager
     this._buildConnectorManager();
-    // build and register available connectors
-    this._buildConnectorsList();
     // prepare before unload auto disconnect
     this._prepareSyncOnUnload();
   },
@@ -258,7 +248,7 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
       + '&closeConnection=true';
 
     connector = XHRWrapper.create({
-      url: opt.url || Config.XHR.url + url,
+      url: opt.url || Config.Connectors.XHR.url + url,
       async: opt.async
     }).sendMessage();
   },
@@ -282,7 +272,7 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
    
     // check if it's an object and has ['name'] inside
     if ( ! channel || ! ('name' in channel) ) {
-      throw new TypeError(Config.Errors.add_channel_err);
+      throw new TypeError(Config.Errors.INVALID_CHANNEL_DECLARATION);
     }
     // @todo trigger an event that tells the widget
     if ( ChannelsListModel.hasSubscribedAndConfirmed(channel) ) {
@@ -323,8 +313,11 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
 
   _buildConnectorManager: function() {
     this.connectorsManager = ConnectorManager.create({
-      sequence: Config.sequence
+      sequence: Config.Sequence,
+      connectorsUrlParamModel: this.urlModel,
+      connectorsOptions: Config.Connectors
     });
+
     // handle the raw incoming message
     this.connectorsManager.on('api:message', this.handleMessage, this);
 
@@ -332,7 +325,7 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
     this.connectorsManager.on('connector:ready',
       this.handleConnectorReady, this);
 
-  // Handle when manager has been deactivated - next/sequence switch
+    // Handle when manager has been deactivated; next/sequence switch
     // or transport issues - issues handled by the manager
     this.connectorsManager.on('connector:deactivated',
       this.handleConnectorDeactivated, this);
@@ -340,32 +333,6 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
     // when the server closes the link
     this.connectorsManager.on('connector:closed',
       this.handleConnectorClosed, this);
-  },
-
-  // @todo move the connectors factory method
-  // inside/to the Connector Manager module
-  _buildConnectorsList: function() {
-    var urlModel = this.urlModel;
-    var manager = this.connectorsManager;
-    var item, active = false, name = null, type = null;
-    var len = Config.sequence.length;
-    
-    // iterate over the sequence
-    for ( var i = 0; i < len; i++ ) {
-      item = Config.sequence[i];
-      // sequence connector name
-      name = ConnectorsAvailable[item]['name'];
-      // sequence connector constructor function
-      type = ConnectorsAvailable[item]['reference'];
-      // if connector not already registered
-      if ( manager.getConnector(name) == null ) {
-        // create the connector and register to manage
-        manager.registerConnector(name, type.create({
-          urlParamModel: urlModel,
-          transportOptions: Config[name]
-        }));
-      }
-    }
   },
 
   _prepareSyncOnUnload: function() {
