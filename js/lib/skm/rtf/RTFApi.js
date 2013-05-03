@@ -9,9 +9,9 @@ define(['skm/k/Object',
   'skm/rtf/ConnectorManager',
   'skm/rtf/XHRConnector',
   'skm/rtf/WSConnector',
-  'skm/rtf/MessagesHandler'],
+  'skm/rtf/ApiEventsDelegates'],
   function(SKMObject, SKMLogger, SKMTimer, Subscribable, XHRWrapper,
-    ConnectorManager, XHRConnector, WSConnector, MessagesHandler)
+    ConnectorManager, XHRConnector, WSConnector, EventsDelegates)
 {
 'use strict';
 
@@ -47,7 +47,7 @@ var ConnectorsAvailable = {
 };
 
 
-var ChannelsList = {
+var ChannelsListModel = {
   _currentList: null,
 
   _confirmedList: null,
@@ -196,7 +196,7 @@ var ConnectorUrlModel = SKMObject.extend(Subscribable, {
 
 
 // main API constructor
-var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
+var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
   _batchId: 0,
 
   urlModel: null,
@@ -285,29 +285,25 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       throw new TypeError(Config.Errors.add_channel_err);
     }
     // @todo trigger an event that tells the widget
-    if ( ChannelsList.hasSubscribedAndConfirmed(channel) ) {
+    if ( ChannelsListModel.hasSubscribedAndConfirmed(channel) ) {
       // that the channel was already subscribed/confirmed
       Logger.error('Channel "' + channel + '" already subscribed.'
         + ' Unsubscribe then subscribe again.');
     } else {
       // Add subscription
-      ChannelsList.addChannel(channel);
+      ChannelsListModel.addChannel(channel);
       // send message to connector, if a connector is available
       if ( activeConnector = this.connectorsManager.getActiveConnector() )
-        activeConnector.sendMessage(ChannelsList.toStringifiedJson());
+        activeConnector.sendMessage(ChannelsListModel.toStringifiedJson());
     }
   },
 
   removeChannel: function(name) {
     // remove from Channels list
-    ChannelsList.removeChannel(name);
+    ChannelsListModel.removeChannel(name);
     // send message back to server
     this.sendMessage('closeSubscription:{' + name + '}');
     return this;
-  },
-
-  getChannelsListObject: function() {
-    return ChannelsList;
   },
 
   addUrlParameter: function(name, value) {
@@ -321,15 +317,14 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
    */
 
   
+  _getChannelsListModel: function() {
+    return ChannelsListModel;
+  },
+
   _buildConnectorManager: function() {
     this.connectorsManager = ConnectorManager.create({
       sequence: Config.sequence
     });
-    // attach the manager event handlers
-    this._attachConnectorManagerHandlers();
-  },
-
-  _attachConnectorManagerHandlers: function() {
     // handle the raw incoming message
     this.connectorsManager.on('api:message', this.handleMessage, this);
 
@@ -337,7 +332,7 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     this.connectorsManager.on('connector:ready',
       this.handleConnectorReady, this);
 
-    // Handle when manager has been deactivated - next/sequence switch
+  // Handle when manager has been deactivated - next/sequence switch
     // or transport issues - issues handled by the manager
     this.connectorsManager.on('connector:deactivated',
       this.handleConnectorDeactivated, this);
@@ -347,9 +342,11 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
       this.handleConnectorClosed, this);
   },
 
+  // @todo move the connectors factory method
+  // inside/to the Connector Manager module
   _buildConnectorsList: function() {
-    var urlModel = this.urlModel,
-        manager = this.connectorsManager;
+    var urlModel = this.urlModel;
+    var manager = this.connectorsManager;
     var item, active = false, name = null, type = null;
     var len = Config.sequence.length;
     
@@ -371,37 +368,29 @@ var RTFApi = SKMObject.extend(Subscribable, MessagesHandler, {
     }
   },
 
-  _getIncrementedBatchId: function() {
-    var bid = this._batchId++
-    return bid;
-  },
-
   _prepareSyncOnUnload: function() {
     var that = this;
     window.onbeforeunload = function() {
       that.shutdown({ async: false });
-    }
+    };
   }
 });
 
 
-var ApiSingleton = (function() {
-  var instance = null;
-
-  return {
-    getInstance: function() {
-      if ( instance == null ) {
-        instance = RTFApi.create();
-      }
-      return instance;
-    }
-  }
-}());
-
-
 return {
   Config: Config,
-  Api: ApiSingleton
+  
+  // Api singleton method
+  Api: (function() {
+    var apiSingletonInstance = null;
+    return {
+      getInstance: function() {
+        if ( apiSingletonInstance == null )
+          apiSingletonInstance = RTFApi.create();
+        return apiSingletonInstance;
+      }
+    };
+  }())
 };
 
 
