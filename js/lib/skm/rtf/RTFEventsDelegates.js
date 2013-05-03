@@ -11,7 +11,7 @@ define(['skm/util/Logger',
 var Logger = SKMLogger.create();
 
 
-var MessagesHandler = {
+var EventsDelegates = {
   handleMessageSections: function(dataObj) {
     var itemKey = null, i = 0, len = dataObj.length,
       messageUpdateItem, itemVal = null;
@@ -44,36 +44,36 @@ var MessagesHandler = {
 
   handleMessage: function(data) {
     if ( 'update' in data ) {
-      Logger.debug('MessagesHandler.handleMessage, update', data);
+      Logger.debug('RTFApi.handleMessage, update', data);
       this.handleMessageSections(data['update']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'reconfirmation' in data ) {
-      Logger.debug('MessagesHandler.handleMessage, reconfirmation', data);
+      Logger.debug('RTFApi.handleMessage, reconfirmation', data);
       this.handleMessageSections(data['reconfirmation']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'noupdates' in data ) {
-      Logger.debug('MessagesHandler.handleNoUpdates, batchId ', this._batchId);
+      Logger.debug('RTFApi.handleNoUpdates, batchId ', this._batchId);
       // Just send the same batchId, over and over again
       // If no param given, take the current batchId - this.batchId
       this.handleUpdateBatchId(this._batchId); 
     }
     else {
-      Logger.error('MessagesHandler.handleMessage, invalid data ', data);
+      Logger.error('RTFApi.handleMessage, invalid data ', data);
     }
   },
 
   // If the subscription is incorrect, assume it will trigger an error
   handleSubscriptionConfirmation: function(confirmedList) {
     var subscription = null, state;
-    Logger.debug('%cMessagesHandler.handleSubscriptionConfirmation',
+    Logger.debug('%cRTFApi.handleSubscriptionConfirmation',
       'color:red', confirmedList);
 
       for ( subscription in confirmedList ) {
         Logger.debug('confirmed subscription : ', subscription);
         state = confirmedList[subscription];
-        this.getChannelsListObject().confirmChannel(subscription, state);
+        this._getChannelsListModel().confirmChannel(subscription, state);
         this.fire('confirmed:' + subscription, state);
       }
   },
@@ -86,7 +86,7 @@ var MessagesHandler = {
    * For the time being, just log the event
    */
   handleConnectorDeactivated: function() {
-    Logger.debug('%cMessagesHandler.handleConnectorDeactivated', 'color:red');
+    Logger.debug('%cRTFApi.handleConnectorDeactivated', 'color:red');
     this.fire('connector:deactivated');
   },
 
@@ -97,7 +97,7 @@ var MessagesHandler = {
    * alongside the close command
    */
   handleConnectorClosed: function() {
-    Logger.debug('%cMessagesHandler.handleConnectorClosed', 'color:red');
+    Logger.debug('%cRTFApi.handleConnectorClosed', 'color:red');
     this.fire('connector:closed');
   },
 
@@ -108,20 +108,21 @@ var MessagesHandler = {
    * has become ready to send messages
    */
   handleConnectorReady: function() {
-    Logger.debug('%cMessagesHandler.handleConnectorReady', 'color:red');
+    Logger.debug('%cRTFApi.handleConnectorReady', 'color:red');
+    var channelsListModel = this._getChannelsListModel();
     // if connector is available
-    if ( this.getChannelsListObject().getCurrentList() )
-      this.sendMessage(this.getChannelsListObject().toStringifiedJson());
+    if ( channelsListModel.getCurrentList() )
+      this.sendMessage(channelsListModel.toStringifiedJson());
   },
 
   // @todo return something useful
   handleMbeanMessage: function(message) {
-    Logger.debug('%cMessagesHandler.handleMbeanMessage',
+    Logger.debug('%cRTFApi.handleMbeanMessage',
       'color:red', message);
   },
 
   handleUpdateBatchId: function(batchId) {
-    Logger.debug('MessagesHandler.handleUpdateBatchId', batchId);
+    Logger.debug('RTFApi.handleUpdateBatchId', batchId);
     this.urlModel.alter('batchId', batchId);
     // Dude, you must set the current object property too, so when you'll
     // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
@@ -132,7 +133,7 @@ var MessagesHandler = {
 };
 
 
-return MessagesHandler;
+return EventsDelegates;
 
 
 });
