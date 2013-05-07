@@ -78,7 +78,7 @@ var ChannelsDelegate = {
 
 
 /**
- * Url parameters delegates
+ * Url parameters handling delegates
  */
 var ParamatersDelegates = {
   /**
@@ -108,7 +108,7 @@ var ParamatersDelegates = {
 };
 
 
-// main API constructor
+// main constructor
 var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates, 
   ChannelsDelegate, ParamatersDelegates,
 {
@@ -219,7 +219,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
   
   _getChannelsList: function() {
     if ( this.channelstList == null ) {
-      this.channelstList = ChannelstListModel.create();
+      this.channelstList = new ChannelstListModel();
     }
     return this.channelstList;
   },
