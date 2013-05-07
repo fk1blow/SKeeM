@@ -1,9 +1,8 @@
 
 // RTF Messages handler
 
-define(['skm/util/Logger',
-  'skm/util/Subscribable'],
-  function(SKMLogger, Subscribable)
+define(['skm/util/Logger'],
+  function(SKMLogger)
 {
 'use strict';
 
