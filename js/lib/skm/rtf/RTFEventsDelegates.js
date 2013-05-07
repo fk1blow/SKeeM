@@ -73,7 +73,7 @@ var EventsDelegates = {
       for ( subscription in confirmedList ) {
         Logger.debug('confirmed subscription : ', subscription);
         state = confirmedList[subscription];
-        this._getChannelsListModel().confirmChannel(subscription, state);
+        this._getChannelsList().confirmChannel(subscription, state);
         this.fire('confirmed:' + subscription, state);
       }
   },
@@ -109,10 +109,10 @@ var EventsDelegates = {
    */
   handleConnectorReady: function() {
     Logger.debug('%cRTFApi.handleConnectorReady', 'color:red');
-    var channelsListModel = this._getChannelsListModel();
+    var channelsList = this._getChannelsList();
     // if connector is available
-    if ( channelsListModel.getCurrentList() )
-      this.sendMessage(channelsListModel.toStringifiedJson());
+    if ( channelsList.getCurrentList() )
+      this.sendMessage(channelsList.toStringifiedJson());
   },
 
   // @todo return something useful
@@ -123,7 +123,7 @@ var EventsDelegates = {
 
   handleUpdateBatchId: function(batchId) {
     Logger.debug('RTFApi.handleUpdateBatchId', batchId);
-    this.urlModel.alter('batchId', batchId);
+    this.connectorsUrlParam.alter('batchId', batchId);
     // Dude, you must set the current object property too, so when you'll
     // try to reconnect you must have last batchId, not 0!! - Thanks, dude!
     this._batchId = batchId;
