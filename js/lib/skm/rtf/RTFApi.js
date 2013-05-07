@@ -3,13 +3,14 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Timer',
   'skm/util/Subscribable',
   'skm/net/XHRWrapper',
   'skm/rtf/ConnectorManager',
+  'skm/rtf/models/ChannelsList',
+  'skm/rtf/models/UrlParam',
   'skm/rtf/RTFEventsDelegates'],
-  function(SKMObject, SKMLogger, SKMTimer, Subscribable, XHRWrapper,
-    ConnectorManager, EventsDelegates)
+  function(SKMObject, SKMLogger, Subscribable, XHRWrapper,
+    ConnectorManager, ChannelstListModel, UrlParamModel, RTFEventsDelegates)
 {
 'use strict';
 
@@ -20,7 +21,7 @@ var Logger = SKMLogger.create();
 var Config = {
   Sequence: ['WebSocket', 'XHR'],
 
-  Connectors : {
+  Connectors: {
     WebSocket: {
       url: 'ws://localhost:8080/testws',
       reconnectAttempts: 10,
@@ -35,185 +36,121 @@ var Config = {
 
   Errors: {
     INVALID_CHANNEL_DECLARATION: 'Invalid or malformed channel declaration'
+  },
+
+  Warnings: {
+    DUPLICATE_CHANNEL_SUBSCRIPTION: 'Channel already subscribed and confirmed'
   }
 };
 
 
-var ChannelsListModel = {
-  _currentList: null,
-
-  _confirmedList: null,
-  
+/**
+ * Channels handling delegates
+ */
+var ChannelsDelegate = {
   addChannel: function(channel) {
-    var list = this._currentList = this._currentList || {},
-        channelItem, paramItem;
-    var channelParams = channel['params'],
-        channelName = channel['name'];
+    var activeConnector = null;
+    var channelsList = this._getChannelsList();
 
-    if ( channelName in list ) {
-      channelItem = list[channelName];
+    // check if it's an object and has ['name'] inside
+    if ( ! channel || ! ('name' in channel) ) {
+      throw new TypeError(Config.Errors.INVALID_CHANNEL_DECLARATION);
+    }
+    if ( channelsList.hasSubscribedAndConfirmed(channel) ) {
+      Logger.warn(Config.Warnings.DUPLICATE_CHANNEL_SUBSCRIPTION, channel);
     } else {
-      channelItem = list[channelName] = {};
+      // Add subscription then send the 
+      // message to connector, if any available
+      channelsList.addChannel(channel);
+      if ( activeConnector = this.connectorsManager.getActiveConnector() )
+        activeConnector.sendMessage(channelsList.toStringifiedJson());
     }
-    // ...and add channel parameters, if any
-    for ( paramItem in channelParams ) {
-      channelItem[paramItem] = channelParams[paramItem];
-    }
-  }, 
+  },
 
   removeChannel: function(name) {
-    var subscription = null;
-    if ( this._currentList && name in this._currentList ) {
-      delete this._currentList[name];
-    }
-    if ( this._confirmedList && name in this._confirmedList ) {
-      delete this._confirmedList[name];
-    }
-  },
-
-  // @todo move it to the api module
-  confirmChannel: function(channelName, willConfirm) {
-    var confirmed = this._confirmedList = this._confirmedList || {};
-    var list = this._currentList;
-
-    if ( channelName in list && willConfirm ) {
-      confirmed[channelName] = list[channelName];
-      delete list[channelName];
-    }
-  },
-
-  hasSubscribedAndConfirmed: function(channelObj) {
-    var list = this._confirmedList;
-    var hasSubscribed = false;
-    if ( list ) {
-      hasSubscribed = (channelObj['name'] in list);
-    }
-    return hasSubscribed;
-  },
-
-  getCurrentList: function() {
-    return this._currentList;
-  },
-
-  toStringifiedJson: function() {
-    var item, first = true, parameterized = 'subscribe:{';
-    var list = this._currentList;
-    for ( item in list ) {
-      if (!first) {
-        parameterized+= ',';
-      }
-      parameterized += item;
-      first = false;
-    }
-    parameterized += '}';
-    parameterized += 'params:' + JSON.stringify(list)
-      .replace(/\'|\"/g, '');
-    return parameterized;
+    // remove from Channels list
+    this._getChannelsList().removeChannel(name);
+    // send message back to server
+    this.sendMessage('closeSubscription:{' + name + '}');
+    return this;
   }
 };
 
 
-var ConnectorUrlModel = SKMObject.extend(Subscribable, {
-  _parameterizerList: null,
-
-  getList: function() {
-    this._parameterizerList = this._parameterizerList || {};
-    return this._parameterizerList;
-  },
-
-  getByName: function(name) {
-    return this._parameterizerList[name];
-  },
-
-  toUrl: function() {
-    var list = this._parameterizerList;
-    return encodeURIComponent(JSON.stringify(list).toString());
-  },
-
-  toQueryString: function(concatStr) {
-    var i = 0, qs = '', part, segment, params = this.getList();
-    var concatWith = concatStr || '&';
-    for ( part in params ) {
-      i = 0, segment = params[part];
-      // If at first part
-      if ( qs.length < 1 ) {
-        qs += '?';
-      } else {
-        qs += concatWith;
-      }
-      // for each part, there will be a segment array
-      for ( ; i < segment.length; i++ ) {
-        if ( i > 0 )
-          qs += concatWith;
-        qs += (part + '=' + segment[i]);
-      }
-    }
-    return qs;
-  },
-
-  reset: function(name, value) {
-    if ( name in this.getList() )
-      delete this._parameterizerList[name];
+/**
+ * Url parameters delegates
+ */
+var ParamatersDelegates = {
+  /**
+   * Adds a parameter to the connectors url model
+   * 
+   * @description it will add the parameter, will trigger a "added" event
+   * that will oblige the active connector to reset its url accordingly   
+   * @param {String} name   the key name of the parameter
+   * @param {String} value  actual value of the parameter, expressed as a string
+   * @return {Object}      current object context
+   */
+  addUrlParameter: function(name, value) {
+    this.connectorsUrlParam.add(name, value);
     return this;
   },
 
-  add: function(name, value) {
-    var list = this.getList();
-    if ( list[name] ) {
-      list[name].push(value);
-    } else {
-      list[name] = [value];
-    }
-    this.fire('added');
-    return this;
-  },
-
-  remove: function(name) {
-    var list = this.getList();
-    if ( name in list )
-      delete list[name];
-    this.fire('removed');
-    return this;
-  },
-
-  alter: function(name, newValue) {
-    var param, list = this.getList();
-    if ( param = list[name] ) {
-      list[name] = [newValue];
-    }
-    this.fire('altered');
+  /**
+   * Remove the parameter from the connectors url
+   * 
+   * @param {String} name   the key name of the parameter
+   * @return {Object}      current object context
+   */
+  removeUrlParameter: function(name) {
+    this.connectorsUrlParam.remove(name);
     return this;
   }
-});
+};
 
 
 // main API constructor
-var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
+var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates, 
+  ChannelsDelegate, ParamatersDelegates,
+{
   _batchId: 0,
 
-  urlModel: null,
+  /**
+   * Holds the url parameters list of the connectors and their model
+   * @type {UrlParam}
+   */
+  connectorsUrlParam: null,
 
+  /**
+   * Holds the list of subscribed channels and their model
+   * @type {ChannelstList}
+   */
+  channelstList: null,
+
+  /**
+   * The connector manager instance
+   * @type {ConnectorManager}
+   */
   connectorsManager: null,
 
-  initialize: function(options) {
+  /**
+   * Yo dawg, i heard you like initializers...
+   */
+  initialize: function() {
     // Create the parameters list object
-    this.urlModel = ConnectorUrlModel.create();
+    this.connectorsUrlParam = UrlParamModel.create();
     // Prepare batchId and add it to the parameterizer
-    this.urlModel.add('batchId', this._batchId);
+    this.connectorsUrlParam.add('batchId', this._batchId);
     // creates the connector manager
     this._buildConnectorManager();
     // prepare before unload auto disconnect
     this._prepareSyncOnUnload();
   },
 
-
-  /*
-    Manager operations
-   */
-  
-
   /**
-   * Stops the connectors updates
+   * Stops the connectors updates, mainly for debugging purpose
+   * 
+   * @description currently, the correct method for closing a subscription
+   * is to send a shutdown message to the API
    * @return {Object} current context
    */
   startUpdates: function() {
@@ -244,7 +181,7 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
     var opt = options || {};
     var url, connector = this.connectorsManager.getActiveConnector();
     
-    url = this.urlModel.toQueryString()
+    url = this.connectorsUrlParam.toQueryString()
       + '&closeConnection=true';
 
     connector = XHRWrapper.create({
@@ -253,52 +190,25 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
     }).sendMessage();
   },
 
+  /**
+   * It tries to switch to the next connector
+   *
+   * @description if it has reached the end of the sequence, as it is defined
+   * in the Config.Sequence, it will stop every connector
+   * and trigger a 'connector:sequence:complete' event
+   */
   switchToNextConnector: function() {
     this.connectorsManager.switchToNextConnector();
   },
 
+  /**
+   * Sends a message using the current active transport
+   * @param  {String} message the message to be sent by the active connector
+   * If the active is a WSConnector instance, it should try to stringify
+   * the content of the message, implementation done by each connector
+   */
   sendMessage: function(message) {
     this.connectorsManager.sendMessage(message);
-  },
-
-
-  /*
-    Channel operations
-   */
-
-
-  addChannel: function(channel) {
-    var activeConnector = null;
-   
-    // check if it's an object and has ['name'] inside
-    if ( ! channel || ! ('name' in channel) ) {
-      throw new TypeError(Config.Errors.INVALID_CHANNEL_DECLARATION);
-    }
-    // @todo trigger an event that tells the widget
-    if ( ChannelsListModel.hasSubscribedAndConfirmed(channel) ) {
-      // that the channel was already subscribed/confirmed
-      Logger.error('Channel "' + channel + '" already subscribed.'
-        + ' Unsubscribe then subscribe again.');
-    } else {
-      // Add subscription
-      ChannelsListModel.addChannel(channel);
-      // send message to connector, if a connector is available
-      if ( activeConnector = this.connectorsManager.getActiveConnector() )
-        activeConnector.sendMessage(ChannelsListModel.toStringifiedJson());
-    }
-  },
-
-  removeChannel: function(name) {
-    // remove from Channels list
-    ChannelsListModel.removeChannel(name);
-    // send message back to server
-    this.sendMessage('closeSubscription:{' + name + '}');
-    return this;
-  },
-
-  addUrlParameter: function(name, value) {
-    this.urlModel.add(name, value);
-    return this;
   },
 
 
@@ -307,14 +217,17 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
    */
 
   
-  _getChannelsListModel: function() {
-    return ChannelsListModel;
+  _getChannelsList: function() {
+    if ( this.channelstList == null ) {
+      this.channelstList = ChannelstListModel.create();
+    }
+    return this.channelstList;
   },
 
   _buildConnectorManager: function() {
     this.connectorsManager = ConnectorManager.create({
       sequence: Config.Sequence,
-      connectorsUrlParamModel: this.urlModel,
+      connectorsUrlParamModel: this.connectorsUrlParam,
       connectorsOptions: Config.Connectors
     });
 
@@ -347,7 +260,7 @@ var RTFApi = SKMObject.extend(Subscribable, EventsDelegates, {
 return {
   Config: Config,
   
-  // Api singleton method
+  // singleton method
   Api: (function() {
     var apiSingletonInstance = null;
     return {
