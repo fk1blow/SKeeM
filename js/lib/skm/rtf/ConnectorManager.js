@@ -249,6 +249,8 @@ var Manager = SKMObject.extend(Subscribable, {
     } else {
       Logger.info('ConnectorManager : sequence complete!');
       this._activeConnector = null;
+      // @todo
+      // this.fire('sequence:complete'):
     }
   },
 
@@ -273,8 +275,6 @@ var Manager = SKMObject.extend(Subscribable, {
   },
 
   _startConnector: function(connector) {
-    cl('_startConnector', connector)
-
     // Stop current connectors and start next one
     connector.on('transport:deactivated', function() {
       this.fire('connector:deactivated');
