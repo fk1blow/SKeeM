@@ -7,11 +7,12 @@ define(['skm/k/Object',
 'use strict';
 
 
-var ChannelsListModel = SKMObject.extend({
-  _currentList: null,
+var ChannelsListModel = function() {
+  this._currentList = null;
+  this._confirmedList = null;
+}
 
-  _confirmedList: null,
-  
+ChannelsListModel.prototype = {
   addChannel: function(channel) {
     var list = this._currentList = this._currentList || {},
         channelItem, paramItem;
@@ -78,7 +79,7 @@ var ChannelsListModel = SKMObject.extend({
       .replace(/\'|\"/g, '');
     return parameterized;
   }
-});
+};
 
 
 return ChannelsListModel;
