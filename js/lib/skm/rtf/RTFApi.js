@@ -144,7 +144,9 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     // creates the connector manager
     this._buildConnectorManager();
     // prepare before unload auto disconnect
-    this._prepareSyncOnUnload();
+    var that = this; window.onbeforeunload = function() {
+      that.shutdown({ async: false });
+    };
   },
 
   /**
@@ -232,14 +234,10 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
       connectorsOptions: Config.Connectors
     });
 
-    /*this.connectorsManager.on('all', function() {
-      cl('all > ', arguments);
-    })
+    /*this.connectorsManager.on('all', function() { cl('all > ', arguments); });
     return;*/
 
-
-
-    // now parse and send channels list
+    /** transport events */
     this.connectorsManager.on('ready',
       this.handleTransportReady, this);
 
@@ -249,53 +247,16 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     this.connectorsManager.on('closed',
       this.handleTransportClosed, this);
 
-
-
-
+    /** sequence events */
     this.connectorsManager.on('sequence:switching',
       this.handleManagerSequenceSwitching, this);
-
+      
     this.connectorsManager.on('sequence:complete',
       this.handleManagerSequenceComplete, this);
 
-
-
+    /** api/server events */
     this.connectorsManager.on('message', this.handleApiMessage, this);
-
     this.connectorsManager.on('error', this.handleApiError, this);
-  },
-
-  xxx_buildConnectorManager: function() {
-    this.connectorsManager = ConnectorManager.create({
-      sequence: Config.Sequence,
-      connectorsUrlParamModel: this.connectorsUrlParam,
-      connectorsOptions: Config.Connectors
-    });
-
-    // handle the raw incoming message
-    this.connectorsManager.on('api:message', this.handleApiMessage, this);
-
-    // now parse and send channels list
-    // @todo test for "api:ready" event
-    // this.connectorsManager.on('connector:ready',
-    this.connectorsManager.on('api:ready', this.handleApiReady, this);
-
-    // Handle when manager has been deactivated; next/sequence switch
-    // or transport issues - issues handled by the manager
-    // @todo remove event handler - will be handled by "connector:closed" event
-    /*this.connectorsManager.on('connector:deactivated',
-      this.handleConnectorDeactivated, this);*/
-
-    // when the server closes the link
-    this.connectorsManager.on('connector:closed',
-      this.handleConnectorClosed, this);
-  },
-
-  _prepareSyncOnUnload: function() {
-    var that = this;
-    window.onbeforeunload = function() {
-      that.shutdown({ async: false });
-    };
   }
 });
 
