@@ -41,14 +41,34 @@ var EventsDelegates = {
     }
   },
 
-  handleMessage: function(data) {
+  // If the subscription is incorrect, assume it will trigger an error
+  handleSubscriptionConfirmation: function(confirmedList) {
+    var subscription = null, state = false;
+
+    for ( subscription in confirmedList ) {
+      if ( confirmedList[subscription] === 'true' ) {
+        this._getChannelsList().confirmChannel(subscription);
+        Logger.debug('confirmed subscription : ', subscription);
+        state = true;
+      } else {
+        this._getChannelsList().removeChannel(subscription);
+        Logger.debug('removed subscription : ', subscription);
+        state = false;
+      }
+      this.fire('confirmed:' + subscription, state);
+    }
+  },
+
+
+
+  handleApiMessage: function(data) {
     if ( 'update' in data ) {
-      Logger.debug('RTFApi.handleMessage, update', data);
+      Logger.debug('RTFApi.handleApiMessage, update', data);
       this.handleMessageSections(data['update']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'reconfirmation' in data ) {
-      Logger.debug('RTFApi.handleMessage, reconfirmation', data);
+      Logger.debug('RTFApi.handleApiMessage, reconfirmation', data);
       this.handleMessageSections(data['reconfirmation']);
       this.handleUpdateBatchId(data['batchId']);
     }
@@ -59,46 +79,16 @@ var EventsDelegates = {
       this.handleUpdateBatchId(this._batchId); 
     }
     else {
-      Logger.error('RTFApi.handleMessage, invalid data ', data);
+      Logger.error('RTFApi.handleApiMessage, invalid data ', data);
     }
   },
 
-  // If the subscription is incorrect, assume it will trigger an error
-  handleSubscriptionConfirmation: function(confirmedList) {
-    var subscription = null, state;
-    Logger.debug('%cRTFApi.handleSubscriptionConfirmation',
-      'color:red', confirmedList);
-
-      for ( subscription in confirmedList ) {
-        Logger.debug('confirmed subscription : ', subscription);
-        state = confirmedList[subscription];
-        this._getChannelsList().confirmChannel(subscription, state);
-        this.fire('confirmed:' + subscription, state);
-      }
+  handleApiError: function() {
+    Logger.debug('%cRTFApi.handleApiError', 'color:red');
+    // this.fire('disconnected');
   },
 
-  /**
-   * Handles when a connector has been deactivated
-   * 
-   * @description Usually, this means the transport could not be
-   * initialized or has tried to reconnect unsuccesfully
-   * For the time being, just log the event
-   */
-  handleConnectorDeactivated: function() {
-    Logger.debug('%cRTFApi.handleConnectorDeactivated', 'color:red');
-    this.fire('connector:deactivated');
-  },
 
-  /**
-   * Handled when the connector was closed by the server
-   * 
-   * @description usually, the server will send a message,
-   * alongside the close command
-   */
-  handleConnectorClosed: function() {
-    Logger.debug('%cRTFApi.handleConnectorClosed', 'color:red');
-    this.fire('connector:closed');
-  },
 
   /**
    * Handler when a connector has becom ready
@@ -106,12 +96,49 @@ var EventsDelegates = {
    * @description usually, triggered whenever a connector
    * has become ready to send messages
    */
-  handleConnectorReady: function() {
-    Logger.debug('%cRTFApi.handleConnectorReady', 'color:red');
+  handleTransportReady: function() {
+    Logger.debug('%cRTFApi.handleTransportReady', 'color:red');
+
     var channelsList = this._getChannelsList();
-    // if connector is available
+    // if connector is available, send the parameterized channels list
     if ( channelsList.getCurrentList() )
       this.sendMessage(channelsList.toStringifiedJson());
+    // Fire the "ready" event, signaling that the rtf,
+    // can start to communicate with the server
+    // this.fire('ready');
+  },
+
+  handleTransportInterrupted: function() {
+    Logger.debug('%cRTFApi.handleTransportInterrupted', 'color:red');
+    // this.fire('disconnected');
+  },
+
+  handleTransportClosed: function() {
+    Logger.debug('%cRTFApi.handleTransportClosed', 'color:red');
+    // this.fire('disconnected');
+  },
+
+
+
+  handleManagerSequenceSwitching: function() {
+    Logger.debug('%cRTFApi.handleManagerSequenceSwitching', 'color:red');
+  },
+
+  handleManagerSequenceComplete: function() {
+    Logger.debug('%cRTFApi.handleManagerSequenceComplete', 'color:red');
+  },
+
+
+
+  xxx_handleConnectorReady: function() {
+    Logger.debug('%cRTFApi.handleConnectorReady', 'color:green');
+    var channelsList = this._getChannelsList();
+    // if connector is available, send the parameterized channels list
+    if ( channelsList.getCurrentList() )
+      this.sendMessage(channelsList.toStringifiedJson());
+    // Fire the "ready" event, signaling that the rtf,
+    // can start to communicate with the server
+    this.fire('ready');
   },
 
   // @todo return something useful
