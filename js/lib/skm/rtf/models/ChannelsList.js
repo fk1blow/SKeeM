@@ -8,11 +8,15 @@ define(['skm/k/Object',
 
 
 var ChannelsListModel = function() {
-  this._currentList = null;
-  this._confirmedList = null;
+  this._currentList = {};
+  this._confirmedList = {};
 }
 
 ChannelsListModel.prototype = {
+  _currentList: null,
+
+  _confirmedList: null,
+
   addChannel: function(channel) {
     var list = this._currentList = this._currentList || {},
         channelItem, paramItem;
@@ -41,12 +45,12 @@ ChannelsListModel.prototype = {
   },
 
   // @todo move it to the api module
-  confirmChannel: function(channelName, willConfirm) {
+  confirmChannel: function(channelName) {
     var confirmed = this._confirmedList = this._confirmedList || {};
     var list = this._currentList;
 
-    if ( channelName in list && willConfirm ) {
-      confirmed[channelName] = list[channelName];
+    if ( channelName in list ) {
+      confirmed[channelName] = true;
       delete list[channelName];
     }
   },
