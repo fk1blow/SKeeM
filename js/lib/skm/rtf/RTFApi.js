@@ -24,13 +24,13 @@ var Config = {
   Connectors: {
     WebSocket: {
       url: 'ws://localhost:8080/testws',
-      reconnectAttempts: 10,
-      pingServer: true
+      maxReconnectAttempts: 10,
+      pingServer: false
     },
 
     XHR: {
       url: 'http://localhost:8080/testajax',
-      reconnectAttempts: 10,
+      maxReconnectAttempts: 10,
     }
   },
 
@@ -64,6 +64,8 @@ var ChannelsDelegate = {
       channelsList.addChannel(channel);
       if ( activeConnector = this.connectorsManager.getActiveConnector() )
         activeConnector.sendMessage(channelsList.toStringifiedJson());
+      else
+        Logger.info('Unable to add channel - no active connector found');
     }
   },
 
@@ -231,17 +233,59 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
       connectorsOptions: Config.Connectors
     });
 
-    // handle the raw incoming message
-    this.connectorsManager.on('api:message', this.handleMessage, this);
+    /*this.connectorsManager.on('all', function() {
+      cl('all > ', arguments);
+    })
+    return;*/
+
+
 
     // now parse and send channels list
-    this.connectorsManager.on('connector:ready',
-      this.handleConnectorReady, this);
+    this.connectorsManager.on('ready',
+      this.handleTransportReady, this);
+
+    this.connectorsManager.on('interrupted',
+      this.handleTransportInterrupted, this);
+
+    this.connectorsManager.on('closed',
+      this.handleTransportClosed, this);
+
+
+
+
+    this.connectorsManager.on('sequence:switching',
+      this.handleManagerSequenceSwitching, this);
+
+    this.connectorsManager.on('sequence:complete',
+      this.handleManagerSequenceComplete, this);
+
+
+
+    this.connectorsManager.on('message', this.handleApiMessage, this);
+
+    this.connectorsManager.on('error', this.handleApiError, this);
+  },
+
+  xxx_buildConnectorManager: function() {
+    this.connectorsManager = ConnectorManager.create({
+      sequence: Config.Sequence,
+      connectorsUrlParamModel: this.connectorsUrlParam,
+      connectorsOptions: Config.Connectors
+    });
+
+    // handle the raw incoming message
+    this.connectorsManager.on('api:message', this.handleApiMessage, this);
+
+    // now parse and send channels list
+    // @todo test for "api:ready" event
+    // this.connectorsManager.on('connector:ready',
+    this.connectorsManager.on('api:ready', this.handleApiReady, this);
 
     // Handle when manager has been deactivated; next/sequence switch
     // or transport issues - issues handled by the manager
-    this.connectorsManager.on('connector:deactivated',
-      this.handleConnectorDeactivated, this);
+    // @todo remove event handler - will be handled by "connector:closed" event
+    /*this.connectorsManager.on('connector:deactivated',
+      this.handleConnectorDeactivated, this);*/
 
     // when the server closes the link
     this.connectorsManager.on('connector:closed',
