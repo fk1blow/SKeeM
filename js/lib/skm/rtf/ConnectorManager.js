@@ -45,12 +45,18 @@ var ConnectorsFactory = {
 
   buildAndRegisterConnector: function(type_name, type_reference) {
     var manager = this.connectorsManager;
+    var connectorOptions = null;
 
     if ( manager.getConnector(type_name) == null ) {
+      connectorOptions = this.connectorsOptions[type_name];
+
       // create the connector and register to manage
+      // @todo refactor creation method and object default properties
       manager.registerConnector(type_name, type_reference.create({
         urlParamModel: this.connectorsUrlParamModel,
-        transportOptions: this.connectorsOptions[type_name]
+        maxReconnectAttempts: connectorOptions['maxReconnectAttempts'],
+        reconnectDelay: connectorOptions['reconnectDelay'],
+        transportOptions: connectorOptions
       }));
     }
   }
@@ -104,7 +110,7 @@ var Manager = SKMObject.extend(Subscribable, {
     Logger.debug('%cnew Manager', 'color:#a2a2a2');
     this._connectors = null;
     this._activeConnector = null;
-    this._prepareConnectors();
+    this._prepareConnectorsFactory();
   },
 
   /**
@@ -179,6 +185,7 @@ var Manager = SKMObject.extend(Subscribable, {
       throw new Error('ConnectorManager.registerConnector :: '
         + ' connector already registered : ' + type);
     }
+    this._attachConnectorHandlers(connector);
     return this._connectors[type] = connector;
   },
 
@@ -209,7 +216,7 @@ var Manager = SKMObject.extend(Subscribable, {
   /**
    * Prepares the connectors for this sequence
    */
-  _prepareConnectors: function() {
+  _prepareConnectorsFactory: function() {
     ConnectorsFactory.connectorsOptions = this.connectorsOptions;
     ConnectorsFactory.connectorsUrlParamModel = this.connectorsUrlParamModel;
     ConnectorsFactory.connectorsManager = this;
@@ -241,6 +248,10 @@ var Manager = SKMObject.extend(Subscribable, {
   _startNextSequence: function() {
     Logger.debug('ConnectorManager : starting next sequence');
 
+    // clean previous active connector - end updates, nullify
+    this._activeConnector.off();
+
+    // set new active connector and sequence index
     this._activeSequenceIdx = this._getNextSequence();
     this._activeConnector = this._connectors[this._activeSequenceIdx];
 
@@ -249,8 +260,7 @@ var Manager = SKMObject.extend(Subscribable, {
     } else {
       Logger.info('ConnectorManager : sequence complete!');
       this._activeConnector = null;
-      // @todo
-      // this.fire('sequence:complete'):
+      this.fire('sequence:complete');
     }
   },
 
@@ -259,11 +269,13 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   _stopCurrentSequence: function() {
     Logger.debug('ConnectorManager : stopping current sequence');
+
     // Remove events and end update
     if ( this._activeConnector ) {
-      this._activeConnector.off()
       this._activeConnector.endUpdate();
-      this._activeConnector = null;
+      // fuuuuck
+      // this._activeConnector.off()
+      // this._activeConnector = null;
     }
   },
 
@@ -274,36 +286,75 @@ var Manager = SKMObject.extend(Subscribable, {
     return this.sequence[this._activeSequenceIdx + 1];
   },
 
-  _startConnector: function(connector) {
-    // Stop current connectors and start next one
-    connector.on('transport:deactivated', function() {
-      this.fire('connector:deactivated');
+
+  _attachConnectorHandlers: function(connector) {
+    /*connector.on('all', function() {
+      cl('all > ', arguments)
+    })
+    return;*/
+  
+    connector.on('transport:ready', function() {
+      this.fire('ready');
+    }, this);
+
+    connector.on('transport:interrupted', function() {
+      this.fire('interrupted');
+    }, this);
+
+    connector.on('transport:closed', function() {
+      this.fire('closed');
+      // stop connector
+      this._stopCurrentSequence();
+    }, this);
+
+    connector.on('transport:error', function() {
+      this.fire('sequence:switching');
+      // switch connectors
       this._stopCurrentSequence();
       this._startNextSequence();
     }, this);
 
-    // Server closed the connection; stop and clean current connector
-    connector.on('api:error', function(message) {
-      this.fire('connector:closed', message);
-      this._stopCurrentSequence();
+
+    connector.on('api:message', function(message) {
+      this.fire('message', message);
     }, this);
 
-    // When the server has closed the connection but no message was given
-    connector.on('api:closed', function() {
-      this.fire('connector:closed');
+    connector.on('api:error', function(message) {
+      this.fire('error', message);
+      // stop connector
+      this._stopCurrentSequence();
+    }, this);
+  },
+
+  xxx_attachConnectorHandlers: function() {
+    /*// Connector has established connection and is ready to be used xD
+    connector.on('connector:ready', function() {
+      this.fire('ready');
+    }, this);
+
+    // Server closed the connection; stop and clean current connector
+    connector.on('api:closed api:error', function(message) {
+      // this.fire('closed', message);
+      this.fire('disconnected', message);
+      // this.fire('connector:closed', message);
       this._stopCurrentSequence();
     }, this);
 
     // notify of update...
     connector.on('api:message', function(message) {
-      this.fire('api:message', message);
+      this.fire('message', message);
     }, this);
 
-    // when is ready to being
-    connector.on('connector:ready', function() {
-      this.fire('connector:ready');
-    }, this);
-    
+    // Stop current connectors and start next one
+    connector.on('connector:deactivated', function() {
+      this.fire('sequence:switching');
+      // this.fire('connector:closed', message);
+      this._stopCurrentSequence();
+      this._startNextSequence();
+    }, this);*/
+  },
+
+  _startConnector: function(connector) {
     // Begin update connector
     connector.beginUpdate();
   }
