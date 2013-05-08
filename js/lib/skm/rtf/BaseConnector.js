@@ -23,6 +23,8 @@ var ConnectorState = {
  * Abstract connector
  */
 var BaseConnector = SKMObject.extend(Subscribable, {
+  name: 'BaseConnector',
+
   /**
    * Transport type object
    * @type {Transport} an instance of a Transport type
@@ -45,7 +47,13 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    * Delay after a reconnect attemp will begin
    * @type {Number}
    */
-  reconnectDelay: 3000,
+  reconnectDelay: undefined,
+
+  /**
+   * Delay after a reconnect attemp will begin
+   * @type {Number}
+   */
+  defaultReconnectDelay: 3000,
 
   /**
    * Object that models the url and 
@@ -57,19 +65,6 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   _currentAttempt: 1,
 
   _isReconnecting: false,
-
-  initialize: function() {
-    Logger.debug('%cnew BaseConnector', 'color:#a2a2a2');
-    
-    // after transport created, add trnasport and urlparam listeners
-    this.on('transport:added', function() {
-      // add transport listeners
-      this.addTransportListeners();
-      // attach url param model events
-      if ( this.urlParamModel )
-        this.urlParamModel.on('added altered removed', this._buildTransportUrl, this);
-    }, this);
-  },
 
   /**
    * Removes transport listeners
@@ -87,7 +82,11 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   addTransport: function(transportObject) {
     if ( this.transport == null ) {
       this.transport = transportObject;
-      this.fire('transport:added');
+      // add transport listeners
+      this.addTransportListeners();
+      // attach url param model events
+      if ( this.urlParamModel )
+        this.urlParamModel.on('added altered removed', this._buildTransportUrl, this);
     } else {
       throw new Error('BaseConnector.addTransport : ' + 
         'transport object already exists');
@@ -138,9 +137,12 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    * or if the native wrapper triggers the close event.
    */
   _makeReconnectAttempt: function() {
+    var maxReconnectAttempts = this.transportOptions.maxReconnectAttempts;
+    var reconnectDelay = this.reconnectDelay || this.defaultReconnectDelay;
     var that = this;
-    if ( this._currentAttempt <= this.maxReconnectAttempts ) {
-      Logger.debug('Connector : will make attempt in', this.reconnectDelay, 'ms');
+
+    if ( this._currentAttempt <= maxReconnectAttempts ) {
+      Logger.debug('Connector : will make attempt in', reconnectDelay, 'ms');
       // After delay, call being update and increment current attempt
       
       setTimeout(function() {
@@ -149,20 +151,16 @@ var BaseConnector = SKMObject.extend(Subscribable, {
         // is reconnecting and increment current attempt
         that._isReconnecting = true;
         that._currentAttempt += 1;
-
         // start connecting by calling beginUpdate
         that.beginUpdate();
-      }, this.reconnectDelay);
+      }, reconnectDelay);
     } else {
       Logger.debug('Connector : maxReconnectAttempts of ' 
-        + this.maxReconnectAttempts + ' reached!');
-
+        + maxReconnectAttempts + ' reached!');
       // has stopped reconnecting and reset current attempt
       this._isReconnecting = false;
       this._currentAttempt = 1;
-
-      // tell the manager the transport has been deactivated
-      this.fire('transport:deactivated');
+      this.handleMaxReconnectAttemptsReached();
     }
   }
 });
