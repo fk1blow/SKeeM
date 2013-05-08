@@ -69,12 +69,15 @@ var EventsDelegates = {
 
 
 var XHRConnector = BaseConnector.extend(EventsDelegates, {
+  name: 'XHR',
+
   beginUpdate: function() {
     this._ensureTransportCreated(XHRWrapper)._buildTransportUrl();
     Logger.info('Connector.beginUpdate');
     Logger.debug('Connector : transport url :', this.transport.url);
     // because xhr is ready after being instantiated
-    this.fire('connector:ready');
+    // this.fire('connector:ready');
+    this.fire('api:ready');
     return this;
   },
 
