@@ -133,11 +133,13 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 
     // If the socket connection is closed by the server
     if ( event.wasClean ) {
-      this.fire('link:closed', event);
+      Logger.debug('NativeWebSocketHandler : connection closed');
+      this.fire('link:closed', event.reason);
     } else {
       // manually closed by the user, no need to trigger events
       if ( this._closeExpected ) {
         Logger.debug('NativeWebSocketHandler : close expected or manually invoked');
+        this.fire('connecting:stopped');
       }
       // if has been opened before
       else if ( this._linkWasOpened ) {
@@ -145,7 +147,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
         this.fire('link:interrupted');
       }
       else {
-        Logger.debug('NativeWebSocketHandler : connection stopped');
+        Logger.debug('NativeWebSocketHandler : connection stopped from various reasonds');
         this.fire('connecting:stopped');
       }
     }
@@ -328,9 +330,9 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
   _initConnectionHandler: function() {
     this._connectionHandler = NativeWebSocketHandler.create({
-      connectionTimeout: this.timeout,
-      reconnectDelay: this.reconnectDelay,
-      maxReconnectAttempts: this.reconnectAttempts
+      connectionTimeout: this.timeout
+      // reconnectDelay: this.reconnectDelay,
+      // maxReconnectAttempts: this.reconnectAttempts
     });
     // Disconnect and auto reconnect bindings
     this._attachConnectionEvents();
@@ -341,13 +343,13 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      this._stopConnecting();
+      // this._stopConnecting();
       this.fire('connecting:timeout');
     }, this);
 
     // A connecting attempt stopped
     connection.on('connecting:stopped', function() {
-      this._stopConnecting();
+      // this._stopConnecting();
       this.fire('connecting:stopped');
     }, this);
 
@@ -357,11 +359,11 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._initPingTimer();
     }, this)
     .on('link:closed', function(evt) {
-      this._stopConnecting();
+      // this._stopConnecting();
       this.fire('link:closed', evt);
     }, this)
     .on('link:interrupted', function(evt) {
-      this._stopConnecting();
+      // this._stopConnecting();
       this.fire('link:interrupted', evt);
     }, this);
 
