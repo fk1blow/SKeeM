@@ -1,4 +1,3 @@
-
 // RTF Api Manager implementation
 
 define(['skm/k/Object',
@@ -181,7 +180,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
    */
   shutdown: function(options) {
     var opt = options || {};
-    var url, connector = this.connectorsManager.getActiveConnector();
+    var url, connector = null; //this.connectorsManager.getActiveConnector(); // dafuck?!
     
     url = this.connectorsUrlParam.toQueryString()
       + '&closeConnection=true';
