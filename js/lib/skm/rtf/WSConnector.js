@@ -15,6 +15,35 @@ var Logger = SKMLogger.create();
 
 var EventsDelegates = {
   /**
+   * Triggered when the transport is ready
+   *
+   * @description when the transport is ready to send messages
+   * this methods signals this by triggerring a 'api:ready'
+   * @return {[type]} [description]
+   */
+  handleLinkOpened: function() {
+    this._isReconnecting = false;
+    this._currentAttempt = 1;
+    this.fire('transport:ready');
+  },
+
+  /**
+   * Handled when the native WebSocket is not present
+   */
+  handleImplementationMissing: function() {
+    Logger.info('WSConnector.handleImplementationMissing');
+    this.fire('transport:error');
+  },
+
+  /**
+   * Handled when the reconnect attemps has reached maximum attempts
+   */
+  handleMaxReconnectAttemptsReached: function() {
+    Logger.info('WSConnector.handleMaxReconnectAttemptsReached');
+    this.fire('transport:error');
+  },
+
+  /**
    * Handles a message received from server api
    *
    * @description handles the server's update message
@@ -26,17 +55,9 @@ var EventsDelegates = {
     message = JSON.parse(message);
     this.fire('api:message', message);
   },
-
-  /**
-   * Handled when the native WebSocket is not present
-   */
-  handleImplementationMissing: function() {
-    Logger.info('WSConnector.handleImplementationMissing');
-    this.fire('transport:deactivated');
-  },
   
   /**
-   * Handles ws link:closed
+   * Handles link:closed
    *
    * @description if server api closes the link, it sends a message
    * describing the reason for the close.
@@ -51,21 +72,9 @@ var EventsDelegates = {
     // if the message is a string, you got an exception and that's baaad!!!
     if ( message ) {
       this.fire('api:error', message);
+    } else {
+      this.fire('transport:closed');
     }
-    this.fire('api:closed');
-  },
-
-  /**
-   * Triggered when the transport is ready
-   *
-   * @description when the transport is ready to send messages
-   * this methods signals this by triggerring a 'api:ready'
-   * @return {[type]} [description]
-   */
-  handleLinkOpened: function() {
-    this._isReconnecting = false;
-    this._currentAttempt = 1;
-    this.fire('connector:ready');
   },
 
   /**
@@ -76,14 +85,22 @@ var EventsDelegates = {
    * It cand fail if the wrapper auto-disconnects the attemp,
    * or if the native wrapper triggers the close event.
    */
-  handleConnectingStopped: function() {
-    Logger.info('Connector.handleConnectingStopped');
+  handleConnectionStopped: function() {
+    Logger.info('Connector.handleConnectionStopped');
+    this._makeReconnectAttempt();
+  },
+
+  handleConnectionInterrupted: function() {
+    Logger.info('Connector.handleConnectionInterrupted');
+    this.fire('transport:interrupted');
     this._makeReconnectAttempt();
   }
 };
 
 
 var WSConnector = BaseConnector.extend(EventsDelegates, {
+  name: 'WebSocket',
+  
   beginUpdate: function() {
     this._ensureTransportCreated(WSWrapper)._buildTransportUrl();
     Logger.info('WSConnector.beginUpdate');
@@ -116,6 +133,11 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     that an error has ocured - this error will be sent to the widget
   */
   addTransportListeners: function() {
+    // this.transport.on('all', function() {
+    //   cl('transport < ', arguments);
+    // });
+    // return;
+
     // connection established
     this.transport.on('link:opened', this.handleLinkOpened, this);
 
@@ -131,8 +153,12 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
 
     // Try to reconnect when "stopped", "timeout" or "interrupted"
     // will reconnect
-    this.transport.on('connecting:stopped connecting:timeout link:interrupted',
-      this.handleConnectingStopped, this);
+    // add special handler for [link:interrupted] - should notifiy the user
+    this.transport.on('connecting:stopped connecting:timeout',
+      this.handleConnectionStopped, this);
+
+    // Connection has been dropped, not by the user nor the server
+    this.transport.on('link:interrupted', this.handleConnectionInterrupted, this);
 
     return this;
   }
