@@ -133,10 +133,8 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     that an error has ocured - this error will be sent to the widget
   */
   addTransportListeners: function() {
-    // this.transport.on('all', function() {
-    //   cl('transport < ', arguments);
-    // });
-    // return;
+    /*this.transport.on('all', function() { cl('transport < ', arguments); });
+    return;*/
 
     // connection established
     this.transport.on('link:opened', this.handleLinkOpened, this);
