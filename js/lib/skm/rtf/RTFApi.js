@@ -181,13 +181,13 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
    * @param  {Object} options optionsl shutdown parameters
    */
   shutdown: function(options) {
-    var opt = options || {};
-    var url, connector = null; //this.connectorsManager.getActiveConnector(); // dafuck?!
-    
+    var url, opt = options || {};
+    // try to stop current updates, if any
+    this.stopUpdates();
+    // build xhr's url and send the message 
     url = this.connectorsUrlParam.toQueryString()
       + '&closeConnection=true';
-
-    connector = XHRWrapper.create({
+    XHRWrapper.create({
       url: opt.url || Config.Connectors.XHR.url + url,
       async: opt.async
     }).sendMessage();

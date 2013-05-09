@@ -136,7 +136,6 @@ var Manager = SKMObject.extend(Subscribable, {
     Logger.info('ConnectorManager.stopConnectors');
     if ( this.getActiveConnector() )
       this._stopCurrentSequence();
-    this._activeConnector = null;
     return this;
   },
   
@@ -230,15 +229,15 @@ var Manager = SKMObject.extend(Subscribable, {
   _startInitialSequence: function() {
     var nextConnector, list = this._connectors;
     this._activeSequenceIdx = 0;
-    
+    // check the list and if the next sequence is in that list
     if ( list === null || ( list && ! ( this.sequence[0] in list ) ) ) {
       Logger.info('%cConnectorManager : connector list is empty or null',
         'color:red');
       return;
     }
-
+    // assign activeConnector and start
     this._activeConnector = list[this.sequence[0]];
-    this._startConnector(this._activeConnector);
+    this._activeConnector.beginUpdate();
   },
 
   /**
@@ -247,16 +246,17 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   _startNextSequence: function() {
     Logger.debug('ConnectorManager : starting next sequence');
-
+    
+    // No more events removal from a connector
     // clean previous active connector - end updates, nullify
-    this._activeConnector.off();
-
+    // this._activeConnector.off();
+    
     // set new active connector and sequence index
     this._activeSequenceIdx = this._getNextSequence();
     this._activeConnector = this._connectors[this._activeSequenceIdx];
 
     if ( this._activeConnector != undefined ) {
-      this._startConnector(this._activeConnector);
+      this._activeConnector.beginUpdate();
     } else {
       Logger.info('ConnectorManager : sequence complete!');
       this._activeConnector = null;
@@ -269,13 +269,11 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   _stopCurrentSequence: function() {
     Logger.debug('ConnectorManager : stopping current sequence');
-
-    // Remove events and end update
+    // If connector, end update and nullify
     if ( this._activeConnector ) {
       this._activeConnector.endUpdate();
-      // fuuuuck
-      // this._activeConnector.off()
-      // this._activeConnector = null;
+      // this._activeConnector.off() // should i remove them?
+      this._activeConnector = null;
     }
   },
 
@@ -288,11 +286,10 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    /*connector.on('all', function() {
-      cl('all > ', arguments)
-    })
+    /*connector.on('all', function() { cl('all > ', arguments) });
     return;*/
   
+    /** transport events  */
     connector.on('transport:ready', function() {
       this.fire('ready');
     }, this);
@@ -301,62 +298,30 @@ var Manager = SKMObject.extend(Subscribable, {
       this.fire('interrupted');
     }, this);
 
+    // stop connectors
     connector.on('transport:closed', function() {
       this.fire('closed');
-      // stop connector
       this._stopCurrentSequence();
     }, this);
 
+    // switch connectors
     connector.on('transport:error', function() {
       this.fire('sequence:switching');
-      // switch connectors
       this._stopCurrentSequence();
       this._startNextSequence();
     }, this);
 
 
+    /** api events */
     connector.on('api:message', function(message) {
       this.fire('message', message);
     }, this);
 
+    // stop connectors
     connector.on('api:error', function(message) {
       this.fire('error', message);
-      // stop connector
       this._stopCurrentSequence();
     }, this);
-  },
-
-  xxx_attachConnectorHandlers: function() {
-    /*// Connector has established connection and is ready to be used xD
-    connector.on('connector:ready', function() {
-      this.fire('ready');
-    }, this);
-
-    // Server closed the connection; stop and clean current connector
-    connector.on('api:closed api:error', function(message) {
-      // this.fire('closed', message);
-      this.fire('disconnected', message);
-      // this.fire('connector:closed', message);
-      this._stopCurrentSequence();
-    }, this);
-
-    // notify of update...
-    connector.on('api:message', function(message) {
-      this.fire('message', message);
-    }, this);
-
-    // Stop current connectors and start next one
-    connector.on('connector:deactivated', function() {
-      this.fire('sequence:switching');
-      // this.fire('connector:closed', message);
-      this._stopCurrentSequence();
-      this._startNextSequence();
-    }, this);*/
-  },
-
-  _startConnector: function(connector) {
-    // Begin update connector
-    connector.beginUpdate();
   }
 });
 
