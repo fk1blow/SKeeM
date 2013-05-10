@@ -236,8 +236,8 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
       connectorsOptions: Config.Connectors
     });
 
-    this.connectorsManager.on('all', function() { cl('all > ', arguments); });
-    return;
+    /*this.connectorsManager.on('all', function() { cl('all > ', arguments); });
+    return;*/
 
     /** transport events */
     this.connectorsManager.on('ready',
