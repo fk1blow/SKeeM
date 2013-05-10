@@ -120,6 +120,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
+    this._stopReconnectAttempts();
     return this;
   },
 
