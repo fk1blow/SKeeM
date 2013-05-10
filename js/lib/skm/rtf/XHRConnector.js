@@ -76,8 +76,7 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
     this._ensureTransportCreated(XHRWrapper)._buildTransportUrl();
     Logger.info('XHRConnector.beginUpdate');
     Logger.debug('XHRConnector : transport url :', this.transport.url);
-    // because xhr is ready after being instantiated
-    // this.fire('connector:ready');
+    // because xhr is ready, right after being instantiated
     this.fire('transport:ready');
     return this;
   },
@@ -86,8 +85,6 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('XHRConnector.endUpdate');
     // disconnect and remove events
     this.transport.abortRequest();
-    // @todo define this event and its handlers
-    this.fire('transport:closed');
     return this;
   },
 
