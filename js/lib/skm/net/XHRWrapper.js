@@ -40,10 +40,13 @@ var XHRMessageDelegates = {
 	},
 
 	handleOnError: function(err) {
+//		this._resetRequestObject(); // is this really necessary?
 		if ( ! this._expectedClose ) {
 			Logger.info('XHRWrapper.handleOnError');
 			this._expectedClose = false;
 			this.fire('error', err);
+		} else {
+			this.fire('closed');
 		}
 	}
 }
@@ -115,6 +118,8 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * callback or not - [this._expectedClose]
 	 */
 	abortRequest: function(triggersError) {
+		Logger.info('XHRWrapper.abortRequest');
+		cl('aborting on object : ', this._request);
 		// if triggers error is true, it will trigger the error event
 		if ( triggersError === true )
 			this._expectedClose = false;
@@ -140,7 +145,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 		// Abort the request if there is one in progress
 		this.abortRequest();
-
+		
 		this._request = this._wrapper.ajax({
 			url: this.url,
 
@@ -162,10 +167,9 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 			},
 
 			complete: function(msg) {
-				this._resetRequestObject();
 				this.handleOnComplete(msg);
 			},
-
+			
 			success: function(msg) {
 				this.handleOnSuccess(msg);
 			}
@@ -173,16 +177,17 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	},
 
 	_resetRequestObject: function() {
-		if ( this._request !== null )
+		if ( this._request !== null ) {
 			this._request = null;
+		}
 	}
 });
 
 
-// return {
-// 	Config: LibraryConfig,
-// 	Wrapper: XHRWrapper
-// };
+/*return {
+	Config: LibraryConfig,
+	Wrapper: XHRWrapper
+};*/
 
 
 /**
