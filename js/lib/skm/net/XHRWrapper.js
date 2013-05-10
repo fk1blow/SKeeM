@@ -15,7 +15,7 @@ var Logger = SKMLogger.create();
 var DefaultLibraryWrapper = window.jQuery || null;
 
 
-// The XHR wrapper that will use
+// The XHR wrapper that will be used.
 // Usually, this wrapper will be for jQuery's $.ajax method
 // Direct reference to the Library that will provide the ajax api
 var LibraryConfig = {
@@ -27,20 +27,28 @@ var LibraryConfig = {
 
 
 var XHRMessageDelegates = {
-	handleOnComplete: function() {
-		Logger.info('XHRWrapper.handleOnComplete');
-		this._expectedClose = false;
-		this.fire('complete');
-	},
-
 	handleOnSuccess: function(msg) {
 		Logger.info('XHRWrapper.handleOnSuccess', msg);
 		this._expectedClose = false;
 		this.fire('success', msg);
 	},
+	
+	handleOnComplete: function(ajaxObject, status) {
+		if ( ajaxObject.status == 405 ) {
+			//should trigger next sequence
+			this.fire('denied');
+		} else if ( ajaxObject.status != 200 && ajaxObject.statusText != 'abort' ) {
+			// interrupted by networkd/hardware stack
+			this.fire('stopped');
+		} else if ( ajaxObject.statusText == 'abort' ) {
+			// manually aborted by user
+			// shouldn't fire anything
+			this.fire('aborted');
+		}
+	},
 
-	handleOnError: function(err) {
-//		this._resetRequestObject(); // is this really necessary?
+	/*
+	 handleOnError: function(err) {
 		if ( ! this._expectedClose ) {
 			Logger.info('XHRWrapper.handleOnError');
 			this._expectedClose = false;
@@ -48,7 +56,8 @@ var XHRMessageDelegates = {
 		} else {
 			this.fire('closed');
 		}
-	}
+	 }
+	 */
 }
 
 
@@ -73,6 +82,7 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 	initialize: function() {
 		Logger.debug('%cnew XHRWrapper', 'color:#A2A2A2');
+		// @todo use a getter for the wrapper
 		this._wrapper = LibraryConfig.wrapper || DefaultLibraryWrapper;
 		this._request = null;
 	},
@@ -119,7 +129,6 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 */
 	abortRequest: function(triggersError) {
 		Logger.info('XHRWrapper.abortRequest');
-		cl('aborting on object : ', this._request);
 		// if triggers error is true, it will trigger the error event
 		if ( triggersError === true )
 			this._expectedClose = false;
@@ -162,12 +171,12 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 			// Data sent to the server
 			data: messageData,
 
-			error: function (err) {
+			/*error: function (err) {
 				this.handleOnError(err);
-			},
-
-			complete: function(msg) {
-				this.handleOnComplete(msg);
+			},*/
+			
+			complete: function(ctx, statusText) {
+				this.handleOnComplete(ctx, statusText);
 			},
 			
 			success: function(msg) {

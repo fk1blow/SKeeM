@@ -34,16 +34,16 @@ var EventsDelegates = {
     Logger.info('XHRConnector.handleMaxReconnectAttemptsReached');
     this.fire('transport:error');
   },
-
+  
   /**
-   * Handles xhr connection error
-   *
-   * @description triggered when the transport cannot
-   * connect to the host url or when the server
-   * closes a connection giving a reason as the "405" status code
-   * 
-   * @param  {[type]} err JSON message representing the reason
+   * Handled when the xhr connection is refused by server api
    */
+  handleConnectionDenied: function() {
+    Logger.info('XHRConnector.handleConnectionDenied');
+    this.fire('transport:error');
+  },
+
+  /*
   handleError: function(err) {
     Logger.info('Connector.handleError');
     // If server triggers errors
@@ -52,18 +52,24 @@ var EventsDelegates = {
     } else {
       this.handleConnectionStopped();
     }
-  },
-
+  },*/
+  
   /**
-   * Handled while trying to establish a link
-   *
-   * @description this handler is called whenever the websocket wrapper
-   * tries to establish a connection but fails to do that.
-   * It cand fail if the wrapper auto-disconnects the attemp,
-   * or if the native wrapper triggers the close event.
+   * Handled when the xhr connection is aborted by the user
+   */
+  handleConnectionAborted: function() {
+    Logger.info('XHRConnector.handleConnectionAborted');
+    this.fire('transport:closed');
+  },
+  
+  /**
+   * Handled when the connection has been stopped
+   * 
+   * @descroption usually, when the network fails or anything that,
+   * can prematurely close a connection
    */
   handleConnectionStopped: function() {
-    Logger.info('Connector.handleConnectionStopped');
+    Logger.info('XHRConnector.handleConnectionStopped');
     this._makeReconnectAttempt();
   }
 };
@@ -95,8 +101,13 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
 
   addTransportListeners: function() {
     this.transport
-      .on('error', this.handleError, this)
+      .on('aborted', this.handleConnectionAborted, this)
+      .on('stopped', this.handleConnectionStopped, this)
+      .on('denied', this.handleConnectionDenied, this)
       .on('success', this.handleReceivedMessage, this);
+
+      /** everything handled on complete */
+      //.on('error', this.handleError, this)
     return this;
   }
 });
