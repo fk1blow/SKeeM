@@ -13,13 +13,6 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var ConnectorErrors = {
-  INACTIVE: 'Innactive connection',
-  LIST_TO_BIG: 'Confirmation Message Sent list is too big',
-  READY_LIST_TO_BIG: 'Ready To send Message list is too big'
-};
-
-
 var EventsDelegates = {
   /**
    * Handles a message received from server api
@@ -32,6 +25,14 @@ var EventsDelegates = {
   handleReceivedMessage: function(message) {
     Logger.info('Connector.handleReceivedMessage');
     this.fire('api:message', message);
+  },
+
+  /**
+   * Handled when the reconnect attemps has reached maximum attempts
+   */
+  handleMaxReconnectAttemptsReached: function() {
+    Logger.info('XHRConnector.handleMaxReconnectAttemptsReached');
+    this.fire('transport:error');
   },
 
   /**
@@ -49,7 +50,7 @@ var EventsDelegates = {
     if ( err.status == 405 ) {
       this.fire('api:error', err.responseText);
     } else {
-      this.handleConnectingStopped();
+      this.handleConnectionStopped();
     }
   },
 
@@ -61,8 +62,8 @@ var EventsDelegates = {
    * It cand fail if the wrapper auto-disconnects the attemp,
    * or if the native wrapper triggers the close event.
    */
-  handleConnectingStopped: function() {
-    Logger.info('Connector.handleConnectingStopped');
+  handleConnectionStopped: function() {
+    Logger.info('Connector.handleConnectionStopped');
     this._makeReconnectAttempt();
   }
 };
@@ -73,23 +74,25 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
 
   beginUpdate: function() {
     this._ensureTransportCreated(XHRWrapper)._buildTransportUrl();
-    Logger.info('Connector.beginUpdate');
-    Logger.debug('Connector : transport url :', this.transport.url);
+    Logger.info('XHRConnector.beginUpdate');
+    Logger.debug('XHRConnector : transport url :', this.transport.url);
     // because xhr is ready after being instantiated
     // this.fire('connector:ready');
-    this.fire('api:ready');
+    this.fire('transport:ready');
     return this;
   },
 
   endUpdate: function() {
-    Logger.info('Connector.endUpdate');
+    Logger.info('XHRConnector.endUpdate');
     // disconnect and remove events
     this.transport.abortRequest();
+    // @todo define this event and its handlers
+    this.fire('transport:closed');
     return this;
   },
 
   sendMessage: function(message) {
-    Logger.debug('%cConnector.sendMessage : ', 'color:green', message);
+    Logger.debug('%cXHRConnector : sending message : ', 'color:green', message);
     this.transport.sendMessage({ message: message });
   },
 

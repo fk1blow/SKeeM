@@ -1,4 +1,5 @@
-// RTF Api Manager implementation
+
+// RTF Api implementation
 
 define(['skm/k/Object',
   'skm/util/Logger',
@@ -187,6 +188,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     // build xhr's url and send the message 
     url = this.connectorsUrlParam.toQueryString()
       + '&closeConnection=true';
+    // gg xhr
     XHRWrapper.create({
       url: opt.url || Config.Connectors.XHR.url + url,
       async: opt.async
@@ -234,8 +236,8 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
       connectorsOptions: Config.Connectors
     });
 
-    /*this.connectorsManager.on('all', function() { cl('all > ', arguments); });
-    return;*/
+    this.connectorsManager.on('all', function() { cl('all > ', arguments); });
+    return;
 
     /** transport events */
     this.connectorsManager.on('ready',

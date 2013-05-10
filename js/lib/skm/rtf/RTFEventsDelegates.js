@@ -159,6 +159,7 @@ var EventsDelegates = {
    */
   handleManagerSequenceSwitching: function() {
     Logger.info('%cRTFApi.handleManagerSequenceSwitching', 'color:red');
+    this.fire('sequence:switching');
   },
 
   /**
@@ -166,6 +167,7 @@ var EventsDelegates = {
    */
   handleManagerSequenceComplete: function() {
     Logger.info('%cRTFApi.handleManagerSequenceComplete', 'color:red');
+    this.fire('sequence:complete');
   },
 
   // @todo return something useful

@@ -105,14 +105,12 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   
   
   startConnectingAttempt: function() {
-    Logger.info('NativeWebSocketHandler.startConnectingAttempt');
     this._timerAutoDisconnect.start();
     this._closeExpected = false;
     return this;
   },
 
   stopConnectingAttempt: function() {
-    Logger.info('NativeWebSocketHandler.stopConnectingAttempt');
     this._timerAutoDisconnect.stop();
     this._closeExpected = true;
     return this;
