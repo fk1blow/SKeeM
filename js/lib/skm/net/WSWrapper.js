@@ -310,7 +310,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   },
 
   _stopConnecting: function() {
-    Logger.debug('%cWSWrapper : stop websocket connecting...', 'color:red');
+    Logger.debug('WSWrapper : stop websocket connecting...');
     // only stop if the connection is not closed
     if ( this.getConnectionState() != 3 )
       this._connectionHandler.stopConnectingAttempt();
@@ -334,7 +334,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
    */
   _destroyNativeSocket: function() {
     if ( this._nativeSocket ) {
-      Logger.debug('%cWSWrapper : closing websocket native reference', 'color:red');
+      Logger.debug('WSWrapper : closing native websocket object');
       this._nativeSocket.close();
       this._nativeSocket = null;
     }
