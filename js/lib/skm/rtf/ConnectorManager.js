@@ -226,10 +226,13 @@ var Manager = SKMObject.extend(Subscribable, {
   /**
    * Starts the initial update sequence
    * when the connectors is at 0(zero) index
+   * 
+   * @description assigning [_activeSequenceIdx = 0] will force the connector manager
+   * to always pick the first connector defined by the sequence
    */
   _startInitialSequence: function() {
     var nextConnector, list = this._connectors;
-    this._activeSequenceIdx = 0;
+    this._activeSequenceIdx = 0
     // check the list and if the next sequence is in that list
     if ( list === null || ( list && ! ( this.sequence[0] in list ) ) ) {
       Logger.info('%cConnectorManager : connector list is empty or null',
@@ -246,11 +249,6 @@ var Manager = SKMObject.extend(Subscribable, {
    * and starts the update
    */
   _startNextSequence: function() {
-    // No more events removal from a connector
-    // clean previous active connector - end updates, nullify
-    // this._activeConnector.off();
-    
-    // set new active connector and sequence index
     this._activeSequenceIdx = this._getNextSequence();
     this._activeConnector = this._connectors[this._activeSequenceIdx];
 
@@ -264,23 +262,22 @@ var Manager = SKMObject.extend(Subscribable, {
     }
   },
 
-  _switchToNextSequence: function() {
-    Logger.debug('ConnectorManager : switching to sequence');
-    this._stopCurrentSequence();
-    this._startNextSequence();
-  },
-
   /**
    * Stops the current sequence and end update
    */
   _stopCurrentSequence: function() {
-    // Logger.debug('ConnectorManager : stopping current sequence');
     // If connector, end update and nullify
     if ( this._activeConnector ) {
       this._activeConnector.endUpdate();
       // this._activeConnector.off() // should i remove them?
       this._activeConnector = null;
     }
+  },
+
+  _switchToNextSequence: function() {
+    Logger.debug('ConnectorManager : switching to sequence');
+    this._stopCurrentSequence();
+    this._startNextSequence();
   },
 
   /**
@@ -293,7 +290,7 @@ var Manager = SKMObject.extend(Subscribable, {
 
   _attachConnectorHandlers: function(connector) {
     // connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
-   // return;
+    // return;
   
     /** transport events  */
     connector.on('transport:ready', function() {
