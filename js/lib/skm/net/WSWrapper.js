@@ -123,7 +123,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 
   handleOnClose: function(event) {
     Logger.info('NativeWebSocketHandler.handleOnClose');
-    Logger.debug('NativeWebSocketHandler : event state : ', 
+    Logger.debug('event state : ', 
       'wasClean:', event.wasClean, ' code:', event.code, ' reason:', event.reason);
 
     // stop all timers
@@ -133,26 +133,28 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     // or it's aborted by the users
     if ( event.wasClean ) {
       Logger.debug('NativeWebSocketHandler : connection closed');
+      this._markAsClosed();
       this.fire('link:closed', event.reason);
     } else {
       // manually closed by the user, no need to trigger events
+      // @todo remove declaration - case already covered by the [event.wasClean]
       if ( this._closeExpected ) {
         Logger.debug('NativeWebSocketHandler : close expected or manually invoked');
-        this.fire('connecting:stopped');
+        this._markAsClosed();
+        this.fire('connecting:aborted');
       }
       // if has been opened before
       else if ( this._linkWasOpened ) {
         Logger.debug('NativeWebSocketHandler : connection interrupted');
+        this._markAsClosed();
         this.fire('link:interrupted');
       }
       else {
         Logger.debug('NativeWebSocketHandler : connection stopped from various reasonds');
+        this._markAsClosed();
         this.fire('connecting:stopped');
       }
     }
-    
-    this._linkWasOpened = false;
-    this._closeExpected = false;
   },
 
   handleOnOpen: function() {
@@ -172,6 +174,11 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       default:
         this.fire('message', data);
     }
+  },
+
+  _markAsClosed: function() {
+    this._linkWasOpened = false;
+    this._closeExpected = false;
   },
   
   _handleAutoDisconnect: function() {
@@ -303,6 +310,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   },
 
   _stopConnecting: function() {
+    Logger.debug('%cWSWrapper : stop websocket connecting...', 'color:red');
     // only stop if the connection is not closed
     if ( this.getConnectionState() != 3 )
       this._connectionHandler.stopConnectingAttempt();
@@ -319,8 +327,14 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     }
   },
 
+  /**
+   * Closes the socket and nullifies the variable reference
+   *
+   * @description
+   */
   _destroyNativeSocket: function() {
     if ( this._nativeSocket ) {
+      Logger.debug('%cWSWrapper : closing websocket native reference', 'color:red');
       this._nativeSocket.close();
       this._nativeSocket = null;
     }
@@ -342,13 +356,13 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      // this._stopConnecting();
+      this._stopConnecting();
       this.fire('connecting:timeout');
     }, this);
 
     // A connecting attempt stopped
     connection.on('connecting:stopped', function() {
-      // this._stopConnecting();
+      this._stopConnecting();
       this.fire('connecting:stopped');
     }, this);
 
