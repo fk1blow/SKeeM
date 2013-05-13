@@ -13,6 +13,11 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
+/*------------------------
+  Delegates
+------------------------*/
+
+
 var EventsDelegates = {
   /**
    * Triggered when the transport is ready
@@ -78,16 +83,14 @@ var EventsDelegates = {
   },
 
   /**
-   * Handled while trying to establish a link
+   * Handled when the user has canceled the connecting attempt
    *
-   * @description this handler is called whenever the websocket wrapper
-   * tries to establish a connection but fails to do that.
-   * It cand fail if the wrapper auto-disconnects the attemp,
-   * or if the native wrapper triggers the close event.
+   * @description easily confused with connecting:closed, this event is
+   * triggered only when an attempt to connect is being aborted by the user.
    */
-  handleConnectionStopped: function() {
-    Logger.info('Connector.handleConnectionStopped');
-    this._makeReconnectAttempt();
+  handleConnectingAttemptAborted: function() {
+    Logger.info('Connector.handleConnectingAttemptAborted');
+    this.fire('transport:closed');
   },
 
   /**
@@ -96,12 +99,32 @@ var EventsDelegates = {
    * @description besides fireing an event, it will try
    * to make another reconnect attempt
    */
-  handleConnectionInterrupted: function() {
-    Logger.info('Connector.handleConnectionInterrupted');
+  handleLinkInterrupted: function() {
+    Logger.info('Connector.handleLinkInterrupted');
+    // besides the reconnect attempt, tell the use what happened
     this.fire('transport:interrupted');
+    this._makeReconnectAttempt();
+  },
+
+  /**
+   * Handled while trying to establish a link
+   *
+   * @description this handler is called whenever the websocket wrapper
+   * tries to establish a connection but fails to do that.
+   * It cand fail if the wrapper auto-disconnects the attemp,
+   * or if the native wrapper triggers the close event.
+   */
+  handleConnectingAttemptStopped: function() {
+    // cl(this.transport._nativeSocket)
+    Logger.info('Connector.handleConnectingAttemptStopped');
     this._makeReconnectAttempt();
   }
 };
+
+
+/*------------------------
+  Delegates
+------------------------*/
 
 
 var WSConnector = BaseConnector.extend(EventsDelegates, {
@@ -120,6 +143,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
+    // Stop the reconnecting attempts
     this._stopReconnectAttempts();
     return this;
   },
@@ -135,14 +159,33 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
-    /*this.transport.on('all', function() { cl('transport < ', arguments); });
-    return;*/
+    this.transport.on('all', function() { cl('WSConnector < ', arguments); });
+    // return;
+
+    /** Transport related handlers */
 
     // connection established
     this.transport.on('link:opened', this.handleLinkOpened, this);
 
-    // connection dropped by server
+    // connection closed by server; wasClean == true
     this.transport.on('link:closed', this.hanleLinkClosed, this);
+
+     // Connection has been interrupted, not by the user nor the server
+    this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
+
+    /** Connecting attempts handlers */
+
+    // A connecting attempt aborted by user
+    this.transport.on('connecting:aborted',
+      this.handleConnectingAttemptAborted, this);
+
+    // WILL TRY TO RECONNECT !!!!!!!!!!
+    // Try to reconnect when "stopped", "timeout" or "interrupted"
+    // add special handler for [link:interrupted] - should notifiy the user
+    this.transport.on('connecting:stopped connecting:timeout',
+      this.handleConnectingAttemptStopped, this);
+
+    /** Message and implementation missing handlers */
 
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
@@ -150,15 +193,6 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     // WebSocket native implementation not found
     this.transport.on('implementation:missing',
       this.handleImplementationMissing, this);
-
-    // WILL TRY TO RECONNECT !!!!!!!!!!
-    // Try to reconnect when "stopped", "timeout" or "interrupted"
-    // add special handler for [link:interrupted] - should notifiy the user
-    this.transport.on('connecting:stopped connecting:timeout',
-      this.handleConnectionStopped, this);
-
-    // Connection has been dropped, not by the user nor the server
-    this.transport.on('link:interrupted', this.handleConnectionInterrupted, this);
 
     return this;
   }
