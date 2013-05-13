@@ -29,7 +29,6 @@ var LibraryConfig = {
 var XHRMessageDelegates = {
 	handleOnSuccess: function(msg) {
 		Logger.info('XHRWrapper.handleOnSuccess', msg);
-		this._expectedClose = false;
 		this.fire('success', msg);
 	},
 	
@@ -43,8 +42,11 @@ var XHRMessageDelegates = {
 		} else if ( ajaxObject.statusText == 'abort' ) {
 			// manually aborted by user
 			// shouldn't fire anything
-			this.fire('aborted');
+			if ( this._expectedClose != true ) {
+				this.fire('aborted');
+			}
 		}
+		this._expectedClose = false;
 	},
 
 	/*
@@ -127,14 +129,13 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 	 * @param  {Boolean} triggersError Should trigger error
 	 * callback or not - [this._expectedClose]
 	 */
-	abortRequest: function(triggersError) {
+	abortRequest: function(abortedByUser) {
 		Logger.info('XHRWrapper.abortRequest');
 		// if triggers error is true, it will trigger the error event
-		if ( triggersError === true )
-			this._expectedClose = false;
+		if ( abortedByUser === true )
+			this._expectedClose = true;
 		// Set expected close, only it aborts the connection
 		if ( this._request != null ) {
-			this._expectedClose = true;
 			this._request.abort();
 		}
 		// nullifies the request object
