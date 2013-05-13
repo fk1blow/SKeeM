@@ -100,7 +100,7 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
   endUpdate: function() {
     Logger.info('XHRConnector.endUpdate');
     // disconnect and remove events
-    this.transport.abortRequest();
+    this.transport.abortRequest(true);
     // Stop the reconnecting attempts
     this._stopReconnectAttempts();
     return this;

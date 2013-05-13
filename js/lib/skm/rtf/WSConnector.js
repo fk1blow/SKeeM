@@ -159,7 +159,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
-    this.transport.on('all', function() { cl('WSConnector < ', arguments); });
+    // this.transport.on('all', function() { cl('WSConnector < ', arguments); });
     // return;
 
     /** Transport related handlers */
