@@ -147,7 +147,10 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   switchToNextConnector: function() {
     Logger.info('ConnectorManager.switchToNextConnector');
-    this._switchToNextSequence();
+    // this._switchToNextSequence();
+    // debugger;
+    this._stopCurrentSequence();
+    this._startNextSequence();
     return this;
   },
 
@@ -249,8 +252,10 @@ var Manager = SKMObject.extend(Subscribable, {
    * and starts the update
    */
   _startNextSequence: function() {
-    this._activeSequenceIdx = this._getNextSequence();
-    this._activeConnector = this._connectors[this._activeSequenceIdx];
+    // debugger;
+    // this._activeSequenceIdx = this._getNextSequence();
+    var nextConnector = this.sequence[++this._activeSequenceIdx];
+    this._activeConnector = this._connectors[nextConnector];
 
     if ( this._activeConnector != undefined ) {
       Logger.debug('ConnectorManager : starting next sequence');
@@ -274,11 +279,11 @@ var Manager = SKMObject.extend(Subscribable, {
     }
   },
 
-  _switchToNextSequence: function() {
-    Logger.debug('ConnectorManager : switching to sequence');
-    this._stopCurrentSequence();
-    this._startNextSequence();
-  },
+  // _switchToNextSequence: function() {
+  //   Logger.debug('ConnectorManager : switching to sequence');
+  //   this._stopCurrentSequence();
+  //   this._startNextSequence();
+  // },
 
   /**
    * Return the next sequence of connector to use
@@ -289,7 +294,7 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    // connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
+    connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
     // return;
   
     /** transport events  */
@@ -304,15 +309,18 @@ var Manager = SKMObject.extend(Subscribable, {
 
     // stop connectors
     // nothing more to do
-    connector.on('transport:closed', function() {
+    connector.on('transport:closed', function(type) {
+      // if ( type != 'WS' )
+        // this._stopCurrentSequence();
       this.fire('closed');
-      this._stopCurrentSequence();
     }, this);
 
     // switch connectors
     connector.on('transport:error', function() {
+      // cl('on transport:error')
       this.fire('sequence:switching');
-      this._switchToNextSequence();
+      // this._stopCurrentSequence();
+      this._startNextSequence();
     }, this);
 
 
@@ -325,7 +333,8 @@ var Manager = SKMObject.extend(Subscribable, {
     // nothing more to do
     connector.on('api:error', function(message) {
       this.fire('error', message);
-      this._stopCurrentSequence();
+      // @todo not sure if this call is necessary and not buggy!!!
+      // this._stopCurrentSequence();
     }, this);
   }
 });

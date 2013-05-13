@@ -150,7 +150,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
         this.fire('link:interrupted');
       }
       else {
-        Logger.debug('NativeWebSocketHandler : connection stopped from various reasonds');
+        Logger.debug('NativeWebSocketHandler : connection stopped');
         this._markAsClosed();
         this.fire('connecting:stopped');
       }
@@ -301,9 +301,10 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   
   _startConnecting: function() {
     this._nativeSocket = createNativeSocket(this.url, this.protocols);
-    if ( this._nativeSocket == null )
-      this.fire('implementation:missing')._stopConnecting();
-    else {
+    if ( this._nativeSocket == null ) {
+      this.fire('implementation:missing');
+      this._stopConnecting();
+    } else {
       this._connectionHandler.attachListenersTo(this._nativeSocket)
         .startConnectingAttempt();
     }
@@ -354,17 +355,25 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   _attachConnectionEvents: function() {
     var connection = this._connectionHandler;
 
+    // connection.on('all', function() { cl('connection > ', arguments) });
+
+
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
+      cl('%cconnecting:timeout', 'color:blue');
       this._stopConnecting();
       this.fire('connecting:timeout');
     }, this);
 
     // A connecting attempt stopped
     connection.on('connecting:stopped', function() {
-      this._stopConnecting();
+      cl('%cconnecting:stopped', 'color:blue');
+      // @todo remove call
+      // should not close an already closed socket connection
+      // this._stopConnecting();
       this.fire('connecting:stopped');
     }, this);
+
 
     // link has been established
     connection.on('link:opened', function() {
@@ -372,11 +381,15 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._initPingTimer();
     }, this)
     .on('link:closed', function(evt) {
+      // @todo remove call
       // this._stopConnecting();
+      // this._destroyNativeSocket();
       this.fire('link:closed', evt);
     }, this)
     .on('link:interrupted', function(evt) {
+      // @todo remove call
       // this._stopConnecting();
+      // this._destroyNativeSocket();
       this.fire('link:interrupted', evt);
     }, this);
 

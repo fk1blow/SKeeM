@@ -112,6 +112,9 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
+    // this.transport.on('all', function() { cl('XHRConnector < ', arguments); });
+    // return;
+
     this.transport
       .on('aborted', this.handleConnectionAborted, this)
       .on('stopped', this.handleConnectionStopped, this)

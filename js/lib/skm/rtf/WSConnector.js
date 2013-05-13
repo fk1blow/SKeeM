@@ -118,6 +118,12 @@ var EventsDelegates = {
     // cl(this.transport._nativeSocket)
     Logger.info('Connector.handleConnectingAttemptStopped');
     this._makeReconnectAttempt();
+  },
+
+  handleConnectingAttemptTimeout: function() {
+    // cl(this.transport._nativeSocket)
+    Logger.info('Connector.handleConnectingAttemptTimeout');
+    this._makeReconnectAttempt();
   }
 };
 
@@ -182,8 +188,11 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     // WILL TRY TO RECONNECT !!!!!!!!!!
     // Try to reconnect when "stopped", "timeout" or "interrupted"
     // add special handler for [link:interrupted] - should notifiy the user
-    this.transport.on('connecting:stopped connecting:timeout',
+    this.transport.on('connecting:stopped',
       this.handleConnectingAttemptStopped, this);
+
+    this.transport.on('connecting:timeout',
+      this.handleConnectingAttemptTimeout, this);
 
     /** Message and implementation missing handlers */
 
