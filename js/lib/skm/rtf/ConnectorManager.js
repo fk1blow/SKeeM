@@ -147,8 +147,7 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   switchToNextConnector: function() {
     Logger.info('ConnectorManager.switchToNextConnector');
-    this._stopCurrentSequence();
-    this._startNextSequence();
+    this._switchToNextSequence();
     return this;
   },
 
@@ -194,8 +193,10 @@ var Manager = SKMObject.extend(Subscribable, {
    * the message sent to the server
    * @param {JSON} optData an object containing additional
    * parameters sent to the connector - wrapper
+   *
+   * @todo implement this method directly to the rtf api module
    */
-  sendMessage: function(message) {
+  /*sendMessage: function(message) {
     var connector;
     if ( connector = this.getActiveConnector() )
       connector.sendMessage(message);
@@ -204,7 +205,7 @@ var Manager = SKMObject.extend(Subscribable, {
         + ' or connector is null');
     }
     return this;
-  },
+  },*/
 
 
   /**
@@ -245,8 +246,6 @@ var Manager = SKMObject.extend(Subscribable, {
    * and starts the update
    */
   _startNextSequence: function() {
-    Logger.debug('ConnectorManager : starting next sequence');
-    
     // No more events removal from a connector
     // clean previous active connector - end updates, nullify
     // this._activeConnector.off();
@@ -256,19 +255,26 @@ var Manager = SKMObject.extend(Subscribable, {
     this._activeConnector = this._connectors[this._activeSequenceIdx];
 
     if ( this._activeConnector != undefined ) {
+      Logger.debug('ConnectorManager : starting next sequence');
       this._activeConnector.beginUpdate();
     } else {
-      Logger.info('ConnectorManager : sequence complete!');
+      Logger.debug('ConnectorManager : sequence complete!');
       this._activeConnector = null;
       this.fire('sequence:complete');
     }
+  },
+
+  _switchToNextSequence: function() {
+    Logger.debug('ConnectorManager : switching to sequence');
+    this._stopCurrentSequence();
+    this._startNextSequence();
   },
 
   /**
    * Stops the current sequence and end update
    */
   _stopCurrentSequence: function() {
-    Logger.debug('ConnectorManager : stopping current sequence');
+    // Logger.debug('ConnectorManager : stopping current sequence');
     // If connector, end update and nullify
     if ( this._activeConnector ) {
       this._activeConnector.endUpdate();
@@ -286,7 +292,7 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    connector.on('all', function() { console.log('cm all > ', arguments) });
+    // connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
    // return;
   
     /** transport events  */
@@ -309,8 +315,7 @@ var Manager = SKMObject.extend(Subscribable, {
     // switch connectors
     connector.on('transport:error', function() {
       this.fire('sequence:switching');
-      this._stopCurrentSequence();
-      this._startNextSequence();
+      this._switchToNextSequence();
     }, this);
 
 
