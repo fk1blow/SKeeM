@@ -13,6 +13,11 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
+/*------------------------
+  Delegates
+------------------------*/
+
+
 var EventsDelegates = {
   /**
    * Handles a message received from server api
@@ -75,6 +80,11 @@ var EventsDelegates = {
 };
 
 
+/*------------------------
+  Connector
+------------------------*/
+
+
 var XHRConnector = BaseConnector.extend(EventsDelegates, {
   name: 'XHR',
 
@@ -91,6 +101,8 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('XHRConnector.endUpdate');
     // disconnect and remove events
     this.transport.abortRequest();
+    // Stop the reconnecting attempts
+    this._stopReconnectAttempts();
     return this;
   },
 
@@ -105,9 +117,6 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
       .on('stopped', this.handleConnectionStopped, this)
       .on('denied', this.handleConnectionDenied, this)
       .on('success', this.handleReceivedMessage, this);
-
-      /** everything handled on complete */
-      //.on('error', this.handleError, this)
     return this;
   }
 });
