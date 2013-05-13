@@ -213,7 +213,14 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
    * the content of the message, implementation done by each connector
    */
   sendMessage: function(message) {
-    this.connectorsManager.sendMessage(message);
+    var connector;
+    if ( connector = this.connectorsManager.getActiveConnector() )
+      connector.sendMessage(message);
+    else {
+      Logger.warn('Unable to send message : invalid connector type' 
+        + ' or connector is null');
+    }
+    return this;
   },
 
 
