@@ -369,7 +369,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     connection.on('connecting:stopped', function() {
       cl('%cconnecting:stopped', 'color:blue');
       // @todo remove call
-      // should not close an already closed socket connection
+      // WebSocket close event already triggered
       // this._stopConnecting();
       this.fire('connecting:stopped');
     }, this);
@@ -382,12 +382,14 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     }, this)
     .on('link:closed', function(evt) {
       // @todo remove call
+      // WebSocket close event already triggered
       // this._stopConnecting();
       // this._destroyNativeSocket();
       this.fire('link:closed', evt);
     }, this)
     .on('link:interrupted', function(evt) {
       // @todo remove call
+      // WebSocket close event already triggered
       // this._stopConnecting();
       // this._destroyNativeSocket();
       this.fire('link:interrupted', evt);
