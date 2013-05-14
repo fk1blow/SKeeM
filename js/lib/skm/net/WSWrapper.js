@@ -132,12 +132,11 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     // If the socket connection is closed by the server
     // or it's aborted by the users
     if ( event.wasClean ) {
-      Logger.debug('NativeWebSocketHandler : connection closed');
+      Logger.debug('NativeWebSocketHandler : link closed');
       this._markAsClosed();
       this.fire('link:closed', event.reason);
     } else {
       // manually closed by the user, no need to trigger events
-      // @todo remove declaration - case already covered by the [event.wasClean]
       if ( this._closeExpected ) {
         Logger.debug('NativeWebSocketHandler : close expected or manually invoked');
         this._markAsClosed();
@@ -355,43 +354,29 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   _attachConnectionEvents: function() {
     var connection = this._connectionHandler;
 
-    // connection.on('all', function() { cl('connection > ', arguments) });
-
-
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      cl('%cconnecting:timeout', 'color:blue');
       this._stopConnecting();
       this.fire('connecting:timeout');
     }, this);
 
     // A connecting attempt stopped
+    // Don't attempt to call [_stopConnecting] because this is already
+    // called when the close event of the native websocket has been triggered
     connection.on('connecting:stopped', function() {
-      cl('%cconnecting:stopped', 'color:blue');
-      // @todo remove call
-      // WebSocket close event already triggered
-      // this._stopConnecting();
       this.fire('connecting:stopped');
     }, this);
 
-
-    // link has been established
+    // As well, link:closed/interrupted already will have been trigger
+    // the close events on the native websocket object
     connection.on('link:opened', function() {
       this.fire('link:opened');
       this._initPingTimer();
     }, this)
     .on('link:closed', function(evt) {
-      // @todo remove call
-      // WebSocket close event already triggered
-      // this._stopConnecting();
-      // this._destroyNativeSocket();
       this.fire('link:closed', evt);
     }, this)
     .on('link:interrupted', function(evt) {
-      // @todo remove call
-      // WebSocket close event already triggered
-      // this._stopConnecting();
-      // this._destroyNativeSocket();
       this.fire('link:interrupted', evt);
     }, this);
 
