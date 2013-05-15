@@ -61,6 +61,12 @@ var createNativeSocket = function(url, protocols) {
 };
 
 
+/*var ClosingAttemptFlags = {
+  STOP: true,
+  END: true
+}*/
+
+
 /**
  * Native WebSocket connection delegates
  */
@@ -70,6 +76,8 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   _timerAutoDisconnect: null,
 
   _closeExpected: false,
+
+  // _closeFlag: null,
 
   _linkWasOpened: false,
 
@@ -110,9 +118,10 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     return this;
   },
 
-  stopConnectingAttempt: function() {
+  stopConnectingAttempt: function(silent) {
     this._timerAutoDisconnect.stop();
-    this._closeExpected = true;
+    cl(silent)
+    this._closeExpected = silent || false;
     return this;
   },
 
@@ -130,30 +139,30 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     this._timerAutoDisconnect.stop();
 
     // If the socket connection is closed by the server
-    // or it's aborted by the users
+    // or it's aborted manually by the user
     if ( event.wasClean ) {
       Logger.debug('NativeWebSocketHandler : link closed');
-      this._markAsClosed();
       this.fire('link:closed', event.reason);
-    } else {
-      // manually closed by the user, no need to trigger events
-      if ( this._closeExpected ) {
-        Logger.debug('NativeWebSocketHandler : close expected or manually invoked');
-        this._markAsClosed();
-        this.fire('connecting:aborted');
-      }
+    }
+    // if manually closed during the connecting attempt
+    else if ( this._closeExpected ) {
+      Logger.debug('manually closed during attempt');
+    }
+    // default case, where no manual close or server close has been triggered
+    else  {
       // if has been opened before
-      else if ( this._linkWasOpened ) {
+      if ( this._linkWasOpened ) {
         Logger.debug('NativeWebSocketHandler : connection interrupted');
-        this._markAsClosed();
         this.fire('link:interrupted');
       }
+      // default case
       else {
         Logger.debug('NativeWebSocketHandler : connection stopped');
-        this._markAsClosed();
         this.fire('connecting:stopped');
       }
     }
+
+    this._markAsClosed();
   },
 
   handleOnOpen: function() {
@@ -252,7 +261,8 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   },
 
   disconnect: function() {
-    this._stopConnecting();
+    // this._stopConnecting();
+    this._abortConnecting({ silent: true });
     return true;
   },
 
@@ -302,20 +312,29 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     this._nativeSocket = createNativeSocket(this.url, this.protocols);
     if ( this._nativeSocket == null ) {
       this.fire('implementation:missing');
-      this._stopConnecting();
+      this._abortConnecting({ silent: true });
     } else {
       this._connectionHandler.attachListenersTo(this._nativeSocket)
         .startConnectingAttempt();
     }
   },
 
-  _stopConnecting: function() {
-    Logger.debug('WSWrapper : stop websocket connecting...');
+  _abortConnecting: function(options) {
+    Logger.debug('WSWrapper : abort websocket connecting...');
+    var opt = options || {};
     // only stop if the connection is not closed
     if ( this.getConnectionState() != 3 )
-      this._connectionHandler.stopConnectingAttempt();
+      this._connectionHandler.stopConnectingAttempt(opt.silent);
     this._destroyNativeSocket();
   },
+
+  /*_endConnecting: function() {
+    Logger.debug('WSWrapper : end websocket connecting...');
+    // only stop if the connection is not closed
+    if ( this.getConnectionState() != 3 )
+      this._connectionHandler.stopConnectingAttempt(false);
+    this._destroyNativeSocket();
+  },*/
 
   _initPingTimer: function() {
     if ( !this.pingServer )
@@ -356,8 +375,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      this._stopConnecting();
-      this.fire('connecting:timeout');
+      this._abortConnecting({ silent: false });
     }, this);
 
     // A connecting attempt stopped

@@ -294,7 +294,7 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
+    // connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
     // return;
   
     /** transport events  */

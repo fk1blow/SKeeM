@@ -178,7 +178,6 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   },
 
   _stopReconnectAttempts: function() {
-    // cl('timer : ', this._reconnectTimer)
     if ( this._reconnectTimer )
       clearTimeout(this._reconnectTimer);
   }

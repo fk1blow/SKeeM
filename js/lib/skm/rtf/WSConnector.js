@@ -83,17 +83,6 @@ var EventsDelegates = {
   },
 
   /**
-   * Handled when the user has canceled the connecting attempt
-   *
-   * @description easily confused with connecting:closed, this event is
-   * triggered only when an attempt to connect is being aborted by the user.
-   */
-  handleConnectingAttemptAborted: function() {
-    Logger.info('Connector.handleConnectingAttemptAborted');
-    this.fire('transport:closed');
-  },
-
-  /**
    * Handled when an opened link/connection has been interrupted
    *
    * @description besides fireing an event, it will try
@@ -109,20 +98,16 @@ var EventsDelegates = {
   /**
    * Handled while trying to establish a link
    *
+   * @see [this._makeReconnectAttempt]
+   * @see reconnection mechanism
+   * 
    * @description this handler is called whenever the websocket wrapper
    * tries to establish a connection but fails to do that.
    * It cand fail if the wrapper auto-disconnects the attemp,
    * or if the native wrapper triggers the close event.
    */
   handleConnectingAttemptStopped: function() {
-    // cl(this.transport._nativeSocket)
     Logger.info('Connector.handleConnectingAttemptStopped');
-    this._makeReconnectAttempt();
-  },
-
-  handleConnectingAttemptTimeout: function() {
-    // cl(this.transport._nativeSocket)
-    Logger.info('Connector.handleConnectingAttemptTimeout');
     this._makeReconnectAttempt();
   }
 };
@@ -165,10 +150,12 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
-    // this.transport.on('all', function() { cl('WSConnector < ', arguments); });
-    // return;
+    this.transport.on('all', function() {
+      cl('%cWSConnector < ', 'color:blue; font-weight:bold', arguments);
+    });
 
-    /** Transport related handlers */
+    
+    /** Transport related */
 
     // connection established
     this.transport.on('link:opened', this.handleLinkOpened, this);
@@ -176,25 +163,19 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     // connection closed by server; wasClean == true
     this.transport.on('link:closed', this.hanleLinkClosed, this);
 
-     // Connection has been interrupted, not by the user nor the server
+    // Connection has been interrupted, not by the user nor the server
     this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
 
-    /** Connecting attempts handlers */
 
-    // A connecting attempt aborted by user
-    this.transport.on('connecting:aborted',
-      this.handleConnectingAttemptAborted, this);
+    /** Connecting attempts */
 
-    // WILL TRY TO RECONNECT !!!!!!!!!!
-    // Try to reconnect when "stopped", "timeout" or "interrupted"
-    // add special handler for [link:interrupted] - should notifiy the user
+    // Makes reconnection attempt
+    // Triggered when an attempt(a link not yet established) is being stopped
     this.transport.on('connecting:stopped',
       this.handleConnectingAttemptStopped, this);
 
-    this.transport.on('connecting:timeout',
-      this.handleConnectingAttemptTimeout, this);
 
-    /** Message and implementation missing handlers */
+    /** Message and implementation */
 
     // handles connection message event - rtf server api update
     this.transport.on('message', this.handleReceivedMessage, this);
