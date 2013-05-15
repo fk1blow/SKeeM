@@ -137,7 +137,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     }
     // if manually closed during the connecting attempt
     else if ( this._closeExpected ) {
-      Logger.debug('manually closed during attempt');
+      Logger.debug('NativeWebSocketHandler : connecting manually aborted during attempt');
     }
     // default case, where no manual close or server close has been triggered
     else  {
@@ -148,7 +148,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       }
       // default case
       else {
-        Logger.debug('NativeWebSocketHandler : connection stopped');
+        Logger.debug('NativeWebSocketHandler : connecting stopped');
         this.fire('connecting:stopped');
       }
     }
@@ -346,10 +346,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   _initConnectionHandler: function() {
     this._connectionHandler = NativeWebSocketHandler.create({
       connectionTimeout: this.timeout
-      // reconnectDelay: this.reconnectDelay,
-      // maxReconnectAttempts: this.reconnectAttempts
     });
-    // Disconnect and auto reconnect bindings
     this._attachConnectionEvents();
   },
 
