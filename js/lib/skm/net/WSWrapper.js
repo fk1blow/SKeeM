@@ -61,12 +61,6 @@ var createNativeSocket = function(url, protocols) {
 };
 
 
-/*var ClosingAttemptFlags = {
-  STOP: true,
-  END: true
-}*/
-
-
 /**
  * Native WebSocket connection delegates
  */
@@ -76,8 +70,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
   _timerAutoDisconnect: null,
 
   _closeExpected: false,
-
-  // _closeFlag: null,
 
   _linkWasOpened: false,
 
@@ -120,7 +112,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 
   stopConnectingAttempt: function(silent) {
     this._timerAutoDisconnect.stop();
-    cl(silent)
     this._closeExpected = silent || false;
     return this;
   },
@@ -327,14 +318,6 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._connectionHandler.stopConnectingAttempt(opt.silent);
     this._destroyNativeSocket();
   },
-
-  /*_endConnecting: function() {
-    Logger.debug('WSWrapper : end websocket connecting...');
-    // only stop if the connection is not closed
-    if ( this.getConnectionState() != 3 )
-      this._connectionHandler.stopConnectingAttempt(false);
-    this._destroyNativeSocket();
-  },*/
 
   _initPingTimer: function() {
     if ( !this.pingServer )
