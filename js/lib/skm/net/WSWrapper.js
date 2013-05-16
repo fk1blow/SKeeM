@@ -150,7 +150,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       // default case
       else {
         Logger.debug('NativeWebSocketHandler : connecting stopped/ended');
-        this.fire('connecting:ended');
+        this.fire('connecting:stopped');
       }
     }
 
@@ -362,13 +362,9 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // Don't attempt to call [_stopConnecting] because this is already
     // called when the close event of the native websocket has been triggered
-    connection.on('connecting:ended', function() {
-      this.fire('connecting:ended');
-    }, this)
-    .on('connecting:aborted', function() {
-      this.fire('connecting:aborted');
+    connection.on('connecting:closed', function() {
+      this.fire('connecting:closed');
     }, this);
-
 
     // As well, link:closed/interrupted already will have been trigger
     // the close events on the native websocket object

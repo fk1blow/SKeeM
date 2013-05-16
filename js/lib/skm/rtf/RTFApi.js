@@ -243,22 +243,22 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
       connectorsOptions: Config.Connectors
     });
 
-    // this.connectorsManager.on('all', function() { 
-    //   cl('%call > ', 'color:red; font-weight:bold;', arguments); 
-    // });
+    this.connectorsManager.on('all', function() { 
+      cl('%call > ', 'color:red; font-weight:bold;', arguments); 
+    });
 
 
     /** transport events */
 
     this.connectorsManager
-      .on('starting', this.handleTransportStarting, this)
+      // .on('starting', this.handleTransportStarting, this)
       .on('ready', this.handleTransportReady, this)
       .on('interrupted', this.handleTransportInterrupted, this)
-      .on('aborted', this.handleTransportAborted, this)
-      .on('ending', this.handleTransportEnding, this)
+      // .on('aborted', this.handleTransportAborted, this)
+      // .on('ending', this.handleTransportEnding, this)
       .on('closed', this.handleTransportClosed, this)
       .on('reconnecting', this.handleTransportReconnecting, this)
-      .on('timeout', this.handleTransportTimeout, this);
+      // .on('timeout', this.handleTransportTimeout, this);
 
     
     /** sequence events */

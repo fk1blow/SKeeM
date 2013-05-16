@@ -98,35 +98,9 @@ var EventsDelegates = {
    * It cand fail if the wrapper auto-disconnects the attemp,
    * or if the native wrapper triggers the close event.
    */
-  handleConnectingAttemptEnded: function() {
-    Logger.info('Connector.handleConnectingAttemptEnded');
+  handleConnectingAttemptStopped: function() {
+    Logger.info('Connector.handleConnectingAttemptStopped');
     this._makeReconnectAttempt();
-    this.fire('connecting:ended');
-  },
-
-  /**
-   * Handled when the connector starts the connect attempt
-   */
-  handleConnectingAttemptStarted: function() {
-    Logger.info('Connector.handleConnectingAttemptStarted');
-    this.fire('connecting:started');
-  },
-
-  /**
-   * Handled when the connector attempting takes to long
-   */
-  handleConnectingAttemptTimeout: function() {
-    Logger.info('Connector.handleConnectingAttemptTimeout');
-    this.fire('connecting:timeout');
-  },
-
-  /**
-   * Connecting attempt aborted by user
-   */
-  handleConnectingAttemptAborted: function() {
-    Logger.info('Connector.handleConnectingAttemptAborted');
-    this._resetReconnectAttempts();
-    this.fire('connecting:aborted');
   }
 };
 
@@ -188,17 +162,11 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     /** Connecting attempts */
 
     
-    this.transport.on('connecting:ended',
-      this.handleConnectingAttemptEnded, this);
+    this.transport.on('connecting:stopped',
+      this.handleConnectingAttemptStopped, this);
 
     this.transport.on('connecting:started', 
       this.handleConnectingAttemptStarted, this);
-
-    this.transport.on('connecting:timeout', 
-      this.handleConnectingAttemptTimeout, this);
-
-    this.transport.on('connecting:aborted', 
-      this.handleConnectingAttemptAborted, this);
 
 
     /** Message and implementation */

@@ -271,7 +271,7 @@ var Manager = SKMObject.extend(Subscribable, {
     // connector.on('all', function() {
     //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
     // });
-  
+
 
     /** transport events  */
 
@@ -286,6 +286,11 @@ var Manager = SKMObject.extend(Subscribable, {
       this.fire('interrupted');
     }, this);
 
+     // Connector tries to make a reconnect attempt
+    connector.on('transport:reconnecting', function() {
+      this.fire('reconnecting');
+    }, this);
+
     // Connector has been stopped, manually or by the server
     connector.on('transport:closed', function() {
       this.fire('closed');
@@ -298,27 +303,7 @@ var Manager = SKMObject.extend(Subscribable, {
       this._startNextSequence();
     }, this);
 
-    // Connector tries to make a reconnect attempt
-    connector.on('transport:reconnecting', function() {
-      this.fire('reconnecting');
-    }, this);
-
-
-    /** connecting attempt events - overexposed */
-
-    connector.on('connecting:started', function() {
-      this.fire('starting');
-    }, this)
-    .on('connecting:aborted', function() {
-      this.fire('aborted');
-    }, this)
-    .on('connecting:ended', function() {
-      this.fire('ending');
-    }, this)
-    // not available on the XHRConnector
-    .on('connecting:timeout', function() {
-      this.fire('timeout');
-    }, this);
+   
 
 
     /** api events */

@@ -154,46 +154,14 @@ var EventsDelegates = {
    * Handled when the user closes the connection or the server
    * api invokes close but doesn't provide a reason message
    */
-  handleTransportClosed: function() {
-    Logger.info('%cRTFApi.handleTransportClosed', 'color:red');
+  handleTransportStopped: function() {
+    Logger.info('%cRTFApi.handleTransportStopped', 'color:red');
     this.fire('closed');
   },
 
   handleTransportReconnecting: function() {
     Logger.info('%cRTFApi.handleTransportReconnecting', 'color:red');
     this.fire('reconnecting');
-  },
-
-  /**
-   * Handled when the transport is trying to initiate a connection
-   */
-  handleTransportStarting: function() {
-    Logger.info('%cRTFApi.handleTransportStarting', 'color:red');
-    this.fire('connecting');
-  },
-
-  /**
-   * A connecting attempt has been stopped or has reached an end
-   */
-  handleTransportEnding: function() {
-    Logger.info('%cRTFApi.handleTransportEnding', 'color:red');
-    this.fire('ending');
-  },
-
-  /**
-   * Connection attempt taking to long
-   */
-  handleTransportTimeout: function() {
-    Logger.info('%cRTFApi.handleTransportTimeout', 'color:red');
-    this.fire('timeout');
-  },
-
-  /**
-   * Connecting attempt aborted while attempting to connect
-   */
-  handleTransportAborted: function() {
-    Logger.info('%cRTFApi.handleTransportAborted', 'color:red');
-    this.fire('aborted');
   },
 
   /**
