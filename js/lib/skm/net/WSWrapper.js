@@ -150,7 +150,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       // default case
       else {
         Logger.debug('NativeWebSocketHandler : connecting stopped/ended');
-        this.fire('connecting:stopped');
+        this.fire('connecting:closed');
       }
     }
 
