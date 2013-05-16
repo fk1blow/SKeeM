@@ -49,19 +49,6 @@ var EventsDelegates = {
     Logger.info('WSConnector.handleMaxReconnectAttemptsReached');
     this.fire('transport:error');
   },
-
-  /**
-   * Handles a message received from server api
-   *
-   * @description handles the server's update message
-   * and passes it to the subscribers/clients of rtf api
-   * 
-   * @param  {Object} message JSON message send by rtf server api
-   */
-  handleReceivedMessage: function(message) {
-    message = JSON.parse(message);
-    this.fire('api:message', message);
-  },
   
   /**
    * Handles link:closed
@@ -98,6 +85,19 @@ var EventsDelegates = {
   },
 
   /**
+   * Handles a message received from server api
+   *
+   * @description handles the server's update message
+   * and passes it to the subscribers/clients of rtf api
+   * 
+   * @param  {Object} message JSON message send by rtf server api
+   */
+  handleReceivedMessage: function(message) {
+    message = JSON.parse(message);
+    this.fire('api:message', message);
+  },
+
+  /**
    * Handled while trying to establish a link
    *
    * @see [this._makeReconnectAttempt]
@@ -119,7 +119,7 @@ var EventsDelegates = {
    */
   handleConnectingAttemptStarted: function() {
     Logger.info('Connector.handleConnectingAttemptStarted');
-    this.fire('connecting_:started');
+    this.fire('connecting:started');
   },
 
   /**

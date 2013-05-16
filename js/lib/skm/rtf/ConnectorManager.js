@@ -279,12 +279,6 @@ var Manager = SKMObject.extend(Subscribable, {
     }
   },
 
-  // _switchToNextSequence: function() {
-  //   Logger.debug('ConnectorManager : switching to sequence');
-  //   this._stopCurrentSequence();
-  //   this._startNextSequence();
-  // },
-
   /**
    * Return the next sequence of connector to use
    */
@@ -294,11 +288,10 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    connector.on('all', function() {
-      cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
-    });
-
-    return;
+    // connector.on('all', function() {
+    //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
+    // });
+    // return;
   
 
     /** transport events  */
@@ -314,8 +307,8 @@ var Manager = SKMObject.extend(Subscribable, {
       this.fire('interrupted');
     }, this);
 
-    // Connector has been stopped, manualkly
-    connector.on('transport:closed', function(type) {
+    // Connector has been stopped, manually or by the server
+    connector.on('transport:closed', function() {
       this.fire('closed');
     }, this);
 
@@ -324,6 +317,22 @@ var Manager = SKMObject.extend(Subscribable, {
       // Not sure if this event is relevant to the api
       this.fire('sequence:switching');
       this._startNextSequence();
+    }, this);
+
+
+    /** connecting attempt events */
+
+    connector.on('connecting:ended', function() {
+      //
+    }, this)
+    .on('connecting:started', function() {
+      //
+    }, this)
+    .on('connecting:timeout', function() {
+      //
+    }, this)
+    .on('connecting:aborted', function() {
+      //
     }, this);
 
 
