@@ -335,7 +335,7 @@ var Manager = SKMObject.extend(Subscribable, {
       this.fire('aborted');
     }, this)
     .on('connecting:ended', function() {
-      this.fire('stopping');
+      this.fire('ending');
     }, this)
     // not available on the XHRConnector
     .on('connecting:timeout', function() {
