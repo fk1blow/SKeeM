@@ -294,11 +294,13 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    // connector.on('all', function() {
-    //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
-    // });
+    connector.on('all', function() {
+      cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
+    });
+
+    return;
   
-  
+
     /** transport events  */
 
     // Connector has established connection and is ready to receive updates

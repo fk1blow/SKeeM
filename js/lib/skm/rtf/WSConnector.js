@@ -110,8 +110,32 @@ var EventsDelegates = {
    */
   handleConnectingAttemptEnded: function() {
     Logger.info('Connector.handleConnectingAttemptEnded');
-    // this.fire('transport:closed');
     this._makeReconnectAttempt();
+    this.fire('connecting:ended');
+  },
+
+  /**
+   * Handled when the connector starts the connect attempt
+   */
+  handleConnectingAttemptStarted: function() {
+    Logger.info('Connector.handleConnectingAttemptStarted');
+    this.fire('connecting_:started');
+  },
+
+  /**
+   * Handled when the connector attempting takes to long
+   */
+  handleConnectingAttemptTimeout: function() {
+    Logger.info('Connector.handleConnectingAttemptTimeout');
+    this.fire('connecting:timeout');
+  },
+
+  /**
+   * Connecting attempt aborted by user
+   */
+  handleConnectingAttemptAborted: function() {
+    Logger.info('Connector.handleConnectingAttemptAborted');
+    this.fire('connecting:aborted');
   }
 };
 
@@ -128,7 +152,6 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     this._ensureTransportCreated(WSWrapper)._buildTransportUrl();
     Logger.info('WSConnector.beginUpdate');
     Logger.debug('WSConnector : transport url :', this.transport.url);
-    this.fire('transport:connecting');
     // after connect, a ["connector:ready"] event will trigger
     this.transport.connect();
     return this;
@@ -138,7 +161,6 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
-    this.fire('transport:disconnecting');
     // Stop the reconnecting attempts
     this._stopReconnectAttempts();
     return this;
@@ -155,10 +177,9 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
-    this.transport.on('all', function() {
-      cl('%cWSConnector < ', 'color:blue; font-weight:bold', arguments);
-    });
-    // return;
+    // this.transport.on('all', function() {
+    //   cl('%cWSConnector < ', 'color:gray;', arguments);
+    // });
 
     
     /** Transport related */
@@ -179,17 +200,14 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     this.transport.on('connecting:ended',
       this.handleConnectingAttemptEnded, this);
 
-    this.transport.on('connecting:started', function() {
-      
-    }, this);
+    this.transport.on('connecting:started', 
+      this.handleConnectingAttemptStarted, this);
 
-    this.transport.on('connecting:timeout', function() {
+    this.transport.on('connecting:timeout', 
+      this.handleConnectingAttemptTimeout, this);
 
-    }, this);
-
-    this.transport.on('connecting:aborted', function() {
-      
-    }, this);
+    this.transport.on('connecting:aborted', 
+      this.handleConnectingAttemptAborted, this);
 
 
     /** Message and implementation */

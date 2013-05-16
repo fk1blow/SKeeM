@@ -359,7 +359,6 @@ var WSWrapper = SKMObject.extend(Subscribable, {
       this._abortConnecting({ expected: false });
       this.fire('connecting:timeout');
     }, this);
-    
 
     // Don't attempt to call [_stopConnecting] because this is already
     // called when the close event of the native websocket has been triggered
