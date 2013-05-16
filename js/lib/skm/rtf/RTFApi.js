@@ -252,14 +252,14 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     /** transport events */
 
     this.connectorsManager
+      .on('starting', this.handleTransportStarting, this)
       .on('ready', this.handleTransportReady, this)
       .on('interrupted', this.handleTransportInterrupted, this)
+      .on('aborted', this.handleTransportAborted, this)
+      .on('ending', this.handleTransportEnding, this)
       .on('closed', this.handleTransportClosed, this)
       .on('reconnecting', this.handleTransportReconnecting, this)
-      .on('starting', this.handleTransportStarting, this)
-      .on('aborted', this.handleTransportAborted, this)
-      .on('stopping', this.handleTransportStopping, this)
-      .on('timeout', this.handleTransportTimeout, this)
+      .on('timeout', this.handleTransportTimeout, this);
 
     
     /** sequence events */
