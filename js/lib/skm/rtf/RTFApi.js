@@ -248,27 +248,25 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     // });
     // return;
 
+
     /** transport events */
-    this.connectorsManager.on('ready',
-      this.handleTransportReady, this);
 
-    this.connectorsManager.on('interrupted',
-      this.handleTransportInterrupted, this);
+    this.connectorsManager
+      .on('ready', this.handleTransportReady, this)
+      .on('interrupted', this.handleTransportInterrupted, this)
+      .on('closed', this.handleTransportClosed, this)
+      .on('reconnecting', this.handleTransportReconnecting, this)
+      .on('starting', this.handleTransportStarting, this)
+      .on('aborted', this.handleTransportAborted, this)
+      .on('stopping', this.handleTransportStopping, this)
+      .on('timeout', this.handleTransportTimeout, this)
 
-    // Active connector's transport/link, has been closed
-    this.connectorsManager.on('closed',
-      this.handleTransportClosed, this);
-
-    // Active connector trying to establish a link/connection
-    this.connectorsManager.on('starting', 
-      this.handleConnectorTransportStarting, this);
-
+    
     /** sequence events */
-    this.connectorsManager.on('sequence:switching',
-      this.handleManagerSequenceSwitching, this);
-      
-    this.connectorsManager.on('sequence:complete',
-      this.handleManagerSequenceComplete, this);
+
+    this.connectorsManager
+      .on('sequence:switching', this.handleManagerSequenceSwitching, this)
+      .on('sequence:complete', this.handleManagerSequenceComplete, this);
 
     /** api/server events */
     this.connectorsManager.on('message', this.handleApiMessage, this);

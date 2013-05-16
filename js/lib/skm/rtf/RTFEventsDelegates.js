@@ -159,12 +159,32 @@ var EventsDelegates = {
     this.fire('closed');
   },
 
+  handleTransportReconnecting: function() {
+    Logger.info('%cRTFApi.handleTransportReconnecting', 'color:red');
+    this.fire('reconnecting');
+  },
+
   /**
    * Handled when the transport is trying to initiate a connection
    */
-  handleConnectorTransportStarting: function() {
-    Logger.info('%cRTFApi.handleConnectorTransportStarting', 'color:red');
+  handleTransportStarting: function() {
+    Logger.info('%cRTFApi.handleTransportStarting', 'color:red');
     this.fire('connecting');
+  },
+
+  handleTransportStopping: function() {
+    Logger.info('%cRTFApi.handleTransportStopping', 'color:red');
+    this.fire('stopping');
+  },
+
+  handleTransportTimeout: function() {
+    Logger.info('%cRTFApi.handleTransportTimeout', 'color:red');
+    this.fire('timeout');
+  },
+
+  handleTransportAborted: function() {
+    Logger.info('%cRTFApi.handleTransportAborted', 'color:red');
+    this.fire('aborted');
   },
 
   /**
