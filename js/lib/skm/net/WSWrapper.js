@@ -357,7 +357,6 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
       this._abortConnecting({ expected: false });
-      this.fire('connecting:timeout');
     }, this);
 
     // Don't attempt to call [_stopConnecting] because this is already
