@@ -71,8 +71,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 
   _closeExpected: false,
 
-  _closingReason: 'ended',
-
   _linkWasOpened: false,
 
   initialize: function() {
@@ -112,11 +110,9 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     return this;
   },
 
-  stopConnectingAttempt: function(reason) {
-    cl('reasoning -------- ', reason)
+  stopConnectingAttempt: function(expected) {
     this._timerAutoDisconnect.stop();
-    // this._closeExpected = silent || false;
-    this._closingReason = reason || 'abort';
+    this._closeExpected = expected || false;
     return this;
   },
 
@@ -140,8 +136,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       this.fire('link:closed', event.reason);
     }
     // if manually closed during the connecting attempt
-    // else if ( this._closeExpected ) {
-    else if ( this._closingReason === 'abort' ) {
+    else if ( this._closeExpected ) {
       Logger.debug('NativeWebSocketHandler : connecting manually aborted during attempt');
       this.fire('connecting:aborted');
     }
@@ -159,7 +154,8 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       }
     }
 
-    this._markAsClosed();
+    this._linkWasOpened = false;
+    this._closeExpected = false;
   },
 
   handleOnOpen: function() {
@@ -180,11 +176,6 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
       default:
         this.fire('message', data);
     }
-  },
-
-  _markAsClosed: function() {
-    this._linkWasOpened = false;
-    this._closeExpected = false;
   },
   
   _handleAutoDisconnect: function() {
@@ -259,8 +250,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   },
 
   disconnect: function() {
-    // this._abortConnecting({ silent: true });
-    this._abortConnecting({ reason: 'abort' });
+    this._abortConnecting({ expected: true });
     return true;
   },
 
@@ -310,8 +300,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     this._nativeSocket = createNativeSocket(this.url, this.protocols);
     if ( this._nativeSocket == null ) {
       this.fire('implementation:missing');
-      // this._abortConnecting({ silent: true });
-      this._abortConnecting({ reason: 'abort' });
+      this._abortConnecting({ expected: true });
     } else {
       this._connectionHandler.attachListenersTo(this._nativeSocket)
         .startConnectingAttempt();
@@ -325,13 +314,10 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     
     // only stop if the connection is not already closed
     if ( this.getConnectionState() != 3 ) {
-      // this._connectionHandler.stopConnectingAttempt(opt.silent);
-      this._connectionHandler.stopConnectingAttempt(opt.reason);
+      this._connectionHandler.stopConnectingAttempt(opt.expected);
     }
     // destroy the native socket instance
     this._destroyNativeSocket();
-    // trigger aborted event
-    // this.fire('connecting:aborted');
   },
 
   _initPingTimer: function() {
@@ -370,22 +356,19 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // Connecting timeout triggered
     connection.on('connecting:timeout', function() {
-      // this._abortConnecting({ silent: false });
-      this._abortConnecting({ reason: 'timeout' });
+      this._abortConnecting({ expected: false });
       this.fire('connecting:timeout');
     }, this);
+    
 
     // Don't attempt to call [_stopConnecting] because this is already
     // called when the close event of the native websocket has been triggered
     connection.on('connecting:ended', function() {
       this.fire('connecting:ended');
-    }, this);
-
-
-    connection.on('connecting:aborted', function() {
+    }, this)
+    .on('connecting:aborted', function() {
       this.fire('connecting:aborted');
     }, this);
-
 
 
     // As well, link:closed/interrupted already will have been trigger
