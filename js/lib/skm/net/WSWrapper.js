@@ -370,11 +370,15 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     connection.on('link:opened', function() {
       this.fire('link:opened');
       this._initPingTimer();
-    }, this)
-    .on('link:closed', function(evt) {
+    }, this);
+
+    // An established link was closed manually or by the server api
+    connection.on('link:closed', function(evt) {
       this.fire('link:closed', evt);
-    }, this)
-    .on('link:interrupted', function(evt) {
+    }, this);
+
+    // An established link was interrupted
+    connection.on('link:interrupted', function(evt) {
       this.fire('link:interrupted', evt);
     }, this);
 
