@@ -172,16 +172,25 @@ var EventsDelegates = {
     this.fire('connecting');
   },
 
-  handleTransportStopping: function() {
-    Logger.info('%cRTFApi.handleTransportStopping', 'color:red');
-    this.fire('stopping');
+  /**
+   * A connecting attempt has been stopped or has reached an end
+   */
+  handleTransportEnding: function() {
+    Logger.info('%cRTFApi.handleTransportEnding', 'color:red');
+    this.fire('ending');
   },
 
+  /**
+   * Connection attempt taking to long
+   */
   handleTransportTimeout: function() {
     Logger.info('%cRTFApi.handleTransportTimeout', 'color:red');
     this.fire('timeout');
   },
 
+  /**
+   * Connecting attempt aborted while attempting to connect
+   */
   handleTransportAborted: function() {
     Logger.info('%cRTFApi.handleTransportAborted', 'color:red');
     this.fire('aborted');
