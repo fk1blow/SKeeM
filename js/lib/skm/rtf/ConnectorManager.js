@@ -190,26 +190,6 @@ var Manager = SKMObject.extend(Subscribable, {
     return this._connectors[type] = connector;
   },
 
-  /**
-   * Sends a message through a connector
-   * @param  {Mixed} message a string or plain json of
-   * the message sent to the server
-   * @param {JSON} optData an object containing additional
-   * parameters sent to the connector - wrapper
-   *
-   * @todo implement this method directly to the rtf api module
-   */
-  /*sendMessage: function(message) {
-    var connector;
-    if ( connector = this.getActiveConnector() )
-      connector.sendMessage(message);
-    else {
-      Logger.info('ConnectorManager.sendMessage : invalid connector type' 
-        + ' or connector is null');
-    }
-    return this;
-  },*/
-
 
   /**
    * Private
