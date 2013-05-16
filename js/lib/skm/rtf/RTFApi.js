@@ -255,6 +255,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     this.connectorsManager.on('interrupted',
       this.handleTransportInterrupted, this);
 
+    // Active connector's transport/link, has been closed
     this.connectorsManager.on('closed',
       this.handleTransportClosed, this);
 

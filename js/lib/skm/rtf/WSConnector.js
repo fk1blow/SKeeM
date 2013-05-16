@@ -108,8 +108,9 @@ var EventsDelegates = {
    * It cand fail if the wrapper auto-disconnects the attemp,
    * or if the native wrapper triggers the close event.
    */
-  handleConnectingAttemptStopped: function() {
-    Logger.info('Connector.handleConnectingAttemptStopped');
+  handleConnectingAttemptEnded: function() {
+    Logger.info('Connector.handleConnectingAttemptEnded');
+    // this.fire('transport:closed');
     this._makeReconnectAttempt();
   }
 };
@@ -127,6 +128,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     this._ensureTransportCreated(WSWrapper)._buildTransportUrl();
     Logger.info('WSConnector.beginUpdate');
     Logger.debug('WSConnector : transport url :', this.transport.url);
+    this.fire('transport:connecting');
     // after connect, a ["connector:ready"] event will trigger
     this.transport.connect();
     return this;
@@ -136,6 +138,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     Logger.info('WSConnector.endUpdate');
     // disconnect and remove events
     this.transport.disconnect();
+    this.fire('transport:disconnecting');
     // Stop the reconnecting attempts
     this._stopReconnectAttempts();
     return this;
@@ -152,9 +155,10 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
-    /*this.transport.on('all', function() {
+    this.transport.on('all', function() {
       cl('%cWSConnector < ', 'color:blue; font-weight:bold', arguments);
-    });*/
+    });
+    // return;
 
     
     /** Transport related */
@@ -171,10 +175,21 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
 
     /** Connecting attempts */
 
-    // Makes reconnection attempt
-    // Triggered when an attempt(a link not yet established) is being stopped
-    this.transport.on('connecting:stopped',
-      this.handleConnectingAttemptStopped, this);
+    
+    this.transport.on('connecting:ended',
+      this.handleConnectingAttemptEnded, this);
+
+    this.transport.on('connecting:started', function() {
+      
+    }, this);
+
+    this.transport.on('connecting:timeout', function() {
+
+    }, this);
+
+    this.transport.on('connecting:aborted', function() {
+      
+    }, this);
 
 
     /** Message and implementation */

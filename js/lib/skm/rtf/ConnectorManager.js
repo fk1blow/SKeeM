@@ -294,9 +294,9 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    connector.on('all', function() {
-      cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
-    });
+    // connector.on('all', function() {
+    //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
+    // });
   
   
     /** transport events  */
