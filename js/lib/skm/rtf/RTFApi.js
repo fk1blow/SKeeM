@@ -246,7 +246,6 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     // this.connectorsManager.on('all', function() { 
     //   cl('%call > ', 'color:red; font-weight:bold;', arguments); 
     // });
-    // return;
 
 
     /** transport events */

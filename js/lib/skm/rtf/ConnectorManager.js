@@ -291,7 +291,6 @@ var Manager = SKMObject.extend(Subscribable, {
     // connector.on('all', function() {
     //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
     // });
-    // return;
   
 
     /** transport events  */
@@ -312,7 +311,7 @@ var Manager = SKMObject.extend(Subscribable, {
       this.fire('closed');
     }, this);
 
-    // Connector has encountered an error
+    // Connector has encountered an error and/or cannot initialize its transport
     connector.on('transport:error', function() {
       // Not sure if this event is relevant to the api
       this.fire('sequence:switching');
@@ -330,7 +329,6 @@ var Manager = SKMObject.extend(Subscribable, {
     connector.on('connecting:started', function() {
       this.fire('starting');
     }, this)
-    // not handled by rtf api handlers
     .on('connecting:aborted', function() {
       this.fire('aborted');
     }, this)
