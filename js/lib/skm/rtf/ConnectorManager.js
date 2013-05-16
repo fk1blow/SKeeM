@@ -288,9 +288,11 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    // connector.on('all', function() {
-    //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
-    // });
+    connector.on('all', function() {
+      cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
+    });
+
+    return;
   
 
     /** transport events  */
@@ -324,14 +326,15 @@ var Manager = SKMObject.extend(Subscribable, {
     connector.on('connecting:started', function() {
       this.fire('starting');
     }, this)
-    // not handled by rtf api
+    // not handled by rtf api handlers
     .on('connecting:aborted', function() {
       this.fire('aborted');
     }, this)
-    // not handled by rtf api
+    // not handled by rtf api handlers
     .on('connecting:ended', function() {
       this.fire('ended');
     }, this)
+    // not available on the XHRConnector
     .on('connecting:timeout', function() {
       this.fire('timeout');
     }, this);

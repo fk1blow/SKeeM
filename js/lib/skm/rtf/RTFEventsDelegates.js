@@ -159,11 +159,14 @@ var EventsDelegates = {
     this.fire('closed');
   },
 
+  /**
+   * Handled when the transport is trying to initiate a connection
+   */
   handleConnectorTransportStarting: function() {
     Logger.info('%cRTFApi.handleConnectorTransportStarting', 'color:red');
-    this.fire('starting');
+    this.fire('connecting');
   },
-  
+
   /**
    * Connector manager tries to change the connectors sequence
    */

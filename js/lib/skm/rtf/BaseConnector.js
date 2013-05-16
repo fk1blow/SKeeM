@@ -13,13 +13,6 @@ define(['skm/k/Object',
 var Logger = SKMLogger.create();
 
 
-var ConnectorState = {
-  ACTIVE: 1,
-  INACTIVE: 0,
-  STOPPED: -1
-}
-
-
 /**
  * Abstract connector
  */
@@ -115,6 +108,32 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   },
 
   /**
+   * @todo move to baseconnector
+   * 
+   * Handled when the reconnect attemps has reached maximum attempts
+   */
+  handleReconnectingEnded: function() {
+    Logger.info('Connector.handleReconnectingEnded');
+    // has stopped reconnecting and reset current attempt
+    this._resetReconnectAttempts();
+    this.fire('transport:error');
+  },
+
+  handleReconnectingBegin: function() {
+    Logger.info('Connector.handleReconnectingBegin');
+    Logger.debug('-----------------------------------------------------------');
+    Logger.debug('Connector : attempt #', this._currentAttempt);
+    // kill current timer
+    this._reconnectTimer = null;
+    // is reconnecting and increment current attempt
+    this._isReconnecting = true;
+    this._currentAttempt += 1;
+    // start connecting by calling beginUpdate
+    this.beginUpdate();
+    this.fire('transport:reconnecting');
+  },
+
+  /**
    * Ensures the presence of a transport type
    * @param  {Object} transportType Reference to the transport
    * used by this particular connecgtor(WSWrapper, XHRWrapper, etc)
@@ -152,34 +171,24 @@ var BaseConnector = SKMObject.extend(Subscribable, {
 
     if ( this._currentAttempt <= maxReconnectAttempts ) {
       Logger.debug('Connector : will make attempt in', reconnectDelay, 'ms');
-      // After delay, call being update and increment current attempt
-      
       this._reconnectTimer = setTimeout(function() {
-        Logger.debug('-------------------------------------------');
-        Logger.debug('Connector : attempt #', that._currentAttempt);
-
-        // kill current timer
-        that._reconnectTimer = null;
-
-        // is reconnecting and increment current attempt
-        that._isReconnecting = true;
-        that._currentAttempt += 1;
-        // start connecting by calling beginUpdate
-        that.beginUpdate();
+        that.handleReconnectingBegin();
       }, reconnectDelay);
     } else {
       Logger.debug('Connector : maxReconnectAttempts of ' 
         + maxReconnectAttempts + ' reached!');
-      // has stopped reconnecting and reset current attempt
-      this._isReconnecting = false;
-      this._currentAttempt = 1;
-      this.handleMaxReconnectAttemptsReached();
+      this.handleReconnectingEnded();
     }
   },
 
   _stopReconnectAttempts: function() {
     if ( this._reconnectTimer )
       clearTimeout(this._reconnectTimer);
+  },
+
+  _resetReconnectAttempts: function() {
+    this._isReconnecting = false;
+    this._currentAttempt = 1;
   }
 });
 

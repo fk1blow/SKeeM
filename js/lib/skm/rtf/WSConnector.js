@@ -27,8 +27,7 @@ var EventsDelegates = {
    * @return {[type]} [description]
    */
   handleLinkOpened: function() {
-    this._isReconnecting = false;
-    this._currentAttempt = 1;
+    this._resetReconnectAttempts();
     this.fire('transport:ready');
   },
 
@@ -37,16 +36,6 @@ var EventsDelegates = {
    */
   handleImplementationMissing: function() {
     Logger.info('WSConnector.handleImplementationMissing');
-    this.fire('transport:error');
-  },
-
-  /**
-   * @todo move to baseconnector
-   * 
-   * Handled when the reconnect attemps has reached maximum attempts
-   */
-  handleMaxReconnectAttemptsReached: function() {
-    Logger.info('WSConnector.handleMaxReconnectAttemptsReached');
     this.fire('transport:error');
   },
   
@@ -63,6 +52,7 @@ var EventsDelegates = {
    */
   hanleLinkClosed: function(message) {
     Logger.info('WSConnector.hanleLinkClosed');
+    this._resetReconnectAttempts();
     // if the message is a string, you got an exception and that's baaad!!!
     if ( message ) {
       this.fire('api:error', message);
@@ -135,6 +125,7 @@ var EventsDelegates = {
    */
   handleConnectingAttemptAborted: function() {
     Logger.info('Connector.handleConnectingAttemptAborted');
+    this._resetReconnectAttempts();
     this.fire('connecting:aborted');
   }
 };
