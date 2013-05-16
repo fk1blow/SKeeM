@@ -122,7 +122,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   handleReconnectingBegin: function() {
     Logger.info('Connector.handleReconnectingBegin');
     Logger.debug('-----------------------------------------------------------');
-    Logger.debug('Connector : attempt #', this._currentAttempt);
+    Logger.debug('Connector : reconnect attempt #', this._currentAttempt);
     // kill current timer
     this._reconnectTimer = null;
     // is reconnecting and increment current attempt
@@ -184,6 +184,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   _stopReconnectAttempts: function() {
     if ( this._reconnectTimer )
       clearTimeout(this._reconnectTimer);
+    this._resetReconnectAttempts();
   },
 
   _resetReconnectAttempts: function() {
