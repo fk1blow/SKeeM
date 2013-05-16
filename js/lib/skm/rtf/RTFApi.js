@@ -259,6 +259,10 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     this.connectorsManager.on('closed',
       this.handleTransportClosed, this);
 
+    // Active connector trying to establish a link/connection
+    this.connectorsManager.on('starting', 
+      this.handleConnectorTransportStarting, this);
+
     /** sequence events */
     this.connectorsManager.on('sequence:switching',
       this.handleManagerSequenceSwitching, this);

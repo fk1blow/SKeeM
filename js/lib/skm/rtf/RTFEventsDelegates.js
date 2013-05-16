@@ -159,6 +159,11 @@ var EventsDelegates = {
     this.fire('closed');
   },
 
+  handleConnectorTransportStarting: function() {
+    Logger.info('%cRTFApi.handleConnectorTransportStarting', 'color:red');
+    this.fire('starting');
+  },
+  
   /**
    * Connector manager tries to change the connectors sequence
    */

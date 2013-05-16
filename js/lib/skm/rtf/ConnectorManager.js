@@ -291,7 +291,6 @@ var Manager = SKMObject.extend(Subscribable, {
     // connector.on('all', function() {
     //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
     // });
-    // return;
   
 
     /** transport events  */
@@ -320,19 +319,21 @@ var Manager = SKMObject.extend(Subscribable, {
     }, this);
 
 
-    /** connecting attempt events */
+    /** connecting attempt events - overexposed */
 
-    connector.on('connecting:ended', function() {
-      //
+    connector.on('connecting:started', function() {
+      this.fire('starting');
     }, this)
-    .on('connecting:started', function() {
-      //
+    // not handled by rtf api
+    .on('connecting:aborted', function() {
+      this.fire('aborted');
+    }, this)
+    // not handled by rtf api
+    .on('connecting:ended', function() {
+      this.fire('ended');
     }, this)
     .on('connecting:timeout', function() {
-      //
-    }, this)
-    .on('connecting:aborted', function() {
-      //
+      this.fire('timeout');
     }, this);
 
 
