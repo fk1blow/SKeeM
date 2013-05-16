@@ -98,8 +98,8 @@ var EventsDelegates = {
    * It cand fail if the wrapper auto-disconnects the attemp,
    * or if the native wrapper triggers the close event.
    */
-  handleConnectingStopped: function() {
-    Logger.info('Connector.handleConnectingAttemptStopped');
+  handleConnectingClosed: function() {
+    Logger.info('Connector.handleConnectingClosed');
     this._makeReconnectAttempt();
   }
 };
@@ -159,8 +159,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
     this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
 
     // Transport has been stopped or closed
-    // this.transport.on('connecting:stopped', this.handleConnectingStopped, this);
-    this.transport.on('connecting:closed', this.handleConnectingStopped, this);
+    this.transport.on('connecting:closed', this.handleConnectingClosed, this);
 
 
     /** Message and implementation */
