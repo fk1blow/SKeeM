@@ -294,37 +294,39 @@ var Manager = SKMObject.extend(Subscribable, {
 
 
   _attachConnectorHandlers: function(connector) {
-    // connector.on('all', function() { console.log('ConnectorManager > ', arguments) });
-    // return;
+    connector.on('all', function() {
+      cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
+    });
+  
   
     /** transport events  */
+
+    // Connector has established connection and is ready to receive updates
     connector.on('transport:ready', function() {
       this.fire('ready');
     }, this);
 
-    // not aplicable to WSConnector
+    // An opened connection/link has been interrupted
+    // not aplicable to XHRConnector
     connector.on('transport:interrupted', function() {
       this.fire('interrupted');
     }, this);
 
-    // stop connectors
-    // nothing more to do
+    // Connector has been stopped, manualkly
     connector.on('transport:closed', function(type) {
-      // if ( type != 'WS' )
-        // this._stopCurrentSequence();
       this.fire('closed');
     }, this);
 
-    // switch connectors
+    // Connector has encountered an error
     connector.on('transport:error', function() {
-      // cl('on transport:error')
+      // Not sure if this event is relevant to the api
       this.fire('sequence:switching');
-      // this._stopCurrentSequence();
       this._startNextSequence();
     }, this);
 
 
     /** api events */
+
     connector.on('api:message', function(message) {
       this.fire('message', message);
     }, this);

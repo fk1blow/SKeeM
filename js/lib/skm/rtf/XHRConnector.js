@@ -33,6 +33,8 @@ var EventsDelegates = {
   },
 
   /**
+   * @todo move to baseconnector
+   * 
    * Handled when the reconnect attemps has reached maximum attempts
    */
   handleMaxReconnectAttemptsReached: function() {

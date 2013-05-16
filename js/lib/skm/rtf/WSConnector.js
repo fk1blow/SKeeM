@@ -41,6 +41,8 @@ var EventsDelegates = {
   },
 
   /**
+   * @todo move to baseconnector
+   * 
    * Handled when the reconnect attemps has reached maximum attempts
    */
   handleMaxReconnectAttemptsReached: function() {
@@ -150,9 +152,9 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   addTransportListeners: function() {
-    this.transport.on('all', function() {
+    /*this.transport.on('all', function() {
       cl('%cWSConnector < ', 'color:blue; font-weight:bold', arguments);
-    });
+    });*/
 
     
     /** Transport related */
