@@ -49,17 +49,6 @@ var EventsDelegates = {
     Logger.info('XHRConnector.handleConnectionDenied');
     this.fire('transport:error');
   },
-
-  /*
-  handleError: function(err) {
-    Logger.info('Connector.handleError');
-    // If server triggers errors
-    if ( err.status == 405 ) {
-      this.fire('api:error', err.responseText);
-    } else {
-      this.handleConnectionStopped();
-    }
-  },*/
   
   /**
    * Handled when the xhr connection is aborted by the user
