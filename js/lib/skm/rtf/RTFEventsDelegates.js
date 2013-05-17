@@ -154,8 +154,8 @@ var EventsDelegates = {
    * Handled when the user closes the connection or the server
    * api invokes close but doesn't provide a reason message
    */
-  handleTransportStopped: function() {
-    Logger.info('%cRTFApi.handleTransportStopped', 'color:red');
+  handleTransportClosed: function() {
+    Logger.info('%cRTFApi.handleTransportClosed', 'color:red');
     this.fire('closed');
   },
 
