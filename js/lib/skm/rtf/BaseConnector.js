@@ -62,12 +62,6 @@ var BaseConnector = SKMObject.extend(Subscribable, {
 
   _isReconnecting: false,
 
-  /*initialize: function() {
-    this._reconnectTimer = SKMTimer.create({
-      tickInterval:
-    });
-  },*/
-
   /**
    * Removes transport listeners
    */
