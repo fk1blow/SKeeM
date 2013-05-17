@@ -297,6 +297,7 @@ var Manager = SKMObject.extend(Subscribable, {
     }, this);
 
     // Connector has encountered an error and/or cannot initialize its transport
+    // Also, triggered when the reconnecting has reached the max attempts
     connector.on('transport:error', function() {
       // Not sure if this event is relevant to the api
       this.fire('sequence:switching');
