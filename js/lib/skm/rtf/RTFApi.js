@@ -65,7 +65,8 @@ var ChannelsDelegate = {
       if ( activeConnector = this.connectorsManager.getActiveConnector() )
         activeConnector.sendMessage(channelsList.toStringifiedJson());
       else
-        Logger.info('Unable to add channel - no active connector found');
+        Logger.info('Channel added to list but no active connector found!'
+          + ' Confirmation will be sent after activating a connector');
     }
   },
 
