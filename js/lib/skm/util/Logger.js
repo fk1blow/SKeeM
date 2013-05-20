@@ -17,7 +17,7 @@ var slice = [].slice;
  * even in browser that don't support it
  * @author Paul Irish, linked from http://www.jquery4u.com/snippets/lightweight-wrapper-firebug-console-log/#.T-2xA-HWRhE
  */
-Logger = SKMObject.extend({
+var Logger = SKMObject.extend({
 	TYPE: 'Logger',
 
 	_instance: null,
@@ -59,7 +59,7 @@ Logger = SKMObject.extend({
 	_prepareConsole: function() {
 	  this._console = window.console;
 	  // if the browser does not support console(IE, mobiles, etc)
-	  if(this.consoleUnavailable())
+	  if ( this.consoleUnavailable() )
 	    this._clearUndefinedConsole();
 	},
 
@@ -79,7 +79,7 @@ Logger = SKMObject.extend({
 // a small shortcut for console.log
 // only for development debugging!!!
 if ( window.console )
-	window.cl = console.log.debug;
+	window.cl = console.log;
 else
 	window.cl = function() {};
 
