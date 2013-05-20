@@ -1,14 +1,11 @@
 
 /**
- * BetBrain RTF.js v0.4.0
+ * BetBrain RTF.js v0.1.9
  * 
  * Dragos Tudorache, BetBrain Ltd.
  * http://betbrain.com
  * BetBrain RTF may be freely distributed under the MIT license.
  */
-
-// RTF Api implementation
-
 define(['skm/k/Object',
   'skm/util/Logger',
   'skm/util/Subscribable',
