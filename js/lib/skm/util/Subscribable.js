@@ -1,15 +1,5 @@
-/**
- * Break apart the Publish-Subcribe part of the Observable
- * and build two distinct modules:
- * 	1 - subscribable
- * 	2 - observable
- *
- * #1 Subscribable
- * - basic pub/sub mechanism
- *
- * #2 Observable
- * - ability to observe object properties
- */
+
+// skm Subscribable mixin
 
 define([], function()
 {
