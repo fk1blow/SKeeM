@@ -1,5 +1,5 @@
 
-
+// skm Logger module
 
 define(['skm/k/Object'], function(SKMObject) {
 
