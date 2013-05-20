@@ -5,9 +5,6 @@ requirejs.config({
     "underscore": "underscore-min",
     "console": "console-wrapper",
     "skm": "./skm"
-    // "templates": "templates",
-    // "text": "lib/require/text",
-    // "views": "views"
   }
 });
 
