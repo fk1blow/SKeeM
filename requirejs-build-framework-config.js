@@ -19,7 +19,7 @@
 
   // START Single file build
 
-  out: 'RTFApi.build.js',
+  out: 'build/RTFApi.build.js',
 
   // By default, if no "optimize" value is declared it will uglify
   // and minimize the build filed
