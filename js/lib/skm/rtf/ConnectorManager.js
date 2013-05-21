@@ -293,6 +293,10 @@ var Manager = SKMObject.extend(Subscribable, {
 
     // Connector has been stopped, manually or by the server
     connector.on('transport:closed', function() {
+      // Theres no need to stop the sequence because 
+      // at the time this is triggered, everything will be cleared,
+      // [_stopCurrentSequence] has already been called
+      // this._stopCurrentSequence();
       this.fire('closed');
     }, this);
 
