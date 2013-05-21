@@ -147,8 +147,6 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   switchToNextConnector: function() {
     Logger.info('ConnectorManager.switchToNextConnector');
-    // this._switchToNextSequence();
-    // debugger;
     this._stopCurrentSequence();
     this._startNextSequence();
     return this;
