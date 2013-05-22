@@ -58,7 +58,15 @@ var inherits = function(childCtor, parentCtor) {
 };
 
 
-var SKMObject = function() {};
+var TO_MANY_PARAMS_ERR = 'SKMObject expects only an '
+  + 'object as an options parameter.';
+
+/**
+ * Actual constructor function
+ */
+var SKMObject = function(options) {
+  extend(this, options);
+};
 
 
 /**
@@ -103,6 +111,7 @@ SKMObject.extend = function(mixins) {
   return child;
 }
 
+
 /**
  * Creates (instantiates) and object
  * based on [this]
@@ -113,13 +122,13 @@ SKMObject.extend = function(mixins) {
  */
 SKMObject.create = function(options) {
   // Create the instance object of 'this' constructor
-  var instance = new this();
+  var instance = new this(options);
 
   // Takes the object passed at create
   // and adds it, directly to the instance
-  if ( arguments.length ) {
+  /*if ( arguments.length ) {
     extend(instance, options);
-  }
+  }*/
 
   // Try to call the initialize function
   if ( typeof instance.initialize === 'function' ) {
@@ -128,6 +137,7 @@ SKMObject.create = function(options) {
 
   return instance;
 }
+
 
 /**
  * Merges [this.prototype] with an Object
