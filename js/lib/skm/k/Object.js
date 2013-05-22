@@ -116,12 +116,16 @@ SKMObject.extend = function(mixins) {
  * Creates (instantiates) and object
  * based on [this]
  *
+ * @description Every function consctructor created using [SKMObject.extend]
+ * will automagically inherit the [create, extend, mixing] static methods.
  * @param {Object} options A single object to be 
  * injected to the newly created object
  * @return {Object}
  */
 SKMObject.create = function(options) {
-  // Create the instance object of 'this' constructor
+  // Create the instance object by instantiating 'this',
+  // where [this] will point to the context of the function
+  // that has this [create] method attached - SKMObject in this case.
   var instance = new this(options);
 
   // Takes the object passed at create
