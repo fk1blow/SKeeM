@@ -10,6 +10,7 @@ requirejs.config({
 
 
 require(['console', 'skm/skm'], function() {
-  var testFile = require(['skm/test-websocket']);
+  // var testFile = require(['skm/test-websocket']);
+  var testFile = require(['skm/test-skmobject']);
   console.log('Required :: application.js');
 });
