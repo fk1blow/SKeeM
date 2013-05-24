@@ -129,6 +129,12 @@ var Subscribable = {
     return this;
   },
 
+  // compatibility with newer definitions from Backbone's Events object
+  trigger: function() {
+    var args = [].slice.call(arguments);
+    this.fire.apply(this, args);
+  },
+
   // Tell this object to stop listening to either specific events ... or
   // to every object it's currently listening to.
   stopListening: function(obj, name, callback) {
