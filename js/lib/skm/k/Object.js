@@ -67,8 +67,8 @@ var TO_MANY_PARAMS_ERR = 'SKMObject expects only an '
 var SKMObject = function(options) {
   // Every object must define its own initialization setup therefore, the options
   // object becomes the container for options passed to the constructor function
-  this.options = options || {};
-  // extend(this, options);
+  this.options = null;
+  extend(this.options, options);
 };
 
 
