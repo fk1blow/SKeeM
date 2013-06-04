@@ -120,7 +120,7 @@ SKMObject.extend = function(mixins) {
  * based on [this]
  *
  * @description Every function consctructor created using [SKMObject.extend]
- * will automagically inherit the [create, extend, mixing] static methods.
+ * will automagically inherit the [create, extend, mixin] static methods.
  * @param {Object} options A single object to be 
  * injected to the newly created object
  * @return {Object}
