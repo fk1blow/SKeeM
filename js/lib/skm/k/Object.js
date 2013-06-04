@@ -42,6 +42,16 @@ var isObject = function(obj) {
 
 
 /**
+ * Test if the passed object is a function
+ * 
+ * @param  {Object} obj testing parameter
+ */
+var isFunction = function(obj) {
+  return (typeof obj === 'function');
+}
+
+
+/**
  * Inherit the prototype methods from one constructor into another.
  *
  * @description Taken from google's closure library
@@ -65,11 +75,14 @@ var TO_MANY_PARAMS_ERR = 'SKMObject expects only an '
  * Actual constructor function
  */
 var SKMObject = function(options) {
-  this.options = null;
   // Every object must define its own initialization setup therefore, the options
   // object becomes the container for options passed to the constructor function
-  extend(this.options, options);
-};
+  extend(this.options = null, options);
+
+  // call the initialize function
+  if ( isFunction(this.initialize) )
+    this.initialize.apply(this, arguments);
+}
 
 
 /**
@@ -125,24 +138,10 @@ SKMObject.extend = function(mixins) {
  * injected to the newly created object
  * @return {Object}
  */
-SKMObject.create = function(options) {
-  // Create the instance object by instantiating 'this',
-  // where [this] will point to the context of the function
-  // that has this [create] method attached - SKMObject in this case.
-  var instance = new this(options);
-
-  // Takes the object passed at create
-  // and adds it, directly to the instance
-  /*if ( arguments.length ) {
-    extend(instance, options);
-  }*/
-
-  // Try to call the initialize function
-  if ( typeof instance.initialize === 'function' ) {
-    instance.initialize.apply(instance, arguments);
-  }
-
-  return instance;
+SKMObject.create = function(proto) {
+  var f = function(){};
+  f.prototype = proto;
+  return new f();
 }
 
 
