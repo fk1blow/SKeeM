@@ -75,9 +75,10 @@ var TO_MANY_PARAMS_ERR = 'SKMObject expects only an '
  * Actual constructor function
  */
 var SKMObject = function(options) {
+  this.options = this.options || {};
   // Every object must define its own initialization setup therefore, the options
   // object becomes the container for options passed to the constructor function
-  extend(this, options);
+  extend(this.options, options);
 
   // call the initialize function
   if ( isFunction(this.initialize) )
@@ -100,17 +101,17 @@ SKMObject.extend = function(extension) {
   var i, argsLen = args.length, mixin;
   // Use the initialize function as a function constructor
   
-  /*if ( extension && ( 'initialize' in extension ) ) {
+  if ( extension && ( 'initialize' in extension ) ) {
     child = extension.initialize;
   } else {
     child = function() {
       parent.apply(this, arguments);
     }
-  }*/
-
-  child = function() {
-    parent.apply(this, arguments);
   }
+
+  // child = function() {
+  //   parent.apply(this, arguments);
+  // }
 
   // Establish the base prototype chain
   inherits(child, parent);
