@@ -10,7 +10,7 @@ define(['skm/k/Object',
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 /*------------------------

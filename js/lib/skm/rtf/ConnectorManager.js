@@ -10,7 +10,7 @@ define(['skm/k/Object',
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 var ConnectorsAvailable = {
@@ -52,7 +52,7 @@ var ConnectorsFactory = {
 
       // create the connector and register to manage
       // @todo refactor creation method and object default properties
-      manager.registerConnector(type_name, type_reference.create({
+      manager.registerConnector(type_name, new type_reference({
         urlParamModel: this.connectorsUrlParamModel,
         maxReconnectAttempts: connectorOptions['maxReconnectAttempts'],
         reconnectDelay: connectorOptions['reconnectDelay'],
@@ -106,8 +106,12 @@ var Manager = SKMObject.extend(Subscribable, {
    */
   sequence: null,
 
-  initialize: function() {
+  initialize: function(options) {
+    options || (options = {});
     Logger.debug('%cnew Manager', 'color:#a2a2a2');
+    this.sequence = options.sequence;
+    this.connectorsUrlParamModel = options.connectorsUrlParamModel;
+    this.connectorsOptions = options.connectorsOptions;
     this._connectors = null;
     this._activeConnector = null;
     this._prepareConnectorsFactory();

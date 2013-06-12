@@ -11,7 +11,7 @@ define(['skm/k/Object',
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 var WebsocketStates = {
@@ -73,9 +73,11 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 
   _linkWasOpened: false,
 
-  initialize: function() {
+  initialize: function(options) {
+    options || (options = {});
+    this.connectionTimeout = options.connectionTimeout || 1500;
     // Creates auto-disconnect and reconnect, timers
-    this._timerAutoDisconnect = SKMTimer.create({
+    this._timerAutoDisconnect = new SKMTimer({
       tickInterval: this.connectionTimeout
     }).on('tick', this._handleAutoDisconnect, this);
   },
@@ -230,7 +232,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
   initialize: function() {
     Logger.debug('%cnew WSWrapper', 'color:#A2A2A2');
-    this._timerPing = Timer.create({ tickInterval: this.pingInterval, ticks: 0 });
+    this._timerPing = new SKMTimer({ tickInterval: this.pingInterval, ticks: 0 });
     this._timerPing.on('tick', this.ping, this);
     this._nativeSocket = null;
     this._initConnectionHandler();
@@ -345,7 +347,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   },
 
   _initConnectionHandler: function() {
-    this._connectionHandler = NativeWebSocketHandler.create({
+    this._connectionHandler = new NativeWebSocketHandler({
       connectionTimeout: this.timeout
     });
     this._attachConnectionEvents();

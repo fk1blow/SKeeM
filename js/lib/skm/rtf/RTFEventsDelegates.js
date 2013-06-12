@@ -7,7 +7,7 @@ define(['skm/util/Logger'],
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 var EventsDelegates = {

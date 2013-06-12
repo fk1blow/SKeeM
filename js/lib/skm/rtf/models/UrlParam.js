@@ -2,9 +2,8 @@
 // RTF Connectors Url Model implementation
 
 define(['skm/k/Object',
-  'skm/util/Logger',
   'skm/util/Subscribable'],
-  function(SKMObject, SKMLogger, Subscribable) {
+  function(SKMObject, Subscribable) {
 'use strict';
 
 

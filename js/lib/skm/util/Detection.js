@@ -4,9 +4,10 @@
 // other libraries.
 
 define(['skm/skm', 'skm/util/Logger'], function() {
+'use strict';
 
 
-SKM.util = SKM.util || {};	
+var Logger = new SKMLogger();
 
 
 SKM.util.Detection = {

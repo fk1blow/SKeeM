@@ -20,7 +20,7 @@ define(['skm/k/Object',
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 var Config = {
@@ -145,7 +145,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
    */
   initialize: function() {
     // Create the parameters list object
-    this.connectorsUrlParam = UrlParamModel.create();
+    this.connectorsUrlParam = new UrlParamModel();
     // Prepare batchId and add it to the parameterizer
     this.connectorsUrlParam.add('batchId', this._batchId);
     // creates the connector manager
@@ -195,7 +195,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     url = this.connectorsUrlParam.toQueryString()
       + '&closeConnection=true';
     // gg xhr
-    XHRWrapper.create({
+    new XHRWrapper({
       url: opt.url || Config.Connectors.XHR.url + url,
       async: opt.async
     }).sendMessage();
@@ -243,7 +243,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
   },
 
   _buildConnectorManager: function() {
-    this.connectorsManager = ConnectorManager.create({
+    this.connectorsManager = new ConnectorManager({
       sequence: Config.Sequence,
       connectorsUrlParamModel: this.connectorsUrlParam,
       connectorsOptions: Config.Connectors
@@ -285,7 +285,7 @@ return {
     return {
       getInstance: function() {
         if ( apiSingletonInstance == null )
-          apiSingletonInstance = RTFApi.create();
+          apiSingletonInstance = new RTFApi();
         return apiSingletonInstance;
       }
     };

@@ -9,7 +9,7 @@ define(['skm/k/Object',
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 var DefaultLibraryWrapper = window.jQuery || null;
@@ -47,19 +47,7 @@ var XHRMessageDelegates = {
 			}
 		}
 		this._expectedClose = false;
-	},
-
-	/*
-	 handleOnError: function(err) {
-		if ( ! this._expectedClose ) {
-			Logger.info('XHRWrapper.handleOnError');
-			this._expectedClose = false;
-			this.fire('error', err);
-		} else {
-			this.fire('closed');
-		}
-	 }
-	 */
+	}
 }
 
 
@@ -82,8 +70,13 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 	_expectedClose: false,
 
-	initialize: function() {
+	initialize: function(options) {
+		options || (options = {});
 		Logger.debug('%cnew XHRWrapper', 'color:#A2A2A2');
+		this.url = options.url || null;
+		this.async = options.async || true;
+		this.httpMethod = options.httpMethod || "POST";
+		this.dataType = options.dataType || "JSON";
 		// @todo use a getter for the wrapper
 		this._wrapper = LibraryConfig.wrapper || DefaultLibraryWrapper;
 		this._request = null;

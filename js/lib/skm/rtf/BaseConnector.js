@@ -3,14 +3,13 @@
 
 define(['skm/k/Object',
   'skm/util/Logger',
-  'skm/util/Timer',
   'skm/util/Subscribable'],
-  function(SKMObject, SKMLogger, SKMTimer, Subscribable)
+  function(SKMObject, SKMLogger, Subscribable)
 {
 'use strict';
 
 
-var Logger = SKMLogger.create();
+var Logger = new SKMLogger();
 
 
 /**
@@ -44,12 +43,6 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   reconnectDelay: undefined,
 
   /**
-   * Delay after a reconnect attemp will begin
-   * @type {Number}
-   */
-  defaultReconnectDelay: 3000,
-
-  /**
    * Object that models the url and 
    * its parameters
    * @type {Object}
@@ -61,6 +54,14 @@ var BaseConnector = SKMObject.extend(Subscribable, {
   _currentAttempt: 1,
 
   _isReconnecting: false,
+
+  initialize: function(options) {
+    options || (options = {});
+    this.urlParamModel = options.urlParamModel;
+    this.maxReconnectAttempts = options.maxReconnectAttempts || 3;
+    this.reconnectDelay = options.reconnectDelay || 3000;
+    this.transportOptions = options.transportOptions || null;
+  },
 
   /**
    * Removes transport listeners
@@ -134,7 +135,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    */
   _ensureTransportCreated: function(transportType) {
     if ( this.transport == null )
-      this.addTransport(transportType.create(this.transportOptions));
+      this.addTransport(new transportType(this.transportOptions));
     return this;
   },
 
@@ -160,7 +161,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
    */
   _makeReconnectAttempt: function() {
     var maxReconnectAttempts = this.transportOptions.maxReconnectAttempts;
-    var reconnectDelay = this.reconnectDelay || this.defaultReconnectDelay;
+    var reconnectDelay = this.reconnectDelay;
     var that = this;
 
     if ( this._currentAttempt <= maxReconnectAttempts ) {

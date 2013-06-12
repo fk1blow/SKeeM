@@ -39,8 +39,11 @@ Timer = SKMObject.extend(Subscribable, {
 
   _lastTickTime: 0,
 
-  initialize: function() {
+  initialize: function(options) {
+    options || (options = {});
     this._timerObject = null;
+    this.ticks = options.ticks || 1;
+    this.tickInterval = options.tickInterval || 1000;
   },
 
   /**
@@ -97,7 +100,6 @@ Timer = SKMObject.extend(Subscribable, {
       val = 1;
     }
     this.ticks = val;
-    return this;
   },
 
   getTicksCounter: function() {
