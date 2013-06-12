@@ -31,16 +31,6 @@ var EventsDelegates = {
     Logger.info('Connector.handleReceivedMessage');
     this.fire('api:message', message);
   },
-
-  /**
-   * @todo move to baseconnector
-   * 
-   * Handled when the reconnect attemps has reached maximum attempts
-   */
-  handleMaxReconnectAttemptsReached: function() {
-    Logger.info('XHRConnector.handleMaxReconnectAttemptsReached');
-    this.fire('transport:error');
-  },
   
   /**
    * Handled when the xhr connection is refused by server api
