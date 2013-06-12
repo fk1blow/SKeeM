@@ -164,6 +164,11 @@ var EventsDelegates = {
     this.fire('reconnecting');
   },
 
+  handleTransportReconnectFailed: function() {
+    Logger.info('%cRTFApi.handleTransportReconnectFailed', 'color:red');
+    this.fire('reconnect:failed');
+  },
+
   /**
    * Connector manager tries to change the connectors sequence
    */

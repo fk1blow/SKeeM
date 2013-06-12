@@ -261,6 +261,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
       .on('interrupted', this.handleTransportInterrupted, this)
       .on('closed', this.handleTransportClosed, this)
       .on('reconnecting', this.handleTransportReconnecting, this)
+      .on('reconnect:failed', this.handleTransportReconnectFailed, this);
 
     
     /** sequence events */

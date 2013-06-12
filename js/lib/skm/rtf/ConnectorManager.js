@@ -268,7 +268,6 @@ var Manager = SKMObject.extend(Subscribable, {
     return this.sequence[this._activeSequenceIdx + 1];
   },
 
-
   _attachConnectorHandlers: function(connector) {
     // connector.on('all', function() {
     //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
@@ -303,14 +302,18 @@ var Manager = SKMObject.extend(Subscribable, {
     }, this);
 
     // Connector has encountered an error and/or cannot initialize its transport
-    // Also, triggered when the reconnecting has reached the max attempts
+    // Triggered alongside "transport:reconnect_failed"
     connector.on('transport:error', function() {
       // Not sure if this event is relevant to the api
       this.fire('sequence:switching');
       this._startNextSequence();
     }, this);
 
-   
+    // The reconnecting attempt of a connector has failed
+    // Triggerd alongside "transport:error"
+    connector.on('transport:reconnect_failed', function() {
+      this.fire('reconnect:failed');
+    }, this);
 
 
     /** api events */

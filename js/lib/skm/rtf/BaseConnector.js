@@ -111,7 +111,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
     Logger.info('Connector.handleReconnectingEnded');
     // has stopped reconnecting and reset current attempt
     this._resetReconnectAttempts();
-    this.fire('transport:error');
+    this.fire('transport:error transport:reconnect_failed');
   },
 
   handleReconnectingBegin: function() {
