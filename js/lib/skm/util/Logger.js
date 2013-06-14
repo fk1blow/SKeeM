@@ -1,28 +1,18 @@
 
 // skm Logger module
 
-define(['skm/k/Object'],
-	function(SKMObject)
-{
+define([], function() {
 'use strict';
 
 
 var slice = Array.prototype.slice;
 
 
-/**
- * Logger singleton object
- * 
- * @description  Adds a convenient and safe method to use the console 
- * even in browser that don't support it
- * @author Paul Irish, linked from http://www.jquery4u.com/snippets/lightweight-wrapper-firebug-console-log/#.T-2xA-HWRhE
- */
 var Logger = function() {
-	this.TYPE = 'Logger';
-	this._instance = null;
-	this._console = null;
-	this._enabled = true;	
-	this._prepareConsole();
+	this._console = window.console || {};
+	this._enabled = true;
+	// @todo define the actual levels and their constraints
+	this._level = 0;
 }
 
 Logger.prototype = {
@@ -33,41 +23,23 @@ Logger.prototype = {
 	/* Now, for every console method, check if it's a function(Because IE that's why) */
 
 	debug: function() {
-	  if(typeof this._console.debug === 'function')
+	  if ( typeof this._console.debug === 'function' )
 	    this._console.debug.apply(console, slice.call(arguments));
 	},
 
 	info: function() {
-  if(typeof this._console.info === 'function')
+ 		if ( typeof this._console.info === 'function' )
 	    this._console.info.apply(console, slice.call(arguments));
 	},
 
 	warn: function() {
-	  if(typeof this._console.warn === 'function')
+	  if ( typeof this._console.warn === 'function' )
 	    this._console.warn.apply(console, slice.call(arguments));
 	},
 
 	error: function() {
-	  if(typeof this._console.error === 'function')
+	  if ( typeof this._console.error === 'function' )
 	    this._console.error.apply(console, slice.call(arguments));
-	},
-
-	_prepareConsole: function() {
-	  this._console = window.console;
-	  // if the browser does not support console(IE, mobiles, etc)
-	  if ( this.consoleUnavailable() )
-	    this._clearUndefinedConsole();
-	},
-
-	/**
-	 * Better console wrapper
-	 * @see paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
-	 */
-	_clearUndefinedConsole: function() {
-	  var c = this._console || {};
-	  for(var d="assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(","),a;a=d.pop();)c[a]=c[a] || function() {};
-	  // is it safe?!
-	  this._console = c;
 	}
 };
 
