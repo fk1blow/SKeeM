@@ -64,9 +64,11 @@ var ChannelsDelegate = {
     if ( channelsList.hasSubscribedAndConfirmed(channel) ) {
       Logger.warn(Config.Warnings.DUPLICATE_CHANNEL_SUBSCRIPTION, channel);
     } else {
-      // Add subscription then send the 
+      // Add the subscription then send the 
       // message to connector, if any available
       channelsList.addChannel(channel);
+
+      // check to see if an active connector is found
       if ( activeConnector = this.connectorsManager.getActiveConnector() )
         activeConnector.sendMessage(channelsList.toStringifiedJson());
       else

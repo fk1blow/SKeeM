@@ -75,6 +75,15 @@ var EventsDelegates = {
   },
 
   /**
+   * Handled after a link is opened but the WSWrapper is not
+   * able to exchange any message with the server
+   */
+  handleLinkGhosting: function() {
+    Logger.info('Connector.handleLinkInterrupted');
+    this.fire('transport:error');
+  },
+
+  /**
    * Handles a message received from server api
    *
    * @description handles the server's update message
@@ -157,6 +166,9 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
 
     // Connection has been interrupted, not by the user nor the server
     this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
+
+    // Link established though not able to communicate - vpn, proxy, middleware
+    this.transport.on('link:ghosting', this.handleLinkGhosting, this);
 
     // Transport has been stopped or closed
     this.transport.on('connecting:closed', this.handleConnectingClosed, this);

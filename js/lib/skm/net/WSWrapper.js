@@ -207,6 +207,13 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   timeout: 1500,
 
   /**
+   * A connection has been established through a proxy, vpn, etc
+   * that won't exchange any message - should close and mark WSWrapper as error
+   * @type {Number}
+   */
+  ghostTimeout: 5000,
+
+  /**
    * If will try to ping the server or not
    */
   pingServer: true,
@@ -230,10 +237,19 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
   _timerPing: null,
 
+  _ghostTimer: null,
+
   initialize: function() {
     Logger.debug('%cnew WSWrapper', 'color:#A2A2A2');
+
+    // timer for the ping
     this._timerPing = new SKMTimer({ tickInterval: this.pingInterval, ticks: 0 });
     this._timerPing.on('tick', this.ping, this);
+
+    // create the ghost timer
+    this._ghostTimer = new SKMTimer({ tickInterval: this.ghostTimeout, ticks: 1 });
+    this._ghostTimer.on('tick', this.handleGhostTimer, this);
+
     this._nativeSocket = null;
     this._initConnectionHandler();
   },
@@ -284,6 +300,11 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     return this;
   },
 
+  handleGhostTimer: function() {
+    this._abortConnecting({ expected: true });
+    this.fire('link:ghosting');
+  },
+
   /**
    * Queries
    */
@@ -301,8 +322,8 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   _startConnecting: function() {
     this._nativeSocket = createNativeSocket(this.url, this.protocols);
     if ( this._nativeSocket == null ) {
-      this.fire('implementation:missing');
       this._abortConnecting({ expected: true });
+      this.fire('implementation:missing');
     } else {
       this._connectionHandler.attachListenersTo(this._nativeSocket)
         .startConnectingAttempt();
@@ -323,10 +344,10 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   },
 
   _initPingTimer: function() {
-    if ( !this.pingServer )
+    if ( ! this.pingServer )
       return false;
     // if timer is not enabled, only then try to (re)start it
-    if ( !this._timerPing.enabled ) {
+    if ( ! this._timerPing.enabled ) {
       Logger.info('Ping started.');
       this._timerPing.start();
     }
@@ -372,6 +393,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
     connection.on('link:opened', function() {
       this.fire('link:opened');
       this._initPingTimer();
+      this._ghostTimer.start();
     }, this);
 
     // An established link was closed manually or by the server api
@@ -386,6 +408,10 @@ var WSWrapper = SKMObject.extend(Subscribable, {
 
     // message received from the server
     connection.on('message', function(message) {
+      // stop the ghost timer if a message has been received
+      this._ghostTimer.stop();
+
+      // separate pong from the other messages
       if ( message == 'pong' )
         Logger.debug('%cWSWrapper : pong', 'color:blue');
       else
