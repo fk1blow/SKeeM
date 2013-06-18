@@ -1,13 +1,9 @@
 
 // Simple Timer object
 
-define(['skm/util/Logger',
-  'skm/util/Subscribable',
-  'skm/k/Object'], function(SKMLogger, Subscribable, SKMObject)
+define(['skm/util/Subscribable',
+  'skm/k/Object'], function(Subscribable, SKMObject)
 {
-
-
-var Logger = SKMLogger.create();
 
 
 /**
