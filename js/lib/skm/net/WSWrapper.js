@@ -65,7 +65,7 @@ var createNativeSocket = function(url, protocols) {
  * Native WebSocket connection delegates
  */
 var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
-  connectionTimeout: 1500,
+  connectionTimeout: 500,
 
   _timerAutoDisconnect: null,
 

@@ -29,13 +29,13 @@ var Config = {
   Connectors: {
     WebSocket: {
       url: 'ws://localhost:8080/testws',
-      maxReconnectAttempts: 10,
-      pingServer: false
+      maxReconnectAttempts: 5,
+      pingServer: true
     },
 
     XHR: {
       url: 'http://localhost:8080/testajax',
-      maxReconnectAttempts: 10,
+      maxReconnectAttempts: 5
     }
   },
 
@@ -159,11 +159,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
   },
 
   /**
-   * Stops the connectors updates, mainly for debugging purpose
-   * 
-   * @description currently, the correct method for closing a subscription
-   * is to send a shutdown message to the API
-   * @return {Object} current context
+   * Starts the connectors updates
    */
   startUpdates: function() {
     this.connectorsManager.startConnectors();
@@ -175,7 +171,6 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
    * 
    * @description stops the updates and disconnects/interrupts 
    * current transport, making it avaiable for a resume call.
-   * @return {Object} current context
    */
   stopUpdates: function() {
     this.connectorsManager.stopConnectors();
@@ -187,7 +182,7 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
    * 
    * @description shuts down communication, stops every connector
    * and sends a proper message to the server.
-   * @param  {Object} options optionsl shutdown parameters
+   * @param  {Object} options optional shutdown parameters
    */
   shutdown: function(options) {
     var url, opt = options || {};
