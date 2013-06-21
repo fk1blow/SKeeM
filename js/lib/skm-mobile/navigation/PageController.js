@@ -1,9 +1,8 @@
 
 // Page controller
 
-define(['skm/util/Logger', 'skm/util/ConfigManager',
-  'skm-mobile/data/PageContentModel'],
-  function(SKMLogger, ConfigManager, PageContentModel)
+define(['skm/util/Logger', 'skm/util/ConfigManager'],
+  function(SKMLogger, ConfigManager)
 {
 'use strict';
 
