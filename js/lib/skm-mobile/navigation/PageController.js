@@ -1,8 +1,9 @@
 
 // Page controller
 
-define(['skm/util/Logger', 'skm/util/ConfigManager'],
-  function(SKMLogger, ConfigManager)
+define(['skm/util/Logger', 'skm/util/ConfigManager',
+  'skm-mobile/data/PageContentModel'],
+  function(SKMLogger, ConfigManager, PageContentModel)
 {
 'use strict';
 
@@ -34,24 +35,33 @@ _.extend(PageController.prototype, Backbone.Events, {
 
   initialize: function() {},
 
+  action_default: function() {},
+
   /*
     Handlers
     --------
    */
 
-  handleViewLoaded: function(view) {
+  handleViewLoaded: function() {
     Logger.info('PageController.handleViewLoaded');
 
     // loads the page view content
     this.loadContent();
   },
 
-  handleContentLoaded: function() {
-    Logger.info('PageController.handleContentLoaded');
+  handlePageContentLoaded: function(contentData) {
+    Logger.info('PageController.handlePageContentLoaded');
 
     // render content on the view
-    this.view.renderContent(this.pageContent);
+    this.view.renderPage(contentData);
     
+    // tell the nav controller that the view's content has been loaded
+    this.trigger('pageSetupComplete');
+  },
+
+  handlePageAlreadyHasContent: function() {
+    Logger.info('PageController.handlePageAlreadyHasContent');
+
     // tell the nav controller that the view's content has been loaded
     this.trigger('pageSetupComplete');
   },
@@ -103,8 +113,7 @@ _.extend(PageController.prototype, Backbone.Events, {
     
     if ( this.view == null ) {
       Logger.debug('PageController : view is null; loading view constructor');
-      viewName = this.getViewNormalizedName();
-      this._requireView(viewName, this.handleViewLoaded);
+      this._requireView(this.getViewNormalizedName(), this.handleViewLoaded);
     } else {
       Logger.debug('PageController : view already set');
       this.handleViewLoaded();
@@ -128,13 +137,13 @@ _.extend(PageController.prototype, Backbone.Events, {
     Logger.info('PageController.loadContent');
     var viewPath = null;
 
-    if ( this.shouldLoadViewContent() ) {
+    if ( this.pageViewNeedsContent() ) {
       Logger.debug('PageController : will load content.');
       viewPath = this.getViewContentPath(this.getViewNormalizedName());
-      this._requestContent(viewPath, this.handleContentLoaded);
+      this._requestContent(viewPath, this.handlePageContentLoaded);
     } else {
       Logger.debug('PageController : content already loaded');
-      this.handleContentLoaded();
+      this.handlePageAlreadyHasContent();
     }
 
     return this;
@@ -150,8 +159,8 @@ _.extend(PageController.prototype, Backbone.Events, {
    * 
    * @return {Boolean}
    */
-  shouldLoadViewContent: function() {
-    return this.pageContent == null;
+  pageViewNeedsContent: function() {
+    return ( this.view && ! this.view.pageAlreadyHasContent() );
   },
 
   /**
@@ -198,8 +207,16 @@ _.extend(PageController.prototype, Backbone.Events, {
     var viewPath = this._getPageViewPath(identifier);
 
     require([viewPath], function(viewConstructor) {
+      // that.pageContent = new PageContentModel({ url: window.location.pathname });
+
       // set the page view instance
-      that.view = new viewConstructor({ identifier: that.identifier });
+      that.view = new viewConstructor({
+        identifier: that.identifier,
+        // model: contentModel
+      });
+
+      // that._attachPageViewEvents();
+
       callback.call(that);
     });
   },
@@ -211,15 +228,24 @@ _.extend(PageController.prototype, Backbone.Events, {
     return viewsPath + '/' + pathInFolder + '/' + viewName;
   },
 
+  // @todo make the loading mechanism, higly customisable
+  // by letting the PageController to set its content path
   _requestContent: function(viewPath, callback) {
+    var contentPath = window.location.pathname;
+
     var req = $.ajax({
-      url: viewPath,
+      url: contentPath,
+      
       context: this,
+
+      data: { ajax: true },
+
       error: function() {
         this.trigger('pageSetupError');
       },
+
       success: function(contentData) {
-        this.pageContent = contentData;
+        // this.pageContent = contentData;
         callback.call(this, contentData);
       }
     });

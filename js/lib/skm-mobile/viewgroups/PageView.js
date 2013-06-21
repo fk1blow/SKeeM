@@ -31,16 +31,13 @@ var PageView = Backbone.View.extend({
    * Render the page view's content on the framework
    * @param  {String} content The content html of the page view
    */
-  renderContent: function(content) {
+  renderPage: function(data) {
     this.trigger('before:renderContent');
 
-    if ( this.alreadyHasContent() == false ) {
-      Logger.debug('PageView : will render content');
-      this.attachPageSkeleton();
-      this.$el.html(content); 
-    } else {
-      Logger.debug('PafeView : content already rendered')
-    }
+    this.ensurePageSkeletonAttached();
+
+    Logger.info('@todo implement the layout render mechanism');
+    this.$el.html(data);
 
     this.trigger('after:renderContent');
 
@@ -108,8 +105,18 @@ var PageView = Backbone.View.extend({
    * Returns if the page has content or not
    * @return {Boolean}
    */
-  alreadyHasContent: function() {
-    return this.$el.children().length;
+  pageAlreadyHasContent: function() {
+    var containerId = 'page' + this.options.identifier;
+
+    // if the page is not attached to the framework
+    if ( ! this.pageAlreadyAttached(containerId) )
+      return false;
+    
+    // if page attache but has no children
+    if ( $('#' + containerId).children().length < 1 )
+      return false;
+    
+    return true;
   },
 
   /*
@@ -120,11 +127,12 @@ var PageView = Backbone.View.extend({
   /**
    * Attaches the page container to the html framework
    */
-  attachPageSkeleton: function() {
-    Logger.info('PageView.attachPageSkeleton');
+  ensurePageSkeletonAttached: function() {
+    Logger.info('PageView.ensurePageSkeletonAttached');
 
     var containerId = 'page' + this.options.identifier;
-    if ( ! this.skeletonAlreadyAttached(containerId) ) {
+
+    if ( ! this.pageAlreadyAttached(containerId) ) {
       this.$el.attr('id', 'page' + this.options.identifier);
       this._frameworkElement.append(this.$el);
     }
@@ -142,8 +150,8 @@ var PageView = Backbone.View.extend({
     return this;
   },
 
-  skeletonAlreadyAttached: function(pageId) {
-    return $('#' + pageId).length;
+  pageAlreadyAttached: function(pageId) {
+    return $('#' + pageId).length > 0;
   }
 });
 
