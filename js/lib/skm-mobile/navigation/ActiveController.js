@@ -4,9 +4,10 @@
 define(['skm/util/Logger',
   'skm-mobile/navigation/ErrorsConstants',
   'skm-mobile/navigation/ActionDispatcher',
-  'skm-mobile/ApplicationObserver'],
+  'skm-mobile/NotificationCenter',
+  'skm/util/ConfigManager'],
   function(SKMLogger, ErrorsConstants,
-    ActionDispatcher, AppObserver)
+    ActionDispatcher, NotificationCenter, ConfigManager)
 {
 'use strict';
 
@@ -14,7 +15,7 @@ define(['skm/util/Logger',
 var Logger = new SKMLogger();
 
 
-var AppObserver = AppObserver.getInstance();
+var Notifications = NotificationCenter.getInstance();
 
 
 var ControllersList = {
@@ -112,7 +113,7 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
     this._navigationTask.setTaskDone();
 
     // notify app about page activated...
-    AppObserver.trigger('PageActivated');
+    Notifications.trigger('PageActivated');
   },
 
   handlePageSetupComplete: function() {
@@ -173,17 +174,25 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
    */
   
   _loadController: function(identifier) {
-    var that = this, instance = null, name = identifier + 'Controller';
+    var that = this, instance = null;
+    var path = this._getControllerPath(identifier);
 
     if ( this.controllerInStack(identifier) ) {
       this.handlControllerRequired(this._controllerStack[identifier]);
     } else {
-      require(['controllers/' + name], function(constructor) {
+      require([path], function(constructor) {
         instance = new constructor({ identifier: identifier });
         that.addController(identifier, instance);
         that.handlControllerRequired(instance);
       });
     }
+  },
+
+  _getControllerPath: function(identifier) {
+    var pathInFolder = identifier.toLowerCase().replace(/[^\w\d]+/g, '');
+    var controllerName = identifier + ConfigManager.getModulePrefixes().PageController;
+    var controllersPath = 'controllers';
+    return controllersPath + '/' + pathInFolder + '/' + controllerName;
   },
 
   _disposePreviousController: function() {
