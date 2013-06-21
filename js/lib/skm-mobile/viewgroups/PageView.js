@@ -31,15 +31,14 @@ var PageView = Backbone.View.extend({
    * Render the page view's content on the framework
    * @param  {String} content The content html of the page view
    */
-  renderPage: function(data) {
-    Logger.info('PageView.renderPage');
+  renderPageContent: function(data) {
+    Logger.info('PageView.renderPageContent');
 
     this.trigger('before:renderContent');
 
     this.ensurePageSkeletonAttached();
 
     Logger.debug('%c@todo implement the layout render mechanism', 'color:red');
-
     this.$el.html(data);
 
     this.trigger('after:renderContent');
@@ -50,8 +49,8 @@ var PageView = Backbone.View.extend({
   /**
    * Renders the page over existing page layout elements
    */
-  renderPreFetched: function() {
-    Logger.info('PageView.renderPreFetched');
+  renderPrefetchedPage: function() {
+    Logger.info('PageView.renderPrefetchedPage');
 
     Logger.debug('%c@todo implement the layout render mechanism', 'color:red');
 

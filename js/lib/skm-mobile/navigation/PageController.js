@@ -52,7 +52,7 @@ _.extend(PageController.prototype, Backbone.Events, {
     Logger.info('PageController.handlePageContentLoaded');
 
     // render content on the view
-    this.view.renderPage(contentData);
+    this.view.renderPageContent(contentData);
     
     // tell the nav controller that the view's content has been loaded
     this.trigger('pageSetupComplete');
@@ -62,7 +62,7 @@ _.extend(PageController.prototype, Backbone.Events, {
     Logger.info('PageController.handlePageAlreadyHasContent');
 
     // render the page by attaching to the existing layout elements
-    this.view.renderPreFetched();
+    this.view.renderPrefetchedPage();
 
     // tell the nav controller that the view's content has been loaded
     this.trigger('pageSetupComplete');
