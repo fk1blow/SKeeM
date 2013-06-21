@@ -2,11 +2,16 @@
 // PageView container view
 
 define(['skm/k/Object',
+
   'skm/util/Logger',
   'backbone'],
   function(SKMObject, SKMLogger)
 {
 'use strict';
+
+
+Logger.debug('%c@todo load template using require when declaring PageView dependencies', 'color:red');
+// define(['skm/k/Object', 'mytemplate'....
 
 
 var Logger = new SKMLogger();
