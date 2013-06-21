@@ -1,8 +1,8 @@
 
 // Page controller
 
-define(['skm/util/Logger'],
-  function(SKMLogger)
+define(['skm/util/Logger', 'skm/util/ConfigManager'],
+  function(SKMLogger, ConfigManager)
 {
 'use strict';
 
@@ -182,8 +182,9 @@ _.extend(PageController.prototype, Backbone.Events, {
    * @return {String} page view name
    */
   getViewNormalizedName: function() {
+    var prefix = ConfigManager.getModulePrefixes().PageView;
     if ( ! this.viewNormalizedName )
-      this.viewNormalizedName = this.identifier + 'View'; 
+      this.viewNormalizedName = this.identifier + prefix;
     return this.viewNormalizedName;
   },
 
@@ -192,13 +193,22 @@ _.extend(PageController.prototype, Backbone.Events, {
     --------
    */
 
-  _requireView: function(viewName, callback) {
+  _requireView: function(identifier, callback) {
     var that = this;
-    require(['views/' + viewName], function(viewConstructor) {
+    var viewPath = this._getPageViewPath(identifier);
+
+    require([viewPath], function(viewConstructor) {
       // set the page view instance
       that.view = new viewConstructor({ identifier: that.identifier });
       callback.call(that);
     });
+  },
+
+  _getPageViewPath: function() {
+    var pathInFolder = this.identifier.toLowerCase().replace(/[^\w\d]+/g, '');
+    var viewName = this.getViewNormalizedName();
+    var viewsPath = 'views';
+    return viewsPath + '/' + pathInFolder + '/' + viewName;
   },
 
   _requestContent: function(viewPath, callback) {

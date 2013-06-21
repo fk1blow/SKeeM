@@ -175,12 +175,12 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
   
   _loadController: function(identifier) {
     var that = this, instance = null;
-    var path = this._getControllerPath(identifier);
+    var controllerPath = this._getControllerPath(identifier);
 
     if ( this.controllerInStack(identifier) ) {
       this.handlControllerRequired(this._controllerStack[identifier]);
     } else {
-      require([path], function(constructor) {
+      require([controllerPath], function(constructor) {
         instance = new constructor({ identifier: identifier });
         that.addController(identifier, instance);
         that.handlControllerRequired(instance);
