@@ -46,23 +46,17 @@ var ControllersList = {
  * and the NavigationController that sends it commands
  */
 var ActiveController = function() {
-  this._controllerStack = null;
+  this._controllerStack = {};
   this._activeController = null;
   this._previousController = null;
   this._temporaryController = null;
-  this._actionDispatcher = null;
+  this._actionDispatcher = new ActionDispatcher();
   this._navigationTask = null;
   this._beforeTransitionDelay = 50;
-  this.initialize.apply(this, arguments);
 }
 
 
 _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
-
-  initialize: function() {
-    this._controllerStack = {};
-    this._actionDispatcher = new ActionDispatcher();
-  },
 
   processNavigationTask: function(task) {
     Logger.info('ActiveController.processNavigationTask');
@@ -190,7 +184,7 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
 
   _getControllerPath: function(identifier) {
     var pathInFolder = identifier.toLowerCase().replace(/[^\w\d]+/g, '');
-    var controllerName = identifier + ConfigManager.getModulePrefixes().PageController;
+    var controllerName = identifier + ConfigManager.getPrefixFor('PageController');
     var controllersPath = 'controllers';
     return controllersPath + '/' + pathInFolder + '/' + controllerName;
   },
