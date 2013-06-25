@@ -17,6 +17,42 @@ var TemplatesBaseUrl = TemplatesUrlHost + '/js/app/templates/';
 var TemplatesExtension = '.html';
 
 
+/**
+ * Abstract methods to be overriten by the PageController implementation
+ */
+var AbstractHandlers = {
+  /**
+   * Handled after the page was attached to the dom
+   * @description  if the dom element is already in the framework, the events
+   * will still be triggered
+   */
+  handlePageViewRendered: function() {
+    return this;
+  },
+
+  /**
+   * Handled after the view has been received the dispose command
+   */
+  handlePageViewDisposed: function() {
+    return this;
+  },
+
+  /**
+   * Handled after the page view has finished the "show" animation
+   */
+  handlePageViewShow: function() {
+    return this;
+  },
+
+  /**
+   * Handled after the page view has finished the "hide" animation
+   */
+  handlePageViewHide: function() {
+    return this;
+  }
+};
+
+
 var PageController = function(options) {
   options || (options = {});
   this.view = null;
@@ -30,7 +66,7 @@ var PageController = function(options) {
 PageController.extend = Backbone.Model.extend;
 
 
-_.extend(PageController.prototype, Backbone.Events, {
+_.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
 
   initialize: function() {},
 
@@ -43,6 +79,9 @@ _.extend(PageController.prototype, Backbone.Events, {
 
   handleViewLoaded: function() {
     Logger.info('PageController.handleViewLoaded');
+
+    // attach some events on the PageView
+    this._attachViewEvents();
 
     // loads the page view content
     this.loadContent();
@@ -251,6 +290,13 @@ _.extend(PageController.prototype, Backbone.Events, {
         callback.call(this, contentData);
       }
     });
+  },
+
+  _attachViewEvents: function() {
+    this.view.on('after:renderContent', this.handlePageViewRendered, this);
+    this.view.on('after:show', this.handlePageViewShow, this);
+    this.view.on('after:hide', this.handlePageViewHide, this);
+    this.view.on('after:disposeContent', this.handlePageViewDisposed, this);
   }
 });
 
