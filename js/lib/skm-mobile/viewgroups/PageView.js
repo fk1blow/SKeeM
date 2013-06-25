@@ -41,12 +41,9 @@ var PageView = Backbone.View.extend({
    */
   renderPageContent: function(data) {
     Logger.info('PageView.renderPageContent');
-
-    this.trigger('before:renderContent');
+    Logger.debug('%c@todo : PageView : implement the layout render mechanism', 'color:red');
 
     this.ensurePageSkeletonAttached();
-
-    Logger.debug('%c@todo : PageView : implement the layout render mechanism', 'color:red');
     this.$el.html(data);
 
     this.trigger('after:renderContent');
@@ -59,13 +56,14 @@ var PageView = Backbone.View.extend({
    */
   renderPrefetchedPage: function() {
     Logger.info('PageView.renderPrefetchedPage');
-
     Logger.debug('%c@todo : PageView : implement the layout render mechanism', 'color:red');
 
-    var containerId = 'page' + this.options.identifier
-    var $existingPageSkeleton = $('#' + containerId);
+    var containerId = 'page' + this.options.identifier;
+    this.setElement($('#' + containerId));
 
-    this.setElement($existingPageSkeleton);
+    this.trigger('after:renderContent');
+
+    return this;
   },
 
   /**
@@ -79,6 +77,7 @@ var PageView = Backbone.View.extend({
     // if the view decides otherwise
     if ( this.shouldEmptyContentOnDispose() )
       this.emptyPageContent();
+    this.trigger('after:disposeContent');
     return this;
   },
 
@@ -98,7 +97,6 @@ var PageView = Backbone.View.extend({
    */
   emptyPageContent: function() {
     this.$el.empty();
-    this.trigger('after:clearPageContent');
     return this;
   },
 
@@ -111,8 +109,11 @@ var PageView = Backbone.View.extend({
    * Displays the content on the framework
    */
   show: function() {
-    this.trigger('before:displayContent');
+    this.trigger('before:show');
     this.$el.addClass(this._activePageClass);
+    Logger.debug('%c@todo : PageView : trigger the "after:show" event, after the show animation has ended', 'color:red');
+    // @todo should be triggered after the animation has ended
+    this.trigger('after:show');
     return this;
   },
 
@@ -120,8 +121,11 @@ var PageView = Backbone.View.extend({
    * Hides the page content on the framework
    */
   hide: function() {
-    this.trigger('before:hideContent');
+    this.trigger('before:hide');
     this.$el.removeClass(this._activePageClass);
+    Logger.debug('%c@todo : PageView : trigger the "after:hide" event, after the hide animation has ended', 'color:red');
+    // @todo should be triggered after the animation has ended
+    this.trigger('after:hide');
     return this;
   },
 
