@@ -184,7 +184,7 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
 
   _getControllerPath: function(identifier) {
     var pathInFolder = identifier.toLowerCase().replace(/[^\w\d]+/g, '');
-    var controllerName = identifier + ConfigManager.getPrefixFor('PageController');
+    var controllerName = identifier + ConfigManager.getPrefix('PageController');
     var controllersPath = 'controllers';
     return controllersPath + '/' + pathInFolder + '/' + controllerName;
   },

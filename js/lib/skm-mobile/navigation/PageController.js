@@ -193,7 +193,7 @@ _.extend(PageController.prototype, Backbone.Events, {
    * @return {String} page view name
    */
   getViewNormalizedName: function() {
-    var prefix = ConfigManager.getPrefixFor('PageView');
+    var prefix = ConfigManager.getPrefix('PageView');
     if ( ! this.viewNormalizedName )
       this.viewNormalizedName = this.identifier + prefix;
     return this.viewNormalizedName;

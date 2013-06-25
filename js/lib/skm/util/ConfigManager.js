@@ -12,7 +12,7 @@ var Errors = {
 
 
 var configurationList = {
-  prefixes: null
+  prefix: null
 };
 
 
@@ -26,10 +26,10 @@ return {
     return configurationList;
   },
 
-  getPrefixFor: function(module) {
-    var prefix = null;
-    if ( module in configurationList.prefixes )
-      prefix = configurationList.prefixes[module];
+  getPrefix: function(configAttr) {
+    var prefix = null, list = this.getConfigurationList().prefix;
+    if ( configAttr in list )
+      prefix = list[configAttr];
     return prefix;
   }
 }
