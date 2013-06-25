@@ -10,32 +10,29 @@ var Errors = {
     + " configuration list already added"
 }
 
-var ConfigManager = (function() {
-  var configurationList = null;
 
-  return {
-    addConfigurationList: function(config) {
-      if ( configurationList != null ) {
-        throw new Error(Errors.LIST_ALREADY_ADDED);
-      }
-      configurationList = config;
-    },
+var configurationList = {
+  prefixes: null
+};
 
-    getConfigurationList: function() {
-      return configurationList;
-    },
 
-    getModulePrefixes: function() {
-      var prefixes = null;
-      if ( configurationList )
-        prefixes = configurationList.prefixes;
-      return prefixes;
-    }
+return {
+  addConfigurationList: function(list) {
+    configurationList = list;
+    return this;
+  },
+
+  getConfigurationList: function() {
+    return configurationList;
+  },
+
+  getPrefixFor: function(module) {
+    var prefix = null;
+    if ( module in configurationList.prefixes )
+      prefix = configurationList.prefixes[module];
+    return prefix;
   }
-}());
-
-
-return ConfigManager;
+}
 
 
 });
