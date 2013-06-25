@@ -10,7 +10,10 @@ define(['skm/k/Object',
 'use strict';
 
 
-Logger.debug('%c@todo load template using require when declaring PageView dependencies', 'color:red');
+var Logger = new SKMLogger();
+
+
+Logger.debug('%c@todo : PageView : load the template using require, when declaring PageView dependencies', 'color:red');
 // define(['skm/k/Object', 'mytemplate'....
 
 
@@ -43,7 +46,7 @@ var PageView = Backbone.View.extend({
 
     this.ensurePageSkeletonAttached();
 
-    Logger.debug('%c@todo implement the layout render mechanism', 'color:red');
+    Logger.debug('%c@todo : PageView : implement the layout render mechanism', 'color:red');
     this.$el.html(data);
 
     this.trigger('after:renderContent');
@@ -57,7 +60,7 @@ var PageView = Backbone.View.extend({
   renderPrefetchedPage: function() {
     Logger.info('PageView.renderPrefetchedPage');
 
-    Logger.debug('%c@todo implement the layout render mechanism', 'color:red');
+    Logger.debug('%c@todo : PageView : implement the layout render mechanism', 'color:red');
 
     var containerId = 'page' + this.options.identifier
     var $existingPageSkeleton = $('#' + containerId);
