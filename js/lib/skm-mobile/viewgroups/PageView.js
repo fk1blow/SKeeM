@@ -52,8 +52,6 @@ var PageView = Backbone.View.extend({
    */
   renderTemplateData: function(templateData) {
     Logger.info('PageView.renderTemplateData');
-    
-    this._ensureSkeletonIsAttached();
 
     this.$el.html(this.template(templateData));
 
@@ -85,9 +83,11 @@ var PageView = Backbone.View.extend({
    */
   dispose: function() {
     this.trigger('before:dispose');
+
     // if the view decides otherwise
     if ( this.shouldEmptyContentOnDispose() )
       this.emptyPageContent();
+    
     this.trigger('after:dispose');
     return this;
   },
