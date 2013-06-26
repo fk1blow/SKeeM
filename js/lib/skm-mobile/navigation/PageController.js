@@ -22,32 +22,30 @@ var TemplatesExtension = '.html';
  */
 var AbstractHandlers = {
   /**
-   * Handled after the page was attached to the dom
-   * @description  if the dom element is already in the framework, the events
-   * will still be triggered
+   * Handled after the view is initialized and added to the dom(if not already)
    */
-  handlePageViewRendered: function() {
+  pageLoaded: function() {
     return this;
   },
 
   /**
    * Handled after the view has been received the dispose command
    */
-  handlePageViewDisposed: function() {
+  pageDisposed: function() {
     return this;
   },
 
   /**
    * Handled after the page view has finished the "show" animation
    */
-  handlePageViewShow: function() {
+  pageDisplayed: function() {
     return this;
   },
 
   /**
    * Handled after the page view has finished the "hide" animation
    */
-  handlePageViewHide: function() {
+  pageHidden: function() {
     return this;
   }
 };
@@ -79,31 +77,26 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
 
   handleViewLoaded: function() {
     Logger.info('PageController.handleViewLoaded');
-
-    // attach some events on the PageView
-    this._attachViewEvents();
-
-    // loads the page view content
-    this.loadContent();
+    this.view.prepareTemplate();
   },
 
-  handlePageContentLoaded: function(contentData) {
-    Logger.info('PageController.handlePageContentLoaded');
-
-    // render content on the view
-    this.view.renderPageContent(contentData);
-    
-    // tell the nav controller that the view's content has been loaded
-    this.trigger('pageSetupComplete');
+  handleViewNeedsData: function() {
+    Logger.info('PageController.handleViewNeedsData');
+    this._requestTemplateData();
   },
 
-  handlePageAlreadyHasContent: function() {
-    Logger.info('PageController.handlePageAlreadyHasContent');
+  handleDataLoadingSuccess: function(templateData) {
+    Logger.info('PageController.handleDataLoadingSuccess');
+    this.view.renderTemplateData(templateData);
+  },
 
-    // render the page by attaching to the existing layout elements
-    this.view.renderPrefetchedPage();
+  handleDataLoadingError: function() {
+    Logger.error('PageController.handleDataLoadingError');
+    this.trigger('pageSetupError');
+  },
 
-    // tell the nav controller that the view's content has been loaded
+  handleViewRendered: function() {
+    Logger.info('PageController.handleViewRendered');
     this.trigger('pageSetupComplete');
   },
 
@@ -130,7 +123,7 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
    */
   disposePage: function() {
     Logger.info('PageController.disposePage');
-    this.view.disposeContent();
+    this.view.dispose();
     this.pageContent = null;
     return this;
   },
@@ -150,41 +143,15 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
    * @param  {Function} callback method callback handler
    */
   loadView: function() {
-    var that = this, viewName = "";
-    
-    if ( this.view == null ) {
+    var that = this, viewPath = this._getPageViewPath(this.identifier);
+
+    if ( this.view === null ) {
       Logger.debug('PageController : view is null; loading view constructor');
-      this._requireView(this.getViewNormalizedName(), this.handleViewLoaded);
-    } else {
-      Logger.debug('PageController : view already set');
-      this.handleViewLoaded();
-    }
-
-    return this;
-  },
-
-  /**
-   * Loads the content of the page view
-   *
-   * @description it first asks the PageView if it should attempt
-   * to load the content and if so, it makes an ajax request for a file
-   * name [this.identifier] + 'View' + [TemplatesExtension]
-   *
-   * @todo this is not the actual content of the view but it's data
-   * that will fill in the template of the PageView.
-   * Therefor, should be renamed to loadPageData or ...
-   */
-  loadContent: function() {
-    Logger.info('PageController.loadContent');
-    var viewPath = null;
-
-    if ( this.pageViewNeedsContent() ) {
-      Logger.debug('PageController : will load content.');
-      viewPath = this.getViewContentPath(this.getViewNormalizedName());
-      this._requestContent(viewPath, this.handlePageContentLoaded);
-    } else {
-      Logger.debug('PageController : content already loaded');
-      this.handlePageAlreadyHasContent();
+      require([viewPath], function(viewConstructor) {
+        that.view = new viewConstructor({ identifier: that.identifier });
+        that._attachViewEvents();
+        that.handleViewLoaded();
+      });
     }
 
     return this;
@@ -194,15 +161,6 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
     Content management
     ------------------
    */
-
-  /**
-   * Asks the controller if it should attempt to load the page view's content
-   * 
-   * @return {Boolean}
-   */
-  pageViewNeedsContent: function() {
-    return ( this.view && ! this.view.pageAlreadyHasContent() );
-  },
 
   /**
    * Returns the default implicit path of the page view
@@ -243,25 +201,6 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
     --------
    */
 
-  _requireView: function(identifier, callback) {
-    var that = this;
-    var viewPath = this._getPageViewPath(identifier);
-
-    require([viewPath], function(viewConstructor) {
-      // that.pageContent = new PageContentModel({ url: window.location.pathname });
-
-      // set the page view instance
-      that.view = new viewConstructor({
-        identifier: that.identifier
-        // model: contentModel
-      });
-
-      // that._attachPageViewEvents();
-
-      callback.call(that);
-    });
-  },
-
   _getPageViewPath: function() {
     var pathInFolder = this.identifier.toLowerCase().replace(/[^\w\d]+/g, '');
     var viewName = this.getViewNormalizedName();
@@ -271,32 +210,29 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
 
   // @todo make the loading mechanism, higly customisable
   // by letting the PageController to set its content path
-  _requestContent: function(viewPath, callback) {
+  _requestTemplateData: function(callback) {
     var contentPath = window.location.pathname;
-
     var req = $.ajax({
       url: contentPath,
-      
       context: this,
-
       data: { ajax: true },
-
-      error: function() {
-        this.trigger('pageSetupError');
-      },
-
-      success: function(contentData) {
-        // this.pageContent = contentData;
-        callback.call(this, contentData);
-      }
+      error: this.handleDataLoadingError,
+      success: this.handleDataLoadingSuccess
     });
   },
 
   _attachViewEvents: function() {
-    this.view.on('after:renderContent', this.handlePageViewRendered, this);
-    this.view.on('after:show', this.handlePageViewShow, this);
-    this.view.on('after:hide', this.handlePageViewHide, this);
-    this.view.on('after:disposeContent', this.handlePageViewDisposed, this);
+    this.view.on('needsTemplateData', this.handleViewNeedsData, this);
+
+    // called directly on the overridden methods
+    this.view.on('templateRendered', function() {
+        this.pageLoaded();
+        this.handleViewRendered();
+      }, this);
+
+    this.view.on('after:show', this.pageDisplayed, this)
+      .on('after:hide', this.pageHidden, this)
+      .on('after:dispose', this.pageDisposed, this);
   }
 });
 
