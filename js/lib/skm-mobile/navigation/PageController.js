@@ -24,28 +24,28 @@ var AbstractHandlers = {
   /**
    * Handled after the view is initialized and added to the dom(if not already)
    */
-  pageLoaded: function() {
+  afterPageLoaded: function() {
     return this;
   },
 
   /**
    * Handled after the view has been received the dispose command
    */
-  pageDisposed: function() {
+  afterPageDisposed: function() {
     return this;
   },
 
   /**
    * Handled after the page view has finished the "show" animation
    */
-  pageDisplayed: function() {
+  afterPageDisplayed: function() {
     return this;
   },
 
   /**
    * Handled after the page view has finished the "hide" animation
    */
-  pageHidden: function() {
+  afterPageHidden: function() {
     return this;
   }
 };
