@@ -40,8 +40,10 @@ var PageView = Backbone.View.extend({
     Logger.info('PageView.prepareTemplate');
 
     if ( this.pageNeedsRender() ) {
+      Logger.debug('PageView : page needs render');
       this.trigger('needsTemplateData');
     } else {
+      Logger.debug('PageView : render prefetched content');
       this.renderPrefetched();
     }
   },
