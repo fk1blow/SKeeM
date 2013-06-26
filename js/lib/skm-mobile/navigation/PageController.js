@@ -252,7 +252,7 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
 
       // set the page view instance
       that.view = new viewConstructor({
-        identifier: that.identifier,
+        identifier: that.identifier
         // model: contentModel
       });
 
