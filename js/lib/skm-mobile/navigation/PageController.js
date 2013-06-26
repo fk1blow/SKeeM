@@ -226,13 +226,13 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
 
     // called directly on the overridden methods
     this.view.on('templateRendered', function() {
-        this.pageLoaded();
+        this.afterPageLoaded();
         this.handleViewRendered();
       }, this);
 
-    this.view.on('after:show', this.pageDisplayed, this)
-      .on('after:hide', this.pageHidden, this)
-      .on('after:dispose', this.pageDisposed, this);
+    this.view.on('after:show', this.afterPageDisplayed, this)
+      .on('after:hide', this.afterPageHidden, this)
+      .on('after:dispose', this.afterPageDisposed, this);
   }
 });
 
