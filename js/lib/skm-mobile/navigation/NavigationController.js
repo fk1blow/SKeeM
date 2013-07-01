@@ -66,10 +66,10 @@ NavigationTask.prototype = {
  * @todo add methods for interogating this object about the
  * pages controller stack, its state and various assets that it holds
  */
-var NavigationController = function() {
+var NavigationController = function(options) {
   this.activeController = null;
   this.currentTask = null;
-  this.activeController = new ActiveController();
+  this.activeController = new ActiveController(options);
 }
 
 

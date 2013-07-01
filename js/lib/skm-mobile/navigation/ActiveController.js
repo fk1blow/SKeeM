@@ -3,11 +3,8 @@
 
 define(['skm/util/Logger',
   'skm-mobile/navigation/ErrorsConstants',
-  'skm-mobile/navigation/ActionDispatcher',
-  'skm-mobile/EventCenter',
-  'skm/util/ConfigManager'],
-  function(SKMLogger, ErrorsConstants,
-    ActionDispatcher, EventCenter, ConfigManager)
+  'skm-mobile/navigation/ActionDispatcher'],
+  function(SKMLogger, ErrorsConstants, ActionDispatcher)
 {
 'use strict';
 
@@ -15,7 +12,7 @@ define(['skm/util/Logger',
 var Logger = new SKMLogger();
 
 
-var EventCenter = EventCenter.getInstance();
+// var EventCenter = EventCenter.getInstance();
 
 
 var ControllersList = {
@@ -45,7 +42,7 @@ var ControllersList = {
  * @description acts as the Mediator between the current active PageController
  * and the NavigationController that sends it commands
  */
-var ActiveController = function() {
+var ActiveController = function(options) {
   this._controllerStack = {};
   this._activeController = null;
   this._previousController = null;
@@ -53,6 +50,7 @@ var ActiveController = function() {
   this._actionDispatcher = new ActionDispatcher();
   this._navigationTask = null;
   this._beforeTransitionDelay = 50;
+  _.extend(this, options);
 }
 
 
@@ -107,7 +105,7 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
     this._navigationTask.setTaskDone();
 
     // notify app about page activated...
-    EventCenter.trigger('PageActivated');
+    this.EventCenter.trigger('PageActivated');
   },
 
   handlePageSetupComplete: function() {
@@ -184,9 +182,9 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
 
   _getControllerPath: function(identifier) {
     var pathInFolder = identifier.toLowerCase().replace(/[^\w\d]+/g, '');
-    var controllerName = identifier + ConfigManager.getPrefix('PageController');
-    var controllersPath = 'controllers';
-    return controllersPath + '/' + pathInFolder + '/' + controllerName;
+    var moduleName = identifier + this.ConfigManager.getPrefix('PageController');
+    var basePath = 'controllers';
+    return basePath + '/' + pathInFolder + '/' + moduleName;
   },
 
   _disposePreviousController: function() {
