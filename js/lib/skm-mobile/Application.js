@@ -15,7 +15,7 @@ var Application = function() {
 
   this.VERSION = "0.1.0";
 
-  this.Config = ConfigManager;
+  this.ConfigManager = new ConfigManager();
 
   this.EventCenter = new EventCenter();
 

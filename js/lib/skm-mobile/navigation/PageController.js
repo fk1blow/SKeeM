@@ -1,8 +1,8 @@
 
 // Page controller
 
-define(['skm/util/Logger', 'skm/util/ConfigManager'],
-  function(SKMLogger, ConfigManager)
+define(['skm/util/Logger'],
+  function(SKMLogger)
 {
 'use strict';
 
@@ -52,11 +52,10 @@ var AbstractHandlers = {
 
 
 var PageController = function(options) {
-  options || (options = {});
   this.view = null;
   this.pageContent = null;
-  this.identifier = options.identifier || null;
   this.viewNormalizedName = null;
+  _.extend(this.options = {}, options);
   this.initialize.apply(this, arguments);
 }
 
@@ -143,12 +142,12 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
    * @param  {Function} callback method callback handler
    */
   loadView: function() {
-    var that = this, viewPath = this._getPageViewPath(this.identifier);
+    var that = this, viewPath = this._getPageViewPath(this.options.identifier);
 
     if ( this.view === null ) {
       Logger.debug('PageController : view is null; loading view constructor');
       require([viewPath], function(viewConstructor) {
-        that.view = new viewConstructor({ identifier: that.identifier });
+        that.view = new viewConstructor({ identifier: that.options.identifier });
         that._attachViewEvents();
         that.handleViewLoaded();
       });
@@ -190,9 +189,9 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
    * @return {String} page view name
    */
   getViewNormalizedName: function() {
-    var prefix = ConfigManager.getPrefix('PageView');
+    var prefix = this.options.ConfigManager.getPrefix('PageView');
     if ( ! this.viewNormalizedName )
-      this.viewNormalizedName = this.identifier + prefix;
+      this.viewNormalizedName = this.options.identifier + prefix;
     return this.viewNormalizedName;
   },
 
@@ -202,7 +201,8 @@ _.extend(PageController.prototype, Backbone.Events, AbstractHandlers, {
    */
 
   _getPageViewPath: function() {
-    var pathInFolder = this.identifier.toLowerCase().replace(/[^\w\d]+/g, '');
+    var pathInFolder = this.options.identifier
+      .toLowerCase().replace(/[^\w\d]+/g, '');
     var viewName = this.getViewNormalizedName();
     var viewsPath = 'views';
     return viewsPath + '/' + pathInFolder + '/' + viewName;

@@ -47,7 +47,7 @@ var ActiveController = function(options) {
   this._actionDispatcher = new ActionDispatcher();
   this._navigationTask = null;
   this._beforeTransitionDelay = 50;
-  _.extend(this, options);
+  _.extend(this.options = {}, options);
 }
 
 
@@ -102,7 +102,7 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
     this._navigationTask.setTaskDone();
 
     // notify app about page activated...
-    this.EventCenter.trigger('PageActivated');
+    this.options.EventCenter.trigger('PageActivated');
   },
 
   handlePageSetupComplete: function() {
@@ -170,7 +170,12 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
       this.handlControllerRequired(this._controllerStack[identifier]);
     } else {
       require([controllerPath], function(constructor) {
-        instance = new constructor({ identifier: identifier });
+        // Create the PageController instance and pass its options
+        instance = new constructor({
+          identifier: identifier,
+          EventCenter: that.options.EventCenter,
+          ConfigManager: that.options.ConfigManager
+        });
         that.addController(identifier, instance);
         that.handlControllerRequired(instance);
       });
@@ -179,9 +184,9 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
 
   _getControllerPath: function(identifier) {
     var pathInFolder = identifier.toLowerCase().replace(/[^\w\d]+/g, '');
-    var moduleName = identifier + this.ConfigManager.getPrefix('PageController');
-    var basePath = 'controllers';
-    return basePath + '/' + pathInFolder + '/' + moduleName;
+    var moduleName = identifier + this.options.ConfigManager
+      .getPrefix('PageController');
+    return 'controllers/' + pathInFolder + '/' + moduleName;
   },
 
   _disposePreviousController: function() {
