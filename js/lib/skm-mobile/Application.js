@@ -14,20 +14,25 @@ define(['skm/util/Logger',
 var resizeTickerTimeout, resizeTickerFirst = 0;
 
 
-var Application = function() {
-  this.NAME = "BetBrain Mobile";
+var Application = function(options) {
+  var options = options || {};
 
-  this.VERSION = "0.1.0";
+  this.NAME = options.NAME || "AppX";
+
+  this.VERSION = options.VERSION || "0.x.0";
 
   this.ConfigManager = new ConfigManager();
 
   this.EventCenter = new EventCenter();
 
+  // Pass the EventCenter and the ConfigManager as a Depencency
+  // to the application's NavigationController instance
   this.Navigation = new NavigationController({
     EventCenter: this.EventCenter,
     ConfigManager: this.ConfigManager
   });
 
+  // attach application-wide events
   this._attachApplicationEvents();
 };
 
