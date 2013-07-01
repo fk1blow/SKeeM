@@ -12,9 +12,6 @@ define(['skm/util/Logger',
 var Logger = new SKMLogger();
 
 
-// var EventCenter = EventCenter.getInstance();
-
-
 var ControllersList = {
   addController: function(identifier, controllerInstance) {
     if ( this.controllerInStack(identifier) )
