@@ -21,6 +21,8 @@ var Application = function(options) {
 
   this.VERSION = options.VERSION || "0.x.0";
 
+  this.BASEURL = options.BASEURL || null;
+
   this.ConfigManager = new ConfigManager();
 
   this.EventCenter = new EventCenter();
