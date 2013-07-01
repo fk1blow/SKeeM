@@ -4,10 +4,10 @@
 define(['skm/util/Logger',
   'skm-mobile/navigation/ErrorsConstants',
   'skm-mobile/navigation/ActionDispatcher',
-  'skm-mobile/NotificationCenter',
+  'skm-mobile/EventCenter',
   'skm/util/ConfigManager'],
   function(SKMLogger, ErrorsConstants,
-    ActionDispatcher, NotificationCenter, ConfigManager)
+    ActionDispatcher, EventCenter, ConfigManager)
 {
 'use strict';
 
@@ -15,7 +15,7 @@ define(['skm/util/Logger',
 var Logger = new SKMLogger();
 
 
-var Notifications = NotificationCenter.getInstance();
+var EventCenter = EventCenter.getInstance();
 
 
 var ControllersList = {
@@ -107,7 +107,7 @@ _.extend(ActiveController.prototype, Backbone.Events, ControllersList, {
     this._navigationTask.setTaskDone();
 
     // notify app about page activated...
-    Notifications.trigger('PageActivated');
+    EventCenter.trigger('PageActivated');
   },
 
   handlePageSetupComplete: function() {
