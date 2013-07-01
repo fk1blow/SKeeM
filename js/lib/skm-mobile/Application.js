@@ -41,8 +41,11 @@ var Application = function(options) {
 
 Application.prototype = {
 
-  start: function() {
-    // @tbd
+  startApplication: function(withPageController) {
+    var that = this;
+    $(function() {
+      that.Navigation.navigateToPage(withPageController);
+    });
   },
 
   _attachApplicationEvents: function() {
