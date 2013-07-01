@@ -17,11 +17,11 @@ var Application = function() {
 
   this.Config = ConfigManager;
 
-  this.EventCenter = EventCenter;
+  this.EventCenter = new EventCenter();
 
   this.Navigation = new NavigationController({
-    EventCenter: EventCenter,
-    ConfigManager: ConfigManager
+    EventCenter: this.EventCenter,
+    ConfigManager: this.ConfigManager
   });
 }
 

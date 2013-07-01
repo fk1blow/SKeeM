@@ -11,19 +11,21 @@ var Errors = {
 }
 
 
-var configurationList = {
-  prefix: null
-};
+var ConfigManager = function() {
+  this.configurationList = {
+    prefix: null
+  };
+}
 
 
-return {
+ConfigManager.prototype = {
   addConfigurationList: function(list) {
-    configurationList = list;
+    this.configurationList = list;
     return this;
   },
 
   getConfigurationList: function() {
-    return configurationList;
+    return this.configurationList;
   },
 
   getPrefix: function(configAttr) {
@@ -33,6 +35,9 @@ return {
     return prefix;
   }
 }
+
+
+return ConfigManager;
 
 
 });
