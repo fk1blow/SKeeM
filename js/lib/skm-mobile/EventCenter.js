@@ -11,17 +11,25 @@ var EventCenter = function() {};
 _.extend(EventCenter.prototype, Backbone.Events);
 
 
-return (function() {
-  var EventCenterInstance = null;
+var eventCenterInstance = null;
+
+
+return eventCenterInstance == null
+  ? (eventCenterInstance = new EventCenter())
+  : eventCenterInstance;
+
+
+/*return (function() {
+  var instance = null;
 
   return {
     getInstance: function() {
-      if ( EventCenterInstance == null )
-        EventCenterInstance = new EventCenter();
-      return EventCenterInstance;
+      if ( instance == null )
+        instance = new EventCenter();
+      return instance;
     }
   }
-}());
+}());*/
 
 
 });

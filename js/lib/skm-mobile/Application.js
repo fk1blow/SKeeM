@@ -1,27 +1,31 @@
   
 // Match List View
 
-define(['skm/util/Logger'],
-  function(SKMLogger) {
+define(['skm/util/Logger',
+  'skm-mobile/navigation/NavigationController',
+  'skm/util/ConfigManager',
+  'skm-mobile/EventCenter'],
+  function(SKMLogger, NavigationController, ConfigManager, EventCenter)
+{
 'use strict';
 
 
-var Logger = new SKMLogger();
+var Application = function() {
+  this.NAME = "BetBrain Mobile";
+
+  this.VERSION = "0.1.0";
+
+  this.Config = ConfigManager;
+
+  this.EventCenter = EventCenter;
+
+  this.Navigation = new NavigationController({
+    EventCenter: EventCenter,
+    ConfigManager: ConfigManager
+  });
+}
 
 
-var Application = {
-  Name: "BetBrain Mobile",
-
-  Version: "0.0.2",  
-
-  Config: null,
-
-  Navigation: null,
-
-  EventCenter: null
-};
-
-// @todo decide if this becomes a fct constructor or will remain a plain object
 return Application;
 
 
