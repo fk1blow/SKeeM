@@ -19,7 +19,7 @@ var Application = function(options) {
 
   this.NAME = options.NAME || "AppX";
 
-  this.VERSION = options.VERSION || "0.x.0";
+  this.VERSION = options.VERSION || "x.x.x";
 
   this.BASEURL = options.BASEURL || null;
 
