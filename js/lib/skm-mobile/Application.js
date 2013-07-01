@@ -10,6 +10,10 @@ define(['skm/util/Logger',
 'use strict';
 
 
+/** screen resize events variables */
+var resizeTickerTimeout, resizeTickerFirst = 0;
+
+
 var Application = function() {
   this.NAME = "BetBrain Mobile";
 
@@ -23,6 +27,31 @@ var Application = function() {
     EventCenter: this.EventCenter,
     ConfigManager: this.ConfigManager
   });
+
+  this._attachApplicationEvents();
+};
+
+
+Application.prototype = {
+
+  start: function() {
+    // @tbd
+  },
+
+  _attachApplicationEvents: function() {
+    var that = this;
+
+    $(window).resize(function() {
+      clearTimeout(resizeTickerTimeout);
+
+      resizeTickerTimeout = setTimeout(function() {
+        that.EventCenter.trigger('window:resized');
+        resizeTickerFirst = 0;
+      }, 500);
+
+      resizeTickerFirst = 1;
+    });
+  }
 }
 
 
