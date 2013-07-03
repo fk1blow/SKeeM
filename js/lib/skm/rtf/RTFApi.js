@@ -153,13 +153,27 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     // creates the connector manager
     this._buildConnectorManager();
     // prepare before unload auto disconnect
-    var that = this; window.onbeforeunload = function() {
-      that.shutdown({ async: false });
+    var that = this;
+    that.unloadfired=false;
+      jQuery(window).unload(function(){
+          if (that.unloadfired==false){
+              that.unloadfired=true;
+              that.shutdown({ async: false });
+          }
+      });
+      window.onbeforeunload = function() {
+          if (that.unloadfired==false){
+              that.unloadfired=true;
+              that.shutdown({ async: false });
+          }
     };
   },
 
   /**
    * Starts the connectors updates
+   * 
+   * @description starts the connector and update process - it tries to get
+   * the list of subscriptions and sends those messages to the server api
    */
   startUpdates: function() {
     this.connectorsManager.startConnectors();
@@ -168,6 +182,9 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
 
   /**
    * Stops the connectors updates
+   *
+   * Currently, the correct method for closing a subscription
+   * is to send a shutdown message to the API
    * 
    * @description stops the updates and disconnects/interrupts 
    * current transport, making it avaiable for a resume call.
