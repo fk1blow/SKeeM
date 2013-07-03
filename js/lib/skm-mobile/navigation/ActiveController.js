@@ -1,4 +1,11 @@
 
+/**
+ * @todo
+ * - don't change the [_activeController] if only the action is changing
+ * - beware of disposing the wrong PageController
+ * - test the same-controller-differrent-action logic
+ */
+
 // Action controller 
 
 define(['skm/util/Logger',
