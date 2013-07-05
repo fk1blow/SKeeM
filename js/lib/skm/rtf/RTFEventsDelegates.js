@@ -89,17 +89,17 @@ var EventsDelegates = {
    */
   handleApiMessage: function(data) {
     if ( 'update' in data ) {
-      Logger.debug('RTFApi : update, data =', data);
+      // Logger.debug('RTFApi : update, data =', data);
       this.handleMessageSections(data['update']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'reconfirmation' in data ) {
-      Logger.debug('RTFApi : reconfirmation, data =', data);
+      // Logger.debug('RTFApi : reconfirmation, data =', data);
       this.handleMessageSections(data['reconfirmation']);
       this.handleUpdateBatchId(data['batchId']);
     }
     else if ( 'noupdates' in data ) {
-      Logger.debug('RTFApi : noupdates, batchId =', this._batchId);
+      // Logger.debug('RTFApi : noupdates, batchId =', this._batchId);
       // Just send the same batchId, over and over again
       // If no param given, take the current batchId - this.batchId
       this.handleUpdateBatchId(this._batchId); 
