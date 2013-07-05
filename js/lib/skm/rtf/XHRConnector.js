@@ -28,7 +28,7 @@ var EventsDelegates = {
    * @param  {Object} message JSON message send by rtf server api
    */
   handleReceivedMessage: function(message) {
-    Logger.info('Connector.handleReceivedMessage');
+//    Logger.info('Connector.handleReceivedMessage');
     this.fire('api:message', message);
   },
   
@@ -88,7 +88,7 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   sendMessage: function(message) {
-    Logger.debug('%cXHRConnector : sending message : ', 'color:green', message);
+//    Logger.debug('%cXHRConnector : sending message : ', 'color:green', message);
     this.transport.sendMessage({ message: message });
   },
 

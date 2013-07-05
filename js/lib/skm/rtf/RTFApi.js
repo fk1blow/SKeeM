@@ -4,7 +4,7 @@
  * 
  * Dragos Tudorache, BetBrain Ltd.
  * http://betbrain.com
- * RTF may be freely distributed under the MIT license.
+ * RTF.js may be freely distributed under the MIT license.
  */
 define(['skm/k/Object',
   'skm/util/Logger',

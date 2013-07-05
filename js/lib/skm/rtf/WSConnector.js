@@ -146,7 +146,7 @@ var WSConnector = BaseConnector.extend(EventsDelegates, {
    * @param  {String} message   the message to be sent to endpoint
    */
   sendMessage: function(message) {
-    Logger.debug('%cWSConnector : sending message : ', 'color:green', message);
+//    Logger.debug('%cWSConnector : sending message : ', 'color:green', message);
     this.transport.send(message);
   },
 

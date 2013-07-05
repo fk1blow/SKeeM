@@ -108,7 +108,6 @@ var Manager = SKMObject.extend(Subscribable, {
 
   initialize: function(options) {
     options || (options = {});
-    Logger.debug('%cnew Manager', 'color:#a2a2a2');
     this.sequence = options.sequence;
     this.connectorsUrlParamModel = options.connectorsUrlParamModel;
     this.connectorsOptions = options.connectorsOptions;

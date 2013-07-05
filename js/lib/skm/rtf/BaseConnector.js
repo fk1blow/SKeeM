@@ -59,7 +59,7 @@ var BaseConnector = SKMObject.extend(Subscribable, {
     options || (options = {});
     this.urlParamModel = options.urlParamModel;
     this.maxReconnectAttempts = options.maxReconnectAttempts || 3;
-    this.reconnectDelay = options.reconnectDelay || 3000;
+    this.reconnectDelay = options.reconnectDelay || 1200;
     this.transportOptions = options.transportOptions || null;
   },
 
