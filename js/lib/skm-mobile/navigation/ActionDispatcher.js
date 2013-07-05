@@ -1,4 +1,3 @@
-
 // Action dispatcher
 
 define(['skm/util/Logger'], function(SKMLogger) {
@@ -30,7 +29,8 @@ ActionDispatcher.prototype = {
 
     // theres a problem if no controller is found
     if ( ! controller ) {
-      throw new Error("No controller assigned for this action");
+      // throw new Error("No controller assigned for this action");
+      throw new Error("No controller found to dispatch this action.");
     }
 
     // if the controller object contains the required action
