@@ -29,7 +29,7 @@ ActionDispatcher.prototype = {
 
     // theres a problem if no controller is found
     if ( ! controller ) {
-      // throw new Error("No controller assigned for this action");
+      // throw new Error("No controller assigned for this action"); 
       throw new Error("No controller found to dispatch this action.");
     }
 
