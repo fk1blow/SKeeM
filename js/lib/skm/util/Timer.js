@@ -4,6 +4,7 @@
 define(['skm/util/Subscribable',
   'skm/k/Object'], function(Subscribable, SKMObject)
 {
+'use strict';
 
 
 /**
@@ -14,7 +15,7 @@ define(['skm/util/Subscribable',
  * i had to borrow much of the logic from google closure's timer.
  * @link http://closure-library.googlecode.com/svn/docs/closure_goog_timer_timer.js.html
  */
-Timer = SKMObject.extend(Subscribable, {
+var Timer = SKMObject.extend(Subscribable, {
   // How many times the interval will
   // trigger a tick; (x < 1) == infinity
   ticks: 1,
@@ -38,7 +39,7 @@ Timer = SKMObject.extend(Subscribable, {
   initialize: function(options) {
     options || (options = {});
     this._timerObject = null;
-    this.ticks = options.ticks || 1;
+    this.ticks = (options.ticks === 0) ? 0  : options.ticks;
     this.tickInterval = options.tickInterval || 1000;
   },
 
@@ -61,8 +62,8 @@ Timer = SKMObject.extend(Subscribable, {
   },
 
   stop: function() {
+    var lastTickCounter = this.getTicks();
     this.enabled = false;
-    var lastTickCounter = this.getTicksCounter();
     this._tickCounter = 0;
     if ( this._timerObject ) {
       clearTimeout(this._timerObject);
@@ -84,22 +85,18 @@ Timer = SKMObject.extend(Subscribable, {
    */
 
   getTicks: function() {
-    if ( this.ticks < 0 ) {
+    if ( this.ticks < 1 )
       return 0;
-    } else {
+    else
       return this.ticks;
-    }
   },
 
-  setTicks: function(val) {
-    if ( typeof val !== 'number' ) {
-      val = 1;
-    }
-    this.ticks = val;
-  },
 
-  getTicksCounter: function() {
-    return this._tickCounter;
+  maxTicksReached: function() {
+    if ( this.getTicks() === 0 )
+      return false;
+    else
+      return this._tickCounter >= this.getTicks();
   },
 
   now: function() {
@@ -113,11 +110,13 @@ Timer = SKMObject.extend(Subscribable, {
   _tickTack: function() {
     if ( this.enabled ) {
       var that = this, elapsed, notSynced;
+
       // Stop if reached maximum ticks set
-      if ( this._maxTicksReached() ) {
+      if ( this.maxTicksReached() ) {
         this.stop();
         return;
       }
+
       // Synchronize the interval with the elapsed time
       // @see closure-library.googlecode.com/svn/docs/closure_goog_timer_timer.js.html
       elapsed = this.now() - this._lastTickTime;
@@ -128,9 +127,11 @@ Timer = SKMObject.extend(Subscribable, {
         }, this.tickInterval - elapsed);
         return;
       }
+      
       // Handle the ticks and increment internal counter
-      this.handleTick.call(this, this.getTicksCounter());
+      this.handleTick.call(this, this.getTicks());
       this._tickCounter++;
+      
       // In goog.timer, this re-check is required becase a timer may be
       // stopped between a tick so that [this.enabled] could be reset
       if ( this.enabled ) {
@@ -139,14 +140,6 @@ Timer = SKMObject.extend(Subscribable, {
         }, this.tickInterval);
         this._lastTickTime = this.now();
       }
-    }
-  },
-
-  _maxTicksReached: function() {
-    if ( this.getTicks() === 0 ) {
-      return false;
-    } else {
-      return this._tickCounter >= this.getTicks();
     }
   }
 });
