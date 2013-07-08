@@ -240,8 +240,6 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   _ghostTimer: null,
 
   initialize: function() {
-    Logger.debug('%cnew WSWrapper', 'color:#A2A2A2');
-
     // timer for the ping
     this._timerPing = new SKMTimer({ tickInterval: this.pingInterval, ticks: 0 });
     this._timerPing.on('tick', this.ping, this);

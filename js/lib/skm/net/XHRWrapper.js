@@ -72,7 +72,6 @@ var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
 
 	initialize: function(options) {
 		options || (options = {});
-		Logger.debug('%cnew XHRWrapper', 'color:#A2A2A2');
 		this.url = options.url || null;
 		this.async = options.async || true;
 		this.httpMethod = options.httpMethod || "POST";
