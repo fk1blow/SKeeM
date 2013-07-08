@@ -1,92 +1,130 @@
 // SKM Object utils definition
 
-define([], function()
-{
-'use strict';
-
-
-var Util = {};
+define([], function() {
+"use strict";
 
 
 /**
- * Object utils
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * @description Taken from google's closure library
+ * @link http://closure-library.googlecode.com/svn/docs/closure_goog_base.js.source.html
  */
-var ObjectUtil = {
-  /**
-   * my.class extend method
-   * @author jie http://myjs.fr/my-class/
-   * 
-   * @param  {Object} obj     target object
-   * @param  {Object} extension   template/extension object
-   * @param  {Boolean} override   if extension prop overrides the target prop
-   */
-  include: function(obj, extension, override) {
-    var prop;
-    if (override === false) {
-      for (prop in extension) {
-        if ((prop in obj)) continue;
-        obj[prop] = extension[prop];
-      }
-    } else {
-      for (prop in extension) {
-        if (extension.hasOwnProperty(prop))
-          obj[prop] = extension[prop];
-        // if (extension.toString !== Object.prototype.toString)
-        //   obj.toString = extension.toString;
-      }
+var inherits = function(childCtor, parentCtor) {
+  /** @constructor */
+  function tempCtor() {};
+  tempCtor.prototype = parentCtor.prototype;
+  childCtor.__super__ = parentCtor.prototype;
+  childCtor.prototype = new tempCtor();
+  /** @override */
+  childCtor.prototype.constructor = childCtor;
+};
+
+/**
+ * Extends a given object with a given
+ * array of extension objects
+ * 
+ * @param  {Object} target Destination object
+ */
+var mixin = function(target) {
+  var ext = [].slice.call(arguments, 1);
+  var i, prop, extension, extLen = ext.length;
+  for (i = 0; i < extLen; i++) {
+    extension = ext[i];
+    for (prop in extension) {
+      if (extension.hasOwnProperty(prop))
+        target[prop] = extension[prop];
     }
-    return obj;
-  },
-
-  /**
-   * TO BE REMOVED
-   * 
-   * Merges two or more objects
-   * 
-   * @description the merge will overrite previously declaredy attributes
-   * @param  {[type]} target the object that should be merged to
-   * @return {Object}    target merged object
-   */
-  merge: function(target) {
-    var targetObject = target;
-    var extension = Array.prototype.slice.call(arguments, 1);
-    // for each object extension, merge into target object
-    ArrayUtil.forEach(extension, function(item) {
-      if(ObjectUtil.isObject(item) == false)
-        throw new Error('Merged/Extension argument must be of type Object; [ObjectUtil.merge]');
-      ObjectUtil.include(target, item || {});
-    });
-    return target;
-  },
-
-  isObject: function(object) {
-    return Object.prototype.toString.apply(object) === '[object Object]';
   }
 };
 
+/**
+ * Creates a constructor function based its prototype
+ * to an SKMObject definition
+ * 
+ * @param  {Object} mixins     A list of zero or more Objects
+ * that represent the definition of this constructor
+ * @return {Function}  function  constructor function used as a 
+ * template for the new SKMObject
+ */
+var extend = function(extension) {
+  var args = slice.call(arguments);
+  var parent = this, child = null;
+  var i, argsLen = args.length, mixin;
+  // Use the initialize function as a function constructor
+  
+  if ( extension && ( 'initialize' in extension ) ) {
+    child = extension.initialize;
+  } else {
+    child = function() {
+      parent.apply(this, arguments);
+    }
+  }
+
+  // child = function() {
+  //   parent.apply(this, arguments);
+  // }
+
+  // Establish the base prototype chain
+  inherits(child, parent);
+
+  // Add static methods directly to child
+  // function constructor
+  mixin(child, parent);
+
+  // Inject every extension Object to [this.prototype]
+  // and see if the mixin is an Object
+  for (i = 0; i < argsLen; i++) {
+    if ( isObject(mixin = args[i]) )
+      mixin(child.prototype, mixin);
+  }
+
+  return child;
+};
 
 /**
- * Array utils
- * @type {Object}
- */ 
-var ArrayUtil = {
-  forEach: function(arr, callback, ctx) {
-    if(arr == null)
-      return;
-    var i, len = arr.length;
-    for(i = 0; i < len; i++)
-      callback.call(ctx || this, arr[i], i);
-  },
+ * Safer test for an Object
+ * though it excludes null and Array
+ * 
+ * @param  {Mixed}  obj The object to test
+ * @return {Boolean}     
+ */
+var isObject = function(obj) {
+  return Object.prototype.toString.apply(obj) === '[object Object]';
+};
 
-  isArray: function(object) {
-    return Object.prototype.toString.apply(object) === '[object Array]';
-  }
+/**
+ * Test for determining if object is an array
+ * 
+ * @param  {Mixed}  obj The object to test
+ * @return {Boolean}
+ */
+var isArray = function(obj) {
+  return Object.prototype.toString.apply(obj) === '[object Array]';
+};
+
+/**
+ * Test if the passed object is a function
+ * 
+ * @param  {Object} obj testing parameter
+ */
+var isFunction = function(obj) {
+  return (typeof obj === 'function');
 };
 
 
 return {
-	ArrayUtil: ArrayUtil,
-	ObjectUtil: ObjectUtil
+  extend: extend,
+
+  inherits: inherits,
+
+  mixin: mixin,
+
+  isObject: isObject,
+
+  isArray: isArray,
+
+  isFunction: isFunction
 }
 
 
