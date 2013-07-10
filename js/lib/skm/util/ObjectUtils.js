@@ -1,3 +1,7 @@
+
+// @deprecated
+// Use /k/Objekt instead
+
 // SKM Object utils definition
 
 define([], function() {
@@ -5,6 +9,8 @@ define([], function() {
 
 
 var slice = Array.prototype.slice;
+
+var __hasProp = {}.hasOwnProperty;
 
 
 /**
@@ -42,43 +48,22 @@ var mixin = function(target) {
 };
 
 /**
- * Creates a constructor function based its prototype
- * to an SKMObject definition
- * 
- * @param  {Object} mixins     A list of zero or more Objects
- * that represent the definition of this constructor
- * @return {Function}  function  constructor function used as a 
- * template for the new SKMObject
+ * CoffeeScript's extend function
  */
-var extend = function(protoProps) {
-  var args = slice.call(arguments);
-  var parent = this, child = null;
-  var i, argsLen = args.length;
-
-  // Use the initialize function as a function constructor
-  if ( protoProps && ( 'initialize' in protoProps ) ) {
-    child = protoProps.initialize;
-  } else {
-    child = function() {
-      parent.apply(this, arguments);
-    }
+var extend = function(child, parent) {
+  for (var key in parent) {
+    if (__hasProp.call(parent, key))
+      child[key] = parent[key];
   }
-
-  // Establish the base prototype chain
-  inherits(child, parent);
-
-  // Add static methods directly to child constructor function
-  // mixin(child, staticProps);
-
-  // Inject every extension Object to [this.prototype]
-  // and see if the mixin is an Object
-  for (i = 0; i < argsLen; i++) {
-    if ( isObject(args[i]) )
-      mixin(child.prototype, args[i]);
+  function ctor() {
+    this.constructor = child; 
   }
-
+  ctor.prototype = parent.prototype;
+  child.prototype = new ctor();
+  child.__super__ = parent.prototype;
   return child;
 };
+
 
 /**
  * Safer test for an Object
@@ -112,11 +97,9 @@ var isFunction = function(obj) {
 
 
 return {
-  extend: extend,
-
-  inherits: inherits,
-
   mixin: mixin,
+
+  extend: extend,
 
   isObject: isObject,
 
