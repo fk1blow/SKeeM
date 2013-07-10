@@ -40,7 +40,7 @@
 		var req = document.createElement('script');
 		req.type = 'text/javascript'; req.async = true;
 		req.src = 'js/lib/require.min.js?build=' + (new Date()).getTime();
-		req.setAttribute('data-main', "js/application.js");
+		req.setAttribute('data-main', "js/tests/test-objectutils.js");
 		var s = document.getElementsByTagName('script')[0];
 		s.parentNode.insertBefore(req, s);
 	}());
