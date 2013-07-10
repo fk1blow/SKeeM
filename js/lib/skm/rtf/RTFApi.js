@@ -244,11 +244,6 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
       connectorsOptions: Config.Connectors
     });
 
-    // this.connectorsManager.on('all', function() { 
-    //   cl('%call > ', 'color:red; font-weight:bold;', arguments); 
-    // });
-
-
     /** transport events */
 
     this.connectorsManager
