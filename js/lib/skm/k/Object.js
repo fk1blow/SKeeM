@@ -1,3 +1,6 @@
+
+// @deprecated
+// Use /k/Objekt instead
   
 // SKM Core Object definition
 
@@ -16,7 +19,7 @@ var slice = Array.prototype.slice;
  * 
  * @param  {Object} target Destination object
  */
-var extend = function(target) {
+var mixin = function(target) {
   var ext = [].slice.call(arguments, 1);
   var i, prop, extension, extLen = ext.length;
   for (i = 0; i < extLen; i++) {
@@ -78,7 +81,7 @@ var SKMObject = function(options) {
   this.options = this.options || {};
   // Every object must define its own initialization setup therefore, the options
   // object becomes the container for options passed to the constructor function
-  extend(this.options, options);
+  mixin(this.options, options);
 
   // call the initialize function
   if ( isFunction(this.initialize) )
@@ -98,7 +101,7 @@ var SKMObject = function(options) {
 SKMObject.extend = function(extension) {
   var args = slice.call(arguments);
   var parent = this, child = null;
-  var i, argsLen = args.length, mixin;
+  var i, argsLen = args.length;
   // Use the initialize function as a function constructor
   
   if ( extension && ( 'initialize' in extension ) ) {
@@ -109,22 +112,18 @@ SKMObject.extend = function(extension) {
     }
   }
 
-  // child = function() {
-  //   parent.apply(this, arguments);
-  // }
-
   // Establish the base prototype chain
   inherits(child, parent);
 
   // Add static methods directly to child
   // function constructor
-  extend(child, parent);
+  mixin(child, parent);
 
   // Inject every extension Object to [this.prototype]
   // and see if the mixin is an Object
   for (i = 0; i < argsLen; i++) {
-    if ( isObject(mixin = args[i]) )
-      extend(child.prototype, mixin);
+    if ( isObject(args[i]) )
+      mixin(child.prototype, args[i]);
   }
 
   return child;

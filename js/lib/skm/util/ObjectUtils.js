@@ -4,6 +4,9 @@ define([], function() {
 "use strict";
 
 
+var slice = Array.prototype.slice;
+
+
 /**
  * Inherit the prototype methods from one constructor into another.
  *
@@ -47,36 +50,31 @@ var mixin = function(target) {
  * @return {Function}  function  constructor function used as a 
  * template for the new SKMObject
  */
-var extend = function(extension) {
+var extend = function(protoProps) {
   var args = slice.call(arguments);
   var parent = this, child = null;
-  var i, argsLen = args.length, mixin;
+  var i, argsLen = args.length;
+
   // Use the initialize function as a function constructor
-  
-  if ( extension && ( 'initialize' in extension ) ) {
-    child = extension.initialize;
+  if ( protoProps && ( 'initialize' in protoProps ) ) {
+    child = protoProps.initialize;
   } else {
     child = function() {
       parent.apply(this, arguments);
     }
   }
 
-  // child = function() {
-  //   parent.apply(this, arguments);
-  // }
-
   // Establish the base prototype chain
   inherits(child, parent);
 
-  // Add static methods directly to child
-  // function constructor
-  mixin(child, parent);
+  // Add static methods directly to child constructor function
+  // mixin(child, staticProps);
 
   // Inject every extension Object to [this.prototype]
   // and see if the mixin is an Object
   for (i = 0; i < argsLen; i++) {
-    if ( isObject(mixin = args[i]) )
-      mixin(child.prototype, mixin);
+    if ( isObject(args[i]) )
+      mixin(child.prototype, args[i]);
   }
 
   return child;
