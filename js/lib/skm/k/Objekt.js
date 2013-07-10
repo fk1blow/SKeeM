@@ -62,7 +62,7 @@ var inherits = function(childCtor, parentCtor) {
  * @param  {Object} target Destination object
  */
 var mixin = function(target) {
-  var ext = [].slice.call(arguments, 1);
+  var ext = arrSlice.call(arguments, 1);
   var i, prop, extension, extLen = ext.length;
   for (i = 0; i < extLen; i++) {
     extension = ext[i];
@@ -73,21 +73,47 @@ var mixin = function(target) {
   }
 };
 
-/**
- * CoffeeScript's extend function
- */
-var extend = function(child, parent) {
-  for (var key in parent) {
-    if (__hasProp.call(parent, key))
-      child[key] = parent[key];
+var extend = function(extension) {
+  var args = arrSlice.call(arguments);
+  var parent = this, child = null;
+  var i, argsLen = args.length;
+  // Use the initialize function as a function constructor
+  
+  if ( extension && ( 'initialize' in extension ) ) {
+    child = extension.initialize;
+  } else {
+    child = function() {
+      parent.apply(this, arguments);
+    }
   }
-  function ctor() {
-    this.constructor = child; 
+  
+  // Establish the base prototype chain
+  inherits(child, parent);
+
+  // Add static methods directly to child
+  // function constructor
+  mixin(child, parent);
+
+  // Inject every extension Object to [this.prototype]
+  // and see if the mixin is an Object
+  for (i = 0; i < argsLen; i++) {
+    if ( isObject(args[i]) )
+      mixin(child.prototype, args[i]);
   }
-  ctor.prototype = parent.prototype;
-  child.prototype = new ctor();
-  child.__super__ = parent.prototype;
+
   return child;
+};
+
+/**
+ * Creates a new object based on another object
+ * 
+ * @param  {Object} proto the prototype for the new object
+ * @return {Object}       new object
+ */
+var create = function(proto) {
+  var f = function(){};
+  f.prototype = proto;
+  return new f();
 };
 
 
@@ -96,7 +122,9 @@ return {
 
   mixin: mixin,
 
-  extend: extend
+  extend: extend,
+  
+  create: create
 };
 
 
