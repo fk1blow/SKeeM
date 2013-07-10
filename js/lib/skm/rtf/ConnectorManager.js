@@ -1,6 +1,7 @@
+
 // Connector Manager implementation
 
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/util/Subscribable',
   'skm/rtf/XHRConnector',
@@ -63,59 +64,25 @@ var ConnectorsFactory = {
 };
 
 
-var Manager = SKMObject.extend(Subscribable, {
-  /**
-   * List of connector object instances
-   * @type {Object} a connector instance
-   */
-  _connectors: null,
+/**
+ * Manages a list of connectors
+ * 
+ * @constructor
+ */
+var Manager = function(options) {
+  options || (options = {});
+  this.sequence = options.sequence || null;
+  this.connectorsUrlParamModel = options.connectorsUrlParamModel;
+  this.connectorsOptions = options.connectorsOptions;
 
-  /**
-   * Reference to the currently/primary used
-   * connector instance
-   * 
-   * @type {Object Connector}
-   */
-  _activeConnector: null,
+  this._activeSequenceIdx = 0;
+  this._connectors = null;
+  this._activeConnector = null;
+  this._prepareConnectorsFactory();
+}
 
-  /**
-   * Reference to active sequence index
-   * @type {Array}
-   */
-  _activeSequenceIdx: 0,
 
-  /**
-   * Connector url parameter model
-   * @type {Object}
-   */
-  connectorsUrlParamModel: null,
-
-  /**
-   * Connectors and transports options
-   * @type {Object}
-   */
-  connectorsOptions: null,
-
-  /**
-   * The default sequence of the connectors
-   * 
-   * @description usual configuration is ['WebSocket', 'XHR']
-   * and those strings should map directly to connector
-   * instances inside [this._connectors] list
-   * @type {Array}
-   */
-  sequence: null,
-
-  initialize: function(options) {
-    options || (options = {});
-    this.sequence = options.sequence;
-    this.connectorsUrlParamModel = options.connectorsUrlParamModel;
-    this.connectorsOptions = options.connectorsOptions;
-    this._connectors = null;
-    this._activeConnector = null;
-    this._prepareConnectorsFactory();
-  },
-
+SKMObject.mixin(Manager.prototype, Subscribable, {
   /**
    * Starts the connectors [beginUpdate]
    * and creates the transports available
@@ -268,11 +235,6 @@ var Manager = SKMObject.extend(Subscribable, {
   },
 
   _attachConnectorHandlers: function(connector) {
-    // connector.on('all', function() {
-    //   cl('%cConnectorManager > ', 'color:red; font-weight:bold;', arguments);
-    // });
-
-
     /** transport events  */
 
     // Connector has established connection and is ready to receive updates

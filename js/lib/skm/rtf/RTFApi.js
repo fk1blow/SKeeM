@@ -6,7 +6,7 @@
  * http://betbrain.com
  * RTF.js may be freely distributed under the MIT license.
  */
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/util/Subscribable',
   'skm/net/XHRWrapper',
@@ -14,8 +14,8 @@ define(['skm/k/Object',
   'skm/rtf/models/ChannelsList',
   'skm/rtf/models/UrlParam',
   'skm/rtf/RTFEventsDelegates'],
-  function(SKMObject, SKMLogger, Subscribable, XHRWrapper,
-    ConnectorManager, ChannelstListModel, UrlParamModel, RTFEventsDelegates)
+  function(SKMObject, SKMLogger, Subscribable, XHRWrapper, ConnectorManager,
+    ChannelstListModel, UrlParamModel, RTFEventsDelegates)
 {
 'use strict';
 
@@ -30,12 +30,15 @@ var Config = {
     WebSocket: {
       url: 'ws://localhost:8080/testws',
       maxReconnectAttempts: 5,
-      pingServer: true
+      pingServer: true,
+      pingInterval: 10 * 1000
     },
 
     XHR: {
       url: 'http://localhost:8080/testajax',
-      maxReconnectAttempts: 5
+      maxReconnectAttempts: 5,
+      pingServer: true,
+      pingInterval: 30 * 1000
     }
   },
 
@@ -49,126 +52,25 @@ var Config = {
 };
 
 
-/**
- * Channels handling delegates
- */
-var ChannelsDelegate = {
-  addChannel: function(channel) {
-    var activeConnector = null;
-    var channelsList = this._getChannelsList();
+var RTFApi = function() {
+  this.connectorsUrlParam = null;
+  this.channelstList = null;
+  this.connectorsManager = null;
 
-    // check if it's an object and has ['name'] inside
-    if ( ! channel || ! ('name' in channel) ) {
-      throw new TypeError(Config.Errors.INVALID_CHANNEL_DECLARATION);
-    }
-    if ( channelsList.hasSubscribedAndConfirmed(channel) ) {
-      Logger.warn(Config.Warnings.DUPLICATE_CHANNEL_SUBSCRIPTION, channel);
-    } else {
-      // Add the subscription then send the 
-      // message to connector, if any available
-      channelsList.addChannel(channel);
+  this._batchId = 0;
 
-      // check to see if an active connector is found
-      if ( activeConnector = this.connectorsManager.getActiveConnector() )
-        activeConnector.sendMessage(channelsList.toStringifiedJson());
-      else
-        Logger.info('Channel added to list but no active connector found!'
-          + ' Confirmation will be sent after activating a connector');
-    }
-  },
+  // Create the parameters list object
+  this.connectorsUrlParam = new UrlParamModel();
+  // Prepare batchId and add it to the parameterizer
+  this.connectorsUrlParam.add('batchId', this._batchId);
+  // creates the connector manager
+  this._buildConnectorManager();
 
-  removeChannel: function(name) {
-    // remove from Channels list
-    this._getChannelsList().removeChannel(name);
-    // send message back to server
-    this.sendMessage('closeSubscription:{' + name + '}');
-    return this;
-  }
+  this._preparePageUnload();
 };
 
 
-/**
- * Url parameters handling delegates
- */
-var ParamatersDelegates = {
-  /**
-   * Adds a parameter to the connectors url model
-   * 
-   * @description it will add the parameter, will trigger a "added" event
-   * that will oblige the active connector to reset its url accordingly   
-   * @param {String} name   the key name of the parameter
-   * @param {String} value  actual value of the parameter, expressed as a string
-   * @return {Object}      current object context
-   */
-  addUrlParameter: function(name, value) {
-    this.connectorsUrlParam.add(name, value);
-    return this;
-  },
-
-  /**
-   * Remove the parameter from the connectors url
-   * 
-   * @param {String} name   the key name of the parameter
-   * @return {Object}      current object context
-   */
-  removeUrlParameter: function(name) {
-    this.connectorsUrlParam.remove(name);
-    return this;
-  }
-};
-
-
-// main constructor
-var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates, 
-  ChannelsDelegate, ParamatersDelegates,
-{
-  _batchId: 0,
-
-  /**
-   * Holds the url parameters list of the connectors and their model
-   * @type {UrlParam}
-   */
-  connectorsUrlParam: null,
-
-  /**
-   * Holds the list of subscribed channels and their model
-   * @type {ChannelstList}
-   */
-  channelstList: null,
-
-  /**
-   * The connector manager instance
-   * @type {ConnectorManager}
-   */
-  connectorsManager: null,
-
-  /**
-   * Yo dawg, i heard you like initializers...
-   */
-  initialize: function() {
-    // Create the parameters list object
-    this.connectorsUrlParam = new UrlParamModel();
-    // Prepare batchId and add it to the parameterizer
-    this.connectorsUrlParam.add('batchId', this._batchId);
-    // creates the connector manager
-    this._buildConnectorManager();
-    // prepare before unload auto disconnect
-    var that = this;
-    that.unloadfired=false;
-      jQuery(window).unload(function(){
-          if (that.unloadfired==false){
-              that.unloadfired=true;
-              that.shutdown({ async: false });
-          }
-      });
-      window.onbeforeunload = function() {
-          if (that.unloadfired==false){
-              that.unloadfired=true;
-              that.shutdown({ async: false });
-          }
-    };
-  },
-
+SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
   /**
    * Starts the connectors updates
    * 
@@ -243,12 +145,91 @@ var RTFApi = SKMObject.extend(Subscribable, RTFEventsDelegates,
     return this;
   },
 
+  /*
+    Parameters delegates
+   */
+
+  /**
+   * Adds a parameter to the connectors url model
+   * 
+   * @description it will add the parameter, will trigger a "added" event
+   * that will oblige the active connector to reset its url accordingly   
+   * @param {String} name   the key name of the parameter
+   * @param {String} value  actual value of the parameter, expressed as a string
+   * @return {Object}      current object context
+   */
+  addUrlParameter: function(name, value) {
+    this.connectorsUrlParam.add(name, value);
+    return this;
+  },
+
+  /**
+   * Remove the parameter from the connectors url
+   * 
+   * @param {String} name   the key name of the parameter
+   * @return {Object}      current object context
+   */
+  removeUrlParameter: function(name) {
+    this.connectorsUrlParam.remove(name);
+    return this;
+  },
+
+  addChannel: function(channel) {
+    var activeConnector = null;
+    var channelsList = this._getChannelsList();
+
+    // check if it's an object and has ['name'] inside
+    if ( ! channel || ! ('name' in channel) ) {
+      throw new TypeError(Config.Errors.INVALID_CHANNEL_DECLARATION);
+    }
+    if ( channelsList.hasSubscribedAndConfirmed(channel) ) {
+      Logger.warn(Config.Warnings.DUPLICATE_CHANNEL_SUBSCRIPTION, channel);
+    } else {
+      // Add the subscription then send the 
+      // message to connector, if any available
+      channelsList.addChannel(channel);
+
+      // check to see if an active connector is found
+      if ( activeConnector = this.connectorsManager.getActiveConnector() )
+        activeConnector.sendMessage(channelsList.toStringifiedJson());
+      else
+        Logger.info('Channel added to list but no active connector found!'
+          + ' Confirmation will be sent after activating a connector');
+    }
+  },
+
+  removeChannel: function(name) {
+    // remove from Channels list
+    this._getChannelsList().removeChannel(name);
+    // send message back to server
+    this.sendMessage('closeSubscription:{' + name + '}');
+    return this;
+  },
 
   /*
     Privates
    */
 
-  
+  _preparePageUnload: function() {
+    // prepare before unload auto disconnect
+    var that = this;
+    that.unloadfired=false;
+
+    jQuery(window).unload(function(){
+      if (that.unloadfired==false){
+        that.unloadfired=true;
+        that.shutdown({ async: false });
+      }
+    });
+
+    window.onbeforeunload = function() {
+      if (that.unloadfired==false){
+        that.unloadfired=true;
+        that.shutdown({ async: false });
+      }
+    };
+  },
+
   _getChannelsList: function() {
     if ( this.channelstList == null ) {
       this.channelstList = new ChannelstListModel();

@@ -1,7 +1,7 @@
 
 // RTF WebSocket Connector implementation
 
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/rtf/BaseConnector',
   'skm/net/WSWrapper'],
@@ -13,12 +13,77 @@ define(['skm/k/Object',
 var Logger = new SKMLogger();
 
 
-/*------------------------
-  Delegates
-------------------------*/
+/**
+ * @constructor
+ */
+var WSConnector = function() {
+  BaseConnector.prototype.constructor.apply(this, arguments);
+};
 
 
-var EventsDelegates = {
+SKMObject.inherits(WSConnector, BaseConnector);
+
+
+SKMObject.mixin(WSConnector.prototype, {
+  /**
+   * Begins update by calling [connect] on the transport object
+   *
+   * @description because of some previous bad design decisions, the
+   * [_ensureTransportCreated] should always be called for each 
+   * connector object...
+   */
+  beginUpdate: function() {
+    this._ensureTransportCreated(WSWrapper)._buildTransportUrl();
+    Logger.info('WSConnector.beginUpdate');
+    Logger.debug('WSConnector : transport url :', this.transport.url);
+    // after connect, a ["connector:ready"] event will trigger
+    this.transport.connect();
+    return this;
+  },
+
+  endUpdate: function() {
+    Logger.info('WSConnector.endUpdate');
+    // disconnect and remove events
+    this.transport.disconnect();
+    // Stop the reconnecting attempts
+    this._stopReconnectAttempts();
+    return this;
+  },
+
+  /**
+   * Sends a message through/using the transport
+   * 
+   * @param  {String} message   the message to be sent to endpoint
+   */
+  sendMessage: function(message) {
+   // Logger.debug('%cWSConnector : sending message : ', 'color:green', message);
+    this.transport.send(message);
+  },
+
+  addTransportListeners: function() {
+    // connection established
+    this.transport.on('link:opened', this.handleLinkOpened, this);
+
+    // connection closed by server; wasClean == true
+    this.transport.on('link:closed', this.hanleLinkClosed, this);
+
+    // Connection has been interrupted, not by the user nor the server
+    this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
+
+    // Link established though not able to communicate - vpn, proxy, middleware
+    this.transport.on('link:ghosting', this.handleLinkGhosting, this);
+
+    // Transport has been stopped or closed
+    this.transport.on('connecting:closed', this.handleConnectingClosed, this);
+
+    // handles connection message event - rtf server api update
+    this.transport.on('message', this.handleReceivedMessage, this);
+
+    // WebSocket native implementation not found
+    this.transport.on('implementation:missing',
+      this.handleImplementationMissing, this);
+  },
+
   /**
    * Triggered when the transport is ready
    *
@@ -38,7 +103,7 @@ var EventsDelegates = {
     Logger.info('WSConnector.handleImplementationMissing');
     this.fire('transport:error');
   },
-  
+
   /**
    * Handles link:closed
    *
@@ -110,80 +175,6 @@ var EventsDelegates = {
   handleConnectingClosed: function() {
     Logger.info('Connector.handleConnectingClosed');
     this._makeReconnectAttempt();
-  }
-};
-
-
-/*------------------------
-  Delegates
-------------------------*/
-
-
-var WSConnector = BaseConnector.extend(EventsDelegates, {
-  name: 'WS',
-  
-  beginUpdate: function() {
-    this._ensureTransportCreated(WSWrapper)._buildTransportUrl();
-    Logger.info('WSConnector.beginUpdate');
-    Logger.debug('WSConnector : transport url :', this.transport.url);
-    // after connect, a ["connector:ready"] event will trigger
-    this.transport.connect();
-    return this;
-  },
-
-  endUpdate: function() {
-    Logger.info('WSConnector.endUpdate');
-    // disconnect and remove events
-    this.transport.disconnect();
-    // Stop the reconnecting attempts
-    this._stopReconnectAttempts();
-    return this;
-  },
-
-  /**
-   * Sends a message through/using the transport
-   * 
-   * @param  {String} message   the message to be sent to endpoint
-   */
-  sendMessage: function(message) {
-//    Logger.debug('%cWSConnector : sending message : ', 'color:green', message);
-    this.transport.send(message);
-  },
-
-  addTransportListeners: function() {
-    // this.transport.on('all', function() {
-    //   cl('%cWSConnector < ', 'color:gray;', arguments);
-    // });
-
-    
-    /** Transport related */
-
-    // connection established
-    this.transport.on('link:opened', this.handleLinkOpened, this);
-
-    // connection closed by server; wasClean == true
-    this.transport.on('link:closed', this.hanleLinkClosed, this);
-
-    // Connection has been interrupted, not by the user nor the server
-    this.transport.on('link:interrupted', this.handleLinkInterrupted, this);
-
-    // Link established though not able to communicate - vpn, proxy, middleware
-    this.transport.on('link:ghosting', this.handleLinkGhosting, this);
-
-    // Transport has been stopped or closed
-    this.transport.on('connecting:closed', this.handleConnectingClosed, this);
-
-
-    /** Message and implementation */
-
-    // handles connection message event - rtf server api update
-    this.transport.on('message', this.handleReceivedMessage, this);
-
-    // WebSocket native implementation not found
-    this.transport.on('implementation:missing',
-      this.handleImplementationMissing, this);
-
-    return this;
   }
 });
 

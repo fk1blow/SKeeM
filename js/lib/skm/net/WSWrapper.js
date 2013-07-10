@@ -1,12 +1,11 @@
 
 // WebSocket wrapper
 
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/util/Subscribable',
   'skm/util/Timer'],
-  function(SKMObject, SKMLogger, Subscribable,
-    SKMTimer)
+  function(SKMObject, SKMLogger, Subscribable, SKMTimer)
 {
 'use strict';
 
@@ -62,26 +61,28 @@ var createNativeSocket = function(url, protocols) {
 
 
 /**
- * Native WebSocket connection delegates
+ * Native websocket "handler" object
+ * 
+ * @constructor
  */
-var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
-  connectionTimeout: 500,
+var NativeWebSocketHandler = function(options) {
+  options || (options = {});
+  
+  this.connectionTimeout = options.connectionTimeout || 1500;
 
-  _timerAutoDisconnect: null,
+  this._closeExpected = false;
+  this._linkWasOpened = false;
+  this._timerAutoDisconnect = null;
 
-  _closeExpected: false,
+  
+  // Creates auto-disconnect and reconnect, timers
+  this._timerAutoDisconnect = new SKMTimer({
+    tickInterval: this.connectionTimeout
+  }).on('tick', this._handleAutoDisconnect, this);
+};
 
-  _linkWasOpened: false,
 
-  initialize: function(options) {
-    options || (options = {});
-    this.connectionTimeout = options.connectionTimeout || 1500;
-    // Creates auto-disconnect and reconnect, timers
-    this._timerAutoDisconnect = new SKMTimer({
-      tickInterval: this.connectionTimeout
-    }).on('tick', this._handleAutoDisconnect, this);
-  },
-
+SKMObject.mixin(NativeWebSocketHandler.prototype, Subscribable, {
   /**
    * Attaches the socket events to a handler
    * @param  {WebSoclet} connection WebSocket connection reference
@@ -100,12 +101,10 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     return this;
   },
 
-  
   /*
     Commands
    */
-  
-  
+
   startConnectingAttempt: function() {
     this._timerAutoDisconnect.start();
     this._closeExpected = false;
@@ -167,7 +166,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
     this._linkWasOpened = true;
     this.fire('link:opened');
   },
- 
+
   handleOnMessage: function(message) {
     var data = message.data;
     switch( data ) {
@@ -179,7 +178,7 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
         this.fire('message', data);
     }
   },
-  
+
   _handleAutoDisconnect: function() {
     Logger.debug('NativeWebSocketHandler : auto-disconnect triggered after:',
       this._timerAutoDisconnect.tickInterval + ' ms');
@@ -188,73 +187,64 @@ var NativeWebSocketHandler = SKMObject.extend(Subscribable, {
 });
 
 
-var WSWrapper = SKMObject.extend(Subscribable, {
+/**
+ * A wrapper for the WebSocket protocol
+ * 
+ * @constructor
+ */
+var WSWrapper = function() {
   /**
    * URL of the WebSocket server
    * @type {String}
    */
-  url: null,
-
+  this.url = null;
   /**
    * TBD
    * @type {Array}
    */
-  protocols: null,
-
+  this.protocols = null;
   /**
    * How long before aborting the connection attempt
    */
-  timeout: 1500,
-
+  this.timeout = 1500;
   /**
    * A connection has been established through a proxy, vpn, etc
    * that won't exchange any message - should close and mark WSWrapper as error
    * @type {Number}
    */
-  ghostTimeout: 5000,
-
+  this.ghostTimeout = 5000;
   /**
    * If will try to ping the server or not
    */
-  pingServer: true,
-
+  this.pingServer = true;
   /**
    * The interval at which will send pings to the server
    */
-  pingInterval: 10 * 1000, // 10 seconds
-
+  this.pingInterval = 10 * 1000; // 10 seconds
   /**
    * Represents the native WebSocket instance 
    * @type {WebSocket}
    */
-  _nativeSocket: null,
+  this._nativeSocket = null;
+  this._connectionHandler = null;
+  this._timerPing = null;
+  this._ghostTimer = null;
 
-  /**
-   * Event handler/delegate object
-   * @type {WSHandler}
-   */
-  _connectionHandler: null,
 
-  _timerPing: null,
+   // timer for the ping
+  this._timerPing = new SKMTimer({ tickInterval: this.pingInterval, ticks: 0 });
+  this._timerPing.on('tick', this.ping, this);
 
-  _ghostTimer: null,
+  // create the ghost timer
+  this._ghostTimer = new SKMTimer({ tickInterval: this.ghostTimeout, ticks: 1 });
+  this._ghostTimer.on('tick', this.handleGhostTimer, this);
 
-  initialize: function() {
-    // timer for the ping
-    this._timerPing = new SKMTimer({ tickInterval: this.pingInterval, ticks: 0 });
-    this._timerPing.on('tick', this.ping, this);
+  this._nativeSocket = null;
+  this._initConnectionHandler();
+};
 
-    // create the ghost timer
-    this._ghostTimer = new SKMTimer({ tickInterval: this.ghostTimeout, ticks: 1 });
-    this._ghostTimer.on('tick', this.handleGhostTimer, this);
 
-    this._nativeSocket = null;
-    this._initConnectionHandler();
-  },
-
-  /**
-   * Public
-   */
+SKMObject.mixin(WSWrapper.prototype, Subscribable, {
 
   connect: function() {
     if ( this.getConnectionState() == 1 ) {
@@ -306,7 +296,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   /**
    * Queries
    */
-  
+
   getConnectionState: function() {
     if ( this._nativeSocket )
       return this._nativeSocket.readyState;
@@ -316,7 +306,7 @@ var WSWrapper = SKMObject.extend(Subscribable, {
   /**
    * Private
    */
-  
+
   _startConnecting: function() {
     this._nativeSocket = createNativeSocket(this.url, this.protocols);
     if ( this._nativeSocket == null ) {

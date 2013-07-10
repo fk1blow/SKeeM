@@ -1,7 +1,7 @@
 
 // RTF XHR Connector implementation
 
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/rtf/BaseConnector',
   'skm/net/XHRWrapper'],
@@ -13,62 +13,26 @@ define(['skm/k/Object',
 var Logger = new SKMLogger();
 
 
-/*------------------------
-  Delegates
-------------------------*/
+/**
+ * @constructor
+ */
+var XHRConnector = function() {
+  BaseConnector.prototype.constructor.apply(this, arguments);
+}
 
 
-var EventsDelegates = {
+// @todo transform to "ObjectUtils.inherits"
+SKMObject.inherits(XHRConnector, BaseConnector);
+
+
+SKMObject.mixin(XHRConnector.prototype, {
   /**
-   * Handles a message received from server api
+   * Begins update by calling [connect] on the transport object
    *
-   * @description handles the server's update message
-   * and passes it to the subscribers/clients of rtf api
-   * 
-   * @param  {Object} message JSON message send by rtf server api
+   * @description because of some previous bad design decisions, the
+   * [_ensureTransportCreated] should always be called for each 
+   * connector object...
    */
-  handleReceivedMessage: function(message) {
-//    Logger.info('Connector.handleReceivedMessage');
-    this.fire('api:message', message);
-  },
-  
-  /**
-   * Handled when the xhr connection is refused by server api
-   */
-  handleConnectionDenied: function() {
-    Logger.info('XHRConnector.handleConnectionDenied');
-    this.fire('transport:error');
-  },
-  
-  /**
-   * Handled when the xhr connection is aborted by the user
-   */
-  handleConnectionAborted: function() {
-    Logger.info('XHRConnector.handleConnectionAborted');
-    this.fire('transport:closed');
-  },
-  
-  /**
-   * Handled when the connection has been stopped
-   * 
-   * @descroption usually, when the network fails or anything that,
-   * can prematurely close a connection
-   */
-  handleConnectionStopped: function() {
-    Logger.info('XHRConnector.handleConnectionStopped');
-    this._makeReconnectAttempt();
-  }
-};
-
-
-/*------------------------
-  Connector
-------------------------*/
-
-
-var XHRConnector = BaseConnector.extend(EventsDelegates, {
-  name: 'XHR',
-
   beginUpdate: function() {
     this._ensureTransportCreated(XHRWrapper)._buildTransportUrl();
     Logger.info('XHRConnector.beginUpdate');
@@ -88,22 +52,63 @@ var XHRConnector = BaseConnector.extend(EventsDelegates, {
   },
 
   sendMessage: function(message) {
-//    Logger.debug('%cXHRConnector : sending message : ', 'color:green', message);
+  //    Logger.debug('%cXHRConnector : sending message : ', 'color:green', message);
     this.transport.sendMessage({ message: message });
   },
 
   addTransportListeners: function() {
-    // this.transport.on('all', function() { cl('XHRConnector < ', arguments); });
-    // return;
-
     this.transport
       .on('aborted', this.handleConnectionAborted, this)
       .on('stopped', this.handleConnectionStopped, this)
       .on('denied', this.handleConnectionDenied, this)
       .on('success', this.handleReceivedMessage, this);
-    return this;
+  },
+
+  /**
+   * Handles a message received from server api
+   *
+   * @description handles the server's update message
+   * and passes it to the subscribers/clients of rtf api
+   * 
+   * @param  {Object} message JSON message send by rtf server api
+   */
+  handleReceivedMessage: function(message) {
+  //    Logger.info('Connector.handleReceivedMessage');
+    this.fire('api:message', message);
+  },
+
+  /**
+   * Handled when the xhr connection is refused by server api
+   */
+  handleConnectionDenied: function() {
+    Logger.info('XHRConnector.handleConnectionDenied');
+    this.fire('transport:error');
+  },
+
+  /**
+   * Handled when the xhr connection is aborted by the user
+   */
+  handleConnectionAborted: function() {
+    Logger.info('XHRConnector.handleConnectionAborted');
+    this.fire('transport:closed');
+  },
+
+  /**
+   * Handled when the connection has been stopped
+   * 
+   * @descroption usually, when the network fails or anything that,
+   * can prematurely close a connection
+   */
+  handleConnectionStopped: function() {
+    Logger.info('XHRConnector.handleConnectionStopped');
+    this._makeReconnectAttempt();
   }
 });
+
+
+
+
+
 
 
 return XHRConnector;

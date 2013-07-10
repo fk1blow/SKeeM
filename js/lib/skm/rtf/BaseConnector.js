@@ -1,7 +1,7 @@
 
 // Base Connector implementation
 
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/util/Subscribable'],
   function(SKMObject, SKMLogger, Subscribable)
@@ -14,55 +14,26 @@ var Logger = new SKMLogger();
 
 /**
  * Abstract connector
+ * 
+ * @constructor
  */
-var BaseConnector = SKMObject.extend(Subscribable, {
-  name: 'BaseConnector',
+var BaseConnector = function(options) {
+  options || (options = {});
+  
+  this.urlParamModel = options.urlParamModel;
+  this.maxReconnectAttempts = options.maxReconnectAttempts || 3;
+  this.reconnectDelay = options.reconnectDelay || 1200;
+  this.transportOptions = options.transportOptions || {};
+  this.transport = null;
 
-  /**
-   * Transport type object
-   * @type {Transport} an instance of a Transport type
-   */
-  transport: null,
+  this._reconnectTimer = null;
+  this._currentAttempt = 1;
+  this._isReconnecting = false;
+  this._timerPing = null;
+};
 
-  /**
-   * Transport's own configuration options
-   * @type {Object}
-   */
-  transportOptions: null,
 
-  /**
-   * Maximum reconnect attempts
-   * @type {Number}
-   */
-  maxReconnectAttempts: 3,
-
-  /**
-   * Delay after a reconnect attemp will begin
-   * @type {Number}
-   */
-  reconnectDelay: undefined,
-
-  /**
-   * Object that models the url and 
-   * its parameters
-   * @type {Object}
-   */
-  urlParamModel: null,
-
-  _reconnectTimer: null,
-
-  _currentAttempt: 1,
-
-  _isReconnecting: false,
-
-  initialize: function(options) {
-    options || (options = {});
-    this.urlParamModel = options.urlParamModel;
-    this.maxReconnectAttempts = options.maxReconnectAttempts || 3;
-    this.reconnectDelay = options.reconnectDelay || 1200;
-    this.transportOptions = options.transportOptions || null;
-  },
-
+SKMObject.mixin(BaseConnector.prototype, Subscribable, {
   /**
    * Removes transport listeners
    */

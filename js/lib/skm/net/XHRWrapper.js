@@ -1,7 +1,7 @@
 
 // XHR Wrapper implementation
 
-define(['skm/k/Object',
+define(['skm/k/Objekt',
   'skm/util/Logger',
   'skm/util/Subscribable'],
   function(SKMObject, SKMLogger, Subscribable)
@@ -51,36 +51,19 @@ var XHRMessageDelegates = {
 }
 
 
-var XHRWrapper = SKMObject.extend(Subscribable, XHRMessageDelegates, {
-	/**
-	 * Server url
-	 * @type {String}
-	 */
-	url: null,
+var XHRWrapper = function(options) {
+	options || (options = {});
+	this.url = options.url || null;
+	this.async = options.async || true;
+	this.httpMethod = options.httpMethod || "POST";
+	this.dataType = options.dataType || "JSON";
+	// @todo use a getter for the wrapper
+	this._wrapper = LibraryConfig.wrapper || DefaultLibraryWrapper;
+	this._request = null;
+};
 
-	httpMethod: 'POST',
 
-	dataType: 'JSON',
-	
-	async: true,
-
-	_wrapper: null,
-
-	_request: null,
-
-	_expectedClose: false,
-
-	initialize: function(options) {
-		options || (options = {});
-		this.url = options.url || null;
-		this.async = options.async || true;
-		this.httpMethod = options.httpMethod || "POST";
-		this.dataType = options.dataType || "JSON";
-		// @todo use a getter for the wrapper
-		this._wrapper = LibraryConfig.wrapper || DefaultLibraryWrapper;
-		this._request = null;
-	},
-
+SKMObject.mixin(XHRWrapper.prototype, Subscribable, XHRMessageDelegates, {
 	/**
 	 * Sends a message through the AJAX connection
 	 * using default method type - 'GET'
