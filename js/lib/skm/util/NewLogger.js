@@ -175,13 +175,9 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	isLoggable: function(level) {
 		var currentLevel = this.getLevel();
 		level = (typeof level !== 'number') ? currentLevel : level;
-
-		// cl(level, currentLevel)
-
 		// If the required level is 0, it means all levels are loggable
 		if ( level === Level.ALL )
 			return true;
-
 		// if the current level is smaller or eq to required, logger is loggable
 		if ( this.getLevel() <= level )
 			return true;
