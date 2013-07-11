@@ -45,5 +45,13 @@ otherLogger.severe("debugging : severe")
 
 
 
+/**
+ * @todo
+ * - make the ConsoleHandler behave just like the Logger.js console
+ * - add the [removeHandler] method implementation
+ * - normalize the Manager and the Config
+ * - add conditions that check if the logging is enabled or not(done via Config and Manager)
+ */
+
 
 });
