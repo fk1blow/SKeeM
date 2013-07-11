@@ -1,7 +1,8 @@
   
 // ...
 
-define(['../lib/skm/k/Objekt'], function(SKMObject) {
+define(['../lib/skm/k/Objekt',
+  '../lib/skm/util/NewLogger'], function(SKMObject, NewLogger) {
 'use strict';
 
 
@@ -13,7 +14,36 @@ if ( window.console )
 else
   window.cl = function() {};
 
-//
+
+
+
+/*var myLogger = NewLogger.Manager.getLogger("rtfapi");
+
+console.log(myLogger)
+
+myLogger.setLevel(2)
+
+myLogger.debug("asd", NewLogger.Level.FINE)*/
+
+
+
+
+var otherLogger = NewLogger.Manager.getLogger("xrx");
+
+// cl(otherLogger)
+
+otherLogger.setLevel(5)
+
+// cl(otherLogger.getLevel())
+
+
+otherLogger.finest("debugging : finest")
+otherLogger.config("debugging : config")
+otherLogger.info("debugging : info")
+otherLogger.warning("debugging : warning")
+otherLogger.severe("debugging : severe")
+
+
 
 
 });
