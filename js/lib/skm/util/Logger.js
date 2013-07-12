@@ -1,4 +1,6 @@
 
+// Deprecated - use NewLogger.js instead
+
 // skm Logger module
 
 define([], function() {
