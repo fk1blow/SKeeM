@@ -115,7 +115,7 @@ var Logger = function(name, options) {
 
 	// Adds the default handler available on default handler object
 	// Default handler is the ConsoleHandler - console in a browser env
-	this._addDefaultHandlersList(options.handlersList);
+	this._addDefaultHandler();
 };
 
 
@@ -195,11 +195,11 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	/*
 		Privates
 	 */
-
-	_addDefaultHandlersList: function(handlersList) {
-		var handler = null;
-		for ( handler in handlersList )
-			this.addHandler(handlersList[handler]);
+	
+	_addDefaultHandler: function() {
+		var handler = this.options.defaultHandler;
+		if ( typeof handler === 'function' )
+			this.addHandler(handler);
 	},
 
 	_processHandlers: function(message) {
@@ -273,7 +273,7 @@ var Level = {
 var Config = {
 	DefaultLevel: Level.ALL,
 
-	DefaultHandlers: ConsoleHandlers
+	DefaultHandler: ConsoleHandlers.debug
 };
 
 
@@ -283,7 +283,7 @@ var LoggerManager = (function(){
 	var getLoggerOptions = function() {
 		return {
 			defaultLevel: Config.DefaultLevel,
-			handlersList: Config.DefaultHandlers
+			defaultHandler: Config.DefaultHandler
 		}
 	};
 
@@ -310,7 +310,11 @@ return {
 
 	Level: Level,
 
-	Config: Config
+	Config: Config,
+
+	Handlers: {
+		Console: ConsoleHandlers
+	}
 };
 
 
