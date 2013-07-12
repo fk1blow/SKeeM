@@ -17,6 +17,10 @@ else
 
 
 
+cl(NewLogger)
+
+
+
 var myLogger = NewLogger.Manager.getLogger("rtfapi");
 
 myLogger.setLevel(3)
