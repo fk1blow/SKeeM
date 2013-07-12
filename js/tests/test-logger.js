@@ -17,31 +17,38 @@ else
 
 
 
-/*var myLogger = NewLogger.Manager.getLogger("rtfapi");
+var myLogger = NewLogger.Manager.getLogger("rtfapi");
 
-console.log(myLogger)
+myLogger.setLevel(3)
 
-myLogger.setLevel(2)
+// NewLogger.Manager.loggersOff();
 
-myLogger.debug("asd", NewLogger.Level.FINE)*/
+cl(myLogger)
+
+myLogger.fine("myLogger : fine");
+
+
+// myLogger.removeHandler(NewLogger.Config.DefaultHandlers.debug)
+
+
+myLogger.fine("myLogger : fine .... 2");
 
 
 
 
-var otherLogger = NewLogger.Manager.getLogger("xrx");
+/*var otherLogger = NewLogger.Manager.getLogger("xrx");
 
-// cl(otherLogger)
+cl(otherLogger)
 
 otherLogger.setLevel(5)
 
 // cl(otherLogger.getLevel())
 
-
 otherLogger.finest("debugging : finest")
 otherLogger.config("debugging : config")
 otherLogger.info("debugging : info")
 otherLogger.warning("debugging : warning")
-otherLogger.severe("debugging : severe")
+otherLogger.severe("debugging : severe")*/
 
 
 
