@@ -1,5 +1,15 @@
+// a small shortcut for console.log
+// only for development debugging!!!
+if ( window.console )
+  window.cl = console.log;
+else
+  window.cl = function() {};
+
 
 /**
+ * @todo Add a cache when lookup for namespaces are called
+ *
+ * 
  * @see  http://www.crazysquirrel.com/computing/java/logging.jspx
  *
  * 
@@ -42,42 +52,55 @@ define(['../k/Objekt'], function(SKMObject) {
  */
 var Loggable = {
 	log: function(message, level) {
-		if ( this._handlers && this.isLoggable(level) )
+		// if ( this._handlers && this.isLoggable(level) )
+		if ( this.isLoggable(level) )
 			this._processHandlers(message);
 	},
 
-	finest: function(message) {
-		this.log(message, Level.FINEST);
-	},
-
-	finer: function(message) {
-		this.log(message, Level.FINER);
-	},
-
-	fine: function(message) {
-		this.log(message, Level.FINE);
-	},
-
-	config: function(message) {
-		this.log(message, Level.CONFIG);
+	debug: function(message) {
+		this.log(message, Level.DEBUG);
 	},
 
 	info: function(message) {
 		this.log(message, Level.INFO);
 	},
 
+	trace :function (message) {
+		this.log(message,Level.TRACE);
+	},
+
 	warning: function(message) {
 		this.log(message, Level.WARNING);
 	},
 
-	severe: function(message) {
-		this.log(message, Level.SEVERE);
+	error: function(message) {
+		this.log(message, Level.ERROR);
 	},
 
-	error: function(message) {
-		this.log(message, Level.SEVERE);
+	fatal: function(message) {
+		this.log(message, Level.FATAL);
 	}
 };
+
+
+/**
+ * Declares the basic levels of the Loggers
+ * @type {Object}
+ */
+var Level = {
+	OFF: -1,
+	ALL: 0,
+
+	DEBUG: 1,
+	INFO: 2,
+	TRACE: 3,
+	WARNING: 4,
+	ERROR: 5,
+	FATAL: 6
+	};
+
+
+var hierarcyEnabled = true;
 
 
 /**
@@ -91,13 +114,23 @@ var Loggable = {
 var Logger = function(name, options) {
 	this.options = options || {};
 
-// cl(arguments)
-
 	/**
 	 * The name identifier ot this Logger instance
 	 * @type {String}
 	 */
 	this._name = name;
+
+	/**
+	 * [_parent description]
+	 * @type {[type]}
+	 */
+	this._parent = null;
+
+	/**
+	 * [_child description]
+	 * @type {[type]}
+	 */
+	this._children = {};
 
 	/**
 	 * Array of handler functions available to this Logger
@@ -159,10 +192,33 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 
 	/**
 	 * Returns the current Logger's reference
-	 * @return {Level}
+	 * @return {Level<Number>}
 	 */
 	getLevel: function() {
+		// @todo(Dragos) check for Global logging enabled
 		return this._level;
+	},
+
+	/**
+	 * Gets the level relative to the parent, hierarcy or own level
+	 * @return {Level<Number>} 
+	 */
+	getRelativeLevel: function() {
+		// no hierarchy, level == 0
+		if ( ! hierarcyEnabled ) {
+			return Level.ALL;
+		}
+		// if it has defined a level, don't try to get the parent's level
+		if ( this._level ) {
+			// cl(this._name, this._level)
+			return this._level;
+		}
+		// if parent is defined, get its level
+		if ( this._parent ) {
+			return this._parent.getRelativeLevel();
+		}
+		// or level off if no level set
+		return Level.OFF;
 	},
 
 	/**
@@ -171,16 +227,20 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	 * @return {Bool}
 	 */
 	isLoggable: function(level) {
-		var currentLevel = this.getLevel();
-		level = (typeof level !== 'number') ? currentLevel : level;
+		// var currentLevel = this.getLevel();
+		var relativeLevel = this.getRelativeLevel();
+		// level = (typeof level !== 'number') ? currentLevel : level;
 		
 		// level is -1, not loggable
 		if ( this.isDisabled() )
 			return false;
 
-		// If the required level is 0, it means all levels are loggable
-		// or if the current level is smaller or eq to required, logger is loggable
-		if ( level === Level.ALL || currentLevel <= level )
+		// everything is loggable
+		if ( relativeLevel === Level.ALL )
+			return true;
+
+		// if eq or bigger than requested level
+		if ( relativeLevel >= level )
 			return true;
 	},
 
@@ -192,9 +252,22 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 		return this.getLevel() === Level.OFF;
 	},
 
+	addChild: function(name, logger) {
+		this._children[name] = logger;
+	},
+
+	setParent: function(logger) {
+		this._parent = logger;
+	},
+
 	/*
 		Privates
 	 */
+	
+	_callParentHandlers: function(message) {
+		if ( this._parent )
+			this._parent._processHandlers(message);
+	},
 	
 	_addDefaultHandler: function() {
 		var handler = this.options.defaultHandler;
@@ -204,9 +277,9 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 
 	_processHandlers: function(message) {
 		var handlers = this._handlers, len = handlers.length;
-		for ( var i = 0; i < len; i++ ) {
-			handlers[i].call(this._defaultHandlerObject, message);
-		}
+		for ( var i = 0; i < len; i++ )
+			handlers[i].call(this, message);
+		this._callParentHandlers(message);
 	}
 });
 
@@ -246,23 +319,6 @@ var ConsoleHandlers = {
 };
 
 
-/*------------------------------------
-	Levels
- -----------------------------------*/
-
-var Level = {
-	OFF: -1,
-	ALL: 0,
-
-	FINEST: 1,
-	FINER: 2,
-	FINE: 3,
-	CONFIG: 4,
-	INFO: 5,
-	WARNING: 6,
-	SEVERE: 7,
-	ERROR: 8
-};
 
 
 /*------------------------------------
@@ -277,7 +333,54 @@ var Config = {
 };
 
 
-var LoggerManager = (function(){
+var Manager = {
+	_loggers: {
+		rootLogger: new Logger("root", { defaultHandler: Config.DefaultHandler })
+	},
+
+	getLogger: function(name) {
+		return this._loggers[name] || Manager.createLogger(name);
+	},
+
+	getRootLogger: function() {
+		return this.getLogger('rootLogger');
+	},
+
+	createLogger: function(name) {
+		// var logger = new Logger(name, { defaultHandler: Config.DefaultHandler });
+		var logger = new Logger(name);
+
+		if ( hierarcyEnabled ) {
+			var lastDotIndex = name.lastIndexOf('.');
+			var parentName = name.substr(0, lastDotIndex) || 'rootLogger';
+			var leafName = name.substr(lastDotIndex + 1);
+			var parentLogger = Manager.getLogger(parentName);
+
+			parentLogger.addChild(leafName, logger);
+			logger.setParent(parentLogger);
+		}
+
+		this._loggers[name] = logger;
+	
+		return logger;
+	},
+
+	getConfig: function() {
+		return Config;
+	}
+};
+
+
+// var log1 = Manager.getLogger('a.b.c')
+// var log2 = Manager.getLogger('a.b.c.d')
+// var log2 = Manager.getLogger('a.b.c.u')
+// var log3 = Manager.getLogger('x.y')
+
+// cl(Manager.getRootLogger())
+
+
+
+var xxx_LoggerManager = (function(){
 	var loggerList = {};
 
 	var getLoggerOptions = function() {
@@ -288,6 +391,10 @@ var LoggerManager = (function(){
 	};
 
 	return {
+		getConfig:function(){
+			//TODO
+		},
+
 		createLogger: function(name) {
 			var options = getLoggerOptions();
 			return loggerList[name] = new Logger(name, options);
@@ -305,17 +412,7 @@ var LoggerManager = (function(){
 }());
 
 
-return {
-	Manager: LoggerManager,
-
-	Level: Level,
-
-	Config: Config,
-
-	Handlers: {
-		Console: ConsoleHandlers
-	}
-};
+return Manager;
 
 
 });

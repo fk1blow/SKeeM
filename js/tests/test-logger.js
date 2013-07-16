@@ -16,43 +16,46 @@ else
 
 
 
+var ml = NewLogger.getLogger("rtf.api.manager.connector");
+var ml2 = NewLogger.getLogger("rtf.api.manager");
+var ml3 = NewLogger.getLogger("rtf.api");
+var ml4 = NewLogger.getLogger("rtf");
 
-cl(NewLogger)
+// ml4.setLevel(4);
+ml.setLevel(2);
+// myLogger.addHandler(console.log)
 
+// cl(ml)
 
+// ml.setLevel(1)
 
-var myLogger = NewLogger.Manager.getLogger("rtfapi");
-
-myLogger.setLevel(3)
-
-// NewLogger.Manager.loggersOff();
-
-cl(myLogger)
-
-myLogger.fine("myLogger : fine");
-
-
-// myLogger.removeHandler(NewLogger.Config.DefaultHandlers.debug)
-
-
-myLogger.fine("myLogger : fine .... 2");
+ml.debug("ml : debug");
+ml.info("ml : info");
+ml.trace("ml : trace");
 
 
+// // myLogger.removeHandler(2NewLogger.Config.DefaultHandlers.debug)
 
 
-/*var otherLogger = NewLogger.Manager.getLogger("xrx");
+// myLogger.config("myLogger : config");
 
-cl(otherLogger)
 
-otherLogger.setLevel(5)
+// cl('_______________________________')
 
-// cl(otherLogger.getLevel())
 
-otherLogger.finest("debugging : finest")
-otherLogger.config("debugging : config")
-otherLogger.info("debugging : info")
-otherLogger.warning("debugging : warning")
-otherLogger.severe("debugging : severe")*/
+// var otherLogger = NewLogger.Manager.getLogger("xrx");
+
+// // cl(otherLogger)
+
+// otherLogger.setLevel(5)
+
+// // cl(otherLogger.getLevel())
+
+// otherLogger.finest("otherLogger : finest")
+// otherLogger.config("otherLogger : config")
+// otherLogger.info("otherLogger : info")
+// otherLogger.warning("otherLogger : warning")
+// otherLogger.severe("otherLogger : severe")
 
 
 
