@@ -206,18 +206,14 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	 */
 	getRelativeLevel: function() {
 		// no hierarchy, level == 0
-		if ( ! hierarcyEnabled ) {
+		if ( ! hierarcyEnabled )
 			return Level.ALL;
-		}
 		// if it has defined a level, don't try to get the parent's level
-		if ( this._level ) {
-			// cl(this._name, this._level)
+		if ( this._level )
 			return this._level;
-		}
 		// if parent is defined, get its level
-		if ( this._parent ) {
+		if ( this._parent )
 			return this._parent.getRelativeLevel();
-		}
 		// or level off if no level set
 		return Level.OFF;
 	},
@@ -228,20 +224,13 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	 * @return {Bool}
 	 */
 	isLoggable: function(requestedLevel) {
-		// var currentLevel = this.getLevel();
 		var relativeLevel = this.getRelativeLevel();
-		// level = (typeof level !== 'number') ? currentLevel : level;
-		
 		// level is -1, not loggable
 		if ( this.isDisabled() )
 			return false;
-
 		// everything is loggable
 		if ( relativeLevel === Level.ALL )
 			return true;
-
-		// cl('current :', relativeLevel, 'requested :', requestedLevel)
-
 		// if requested level is bigger or equal than the current level
 		if ( requestedLevel >= relativeLevel )
 			return true;
@@ -349,10 +338,20 @@ var Manager = {
 		return this.getLogger('rootLogger');
 	},
 
+	/**
+	 * Creates a logger and its parent
+	 * 
+	 * @param  {String} name the name of the logger as a namespace
+	 * @return {Logger}      an instance of the child logger
+	 *
+	 * @description based on google closure's Logger module
+	 * @link  {http://docs.closure-library.googlecode.com/git/class_goog_debug_Logger.html}
+	 */
 	createLogger: function(name) {
 		var logger = new Logger(name);
 		var lastDotIndex, parentName, leafName, parentLogger;
 
+		// fucking typo...
 		if ( hierarcyEnabled ) {
 			lastDotIndex = name.lastIndexOf('.');
 			parentName = name.substr(0, lastDotIndex) || 'rootLogger';
