@@ -239,6 +239,8 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 		if ( relativeLevel === Level.ALL )
 			return true;
 
+		// cl(relativeLevel, level)
+
 		// if eq or bigger than requested level
 		if ( relativeLevel >= level )
 			return true;
@@ -347,14 +349,14 @@ var Manager = {
 	},
 
 	createLogger: function(name) {
-		// var logger = new Logger(name, { defaultHandler: Config.DefaultHandler });
 		var logger = new Logger(name);
+		var lastDotIndex, parentName, leafName, parentLogger;
 
 		if ( hierarcyEnabled ) {
-			var lastDotIndex = name.lastIndexOf('.');
-			var parentName = name.substr(0, lastDotIndex) || 'rootLogger';
-			var leafName = name.substr(lastDotIndex + 1);
-			var parentLogger = Manager.getLogger(parentName);
+			lastDotIndex = name.lastIndexOf('.');
+			parentName = name.substr(0, lastDotIndex) || 'rootLogger';
+			leafName = name.substr(lastDotIndex + 1);
+			parentLogger = Manager.getLogger(parentName);
 
 			parentLogger.addChild(leafName, logger);
 			logger.setParent(parentLogger);
@@ -369,47 +371,6 @@ var Manager = {
 		return Config;
 	}
 };
-
-
-// var log1 = Manager.getLogger('a.b.c')
-// var log2 = Manager.getLogger('a.b.c.d')
-// var log2 = Manager.getLogger('a.b.c.u')
-// var log3 = Manager.getLogger('x.y')
-
-// cl(Manager.getRootLogger())
-
-
-
-var xxx_LoggerManager = (function(){
-	var loggerList = {};
-
-	var getLoggerOptions = function() {
-		return {
-			defaultLevel: Config.DefaultLevel,
-			defaultHandler: Config.DefaultHandler
-		}
-	};
-
-	return {
-		getConfig:function(){
-			//TODO
-		},
-
-		createLogger: function(name) {
-			var options = getLoggerOptions();
-			return loggerList[name] = new Logger(name, options);
-		},
-
-		getLogger: function(name) {
-			return loggerList[name] || this.createLogger(name);
-		},
-
-		turnOffLoggers: function() {
-			for ( var logger in loggerList )
-				loggerList[logger].setLevel(Level.OFF);
-		}
-	}
-}());
 
 
 return Manager;

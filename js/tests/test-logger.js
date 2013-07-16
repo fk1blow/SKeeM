@@ -22,12 +22,14 @@ var ml3 = NewLogger.getLogger("rtf.api");
 var ml4 = NewLogger.getLogger("rtf");
 
 // ml4.setLevel(4);
-ml.setLevel(2);
+// ml.setLevel(2);
 // myLogger.addHandler(console.log)
 
 // cl(ml)
 
-// ml.setLevel(1)
+ml.setLevel(3)
+
+// NewLogger.getRootLogger().setLevel(1)
 
 ml.debug("ml : debug");
 ml.info("ml : info");
