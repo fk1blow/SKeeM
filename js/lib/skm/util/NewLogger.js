@@ -100,6 +100,7 @@ var Level = {
 	};
 
 
+// @todo(Dragos) fix hierarchy condition check and typo
 var hierarcyEnabled = true;
 
 
@@ -226,7 +227,7 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	 * @param  {Level} level a reference to a field in Level struct
 	 * @return {Bool}
 	 */
-	isLoggable: function(level) {
+	isLoggable: function(requestedLevel) {
 		// var currentLevel = this.getLevel();
 		var relativeLevel = this.getRelativeLevel();
 		// level = (typeof level !== 'number') ? currentLevel : level;
@@ -239,10 +240,10 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 		if ( relativeLevel === Level.ALL )
 			return true;
 
-		// cl(relativeLevel, level)
+		// cl('current :', relativeLevel, 'requested :', requestedLevel)
 
-		// if eq or bigger than requested level
-		if ( relativeLevel >= level )
+		// if requested level is bigger or equal than the current level
+		if ( requestedLevel >= relativeLevel )
 			return true;
 	},
 
