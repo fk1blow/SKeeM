@@ -8,6 +8,7 @@ else
 
 /**
  * @todo Add a cache when lookup for namespaces are called
+ * @todo (Radu) append logger namespace to handler message
  *
  * 
  * @see  http://www.crazysquirrel.com/computing/java/logging.jspx
