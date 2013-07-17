@@ -17,7 +17,7 @@ else
 
 
 
-NewLogger.getConfig().HierarchyEnabled = false;
+NewLogger.getConfig().HierarchyEnabled = true;
 
 
 var ml = NewLogger.getLogger("rtf.api.manager");
@@ -27,7 +27,7 @@ var ml2 = NewLogger.getLogger("rtf.api");
 
 ml2.setLevel(1);
 
-// ml.setLevel(4);
+ml.setLevel(3);
 
 ml.addHandler(console.info)
 

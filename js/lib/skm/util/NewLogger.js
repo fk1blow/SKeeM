@@ -32,7 +32,7 @@
 // Based on Google's Closure Library
 // @url http://docs.closure-library.googlecode.com/git/class_goog_debug_Logger.html
 
-define(['../k/Objekt'], function(SKMObject) {
+define(['skm/k/Objekt'], function(SKMObject) {
 'use strict';
 
 
