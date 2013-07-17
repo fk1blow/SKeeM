@@ -19,7 +19,7 @@ var arrSlice = Array.prototype.slice;
 var isObject = function(obj) {
   return Object.prototype.toString.apply(obj) === '[object Object]';
 };
-
+ 
 /**
  * Test for determining if object is an array
  * 

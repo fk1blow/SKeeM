@@ -1,7 +1,7 @@
 
 /**
  * BetBrain RTF.js v0.1.9
- * 
+ *
  * Dragos Tudorache, BetBrain Ltd.
  * http://betbrain.com
  * RTF.js may be freely distributed under the MIT license.
@@ -59,21 +59,21 @@ var RTFApi = function() {
 
   this._batchId = 0;
 
-  // Create the parameters list object
-  this.connectorsUrlParam = new UrlParamModel();
-  // Prepare batchId and add it to the parameterizer
-  this.connectorsUrlParam.add('batchId', this._batchId);
-  // creates the connector manager
-  this._buildConnectorManager();
+    // Create the parameters list object
+    this.connectorsUrlParam = new UrlParamModel();
+    // Prepare batchId and add it to the parameterizer
+    this.connectorsUrlParam.add('batchId', this._batchId);
+    // creates the connector manager
+    this._buildConnectorManager();
 
   this._preparePageUnload();
-};
+    };
 
 
 SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
   /**
    * Starts the connectors updates
-   * 
+   *
    * @description starts the connector and update process - it tries to get
    * the list of subscriptions and sends those messages to the server api
    */
@@ -87,8 +87,8 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
    *
    * Currently, the correct method for closing a subscription
    * is to send a shutdown message to the API
-   * 
-   * @description stops the updates and disconnects/interrupts 
+   *
+   * @description stops the updates and disconnects/interrupts
    * current transport, making it avaiable for a resume call.
    */
   stopUpdates: function() {
@@ -98,19 +98,30 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
 
   /**
    * Shuts down server updates communication
-   * 
+   *
    * @description shuts down communication, stops every connector
    * and sends a proper message to the server.
    * @param  {Object} options optional shutdown parameters
    */
   shutdown: function(options) {
+
+     this.isStopped=true;
+     try{
+         this.connectorsUrlParam.add('closeConnection', true);
+         this.connectorsManager.getActiveConnector().sendMessage('closeConnection');
+         this.switchToNextConnector();
+     }catch(e){
+         console.log('ws error close = ');
+         console.error(e);
+     }
     var url, opt = options || {};
     // try to stop current updates, if any
     this.stopUpdates();
-    // build xhr's url and send the message 
+    // build xhr's url and send the message
     url = this.connectorsUrlParam.toQueryString()
       + '&closeConnection=true';
     // gg xhr
+
     new XHRWrapper({
       url: opt.url || Config.Connectors.XHR.url + url,
       async: opt.async
@@ -139,7 +150,7 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
     if ( connector = this.connectorsManager.getActiveConnector() )
       connector.sendMessage(message);
     else {
-      Logger.warn('Unable to send message : invalid connector type' 
+      Logger.warn('Unable to send message : invalid connector type'
         + ' or connector is null');
     }
     return this;
@@ -211,23 +222,30 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
    */
 
   _preparePageUnload: function() {
-    // prepare before unload auto disconnect
     var that = this;
     that.unloadfired=false;
-
-    jQuery(window).unload(function(){
-      if (that.unloadfired==false){
+    
+    //please do not extract the following into anothebbr function ,CHROME BUG !!!
+    window.onbeforeunload = function() {
+      if (that.unloadfired==false && !that.isStopped){
         that.unloadfired=true;
-        that.shutdown({ async: false });
+        that.stopUpdates();
+        jQuery.ajax({
+          url:  Config.Connectors.XHR.url + that.connectorsUrlParam.toQueryString() + '&closeConnection=true',
+          async:false
+        });
+      }
+    }
+    jQuery(window).unload(function(){
+      if (that.unloadfired==false && !that.isStopped){
+        that.unloadfired=true;
+        that.stopUpdates();
+        jQuery.ajax({
+          url:  Config.Connectors.XHR.url + that.connectorsUrlParam.toQueryString() + '&closeConnection=true',
+          async:false
+        });
       }
     });
-
-    window.onbeforeunload = function() {
-      if (that.unloadfired==false){
-        that.unloadfired=true;
-        that.shutdown({ async: false });
-      }
-    };
   },
 
   _getChannelsList: function() {
@@ -253,7 +271,7 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
       .on('reconnecting', this.handleTransportReconnecting, this)
       .on('reconnect:failed', this.handleTransportReconnectFailed, this);
 
-    
+
     /** sequence events */
 
     this.connectorsManager
@@ -269,7 +287,7 @@ SKMObject.mixin(RTFApi.prototype, Subscribable, RTFEventsDelegates, {
 
 return {
   Config: Config,
-  
+
   // singleton method
   Api: (function() {
     var apiSingletonInstance = null;
