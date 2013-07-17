@@ -53,7 +53,6 @@ define(['../k/Objekt'], function(SKMObject) {
  */
 var Loggable = {
 	log: function(message, level) {
-		// if ( this._handlers && this.isLoggable(level) )
 		if ( this.isLoggable(level) )
 			this._processHandlers(message);
 	},
@@ -370,6 +369,10 @@ var Manager = {
 
 	getConfig: function() {
 		return Config;
+	},
+
+	getLevels: function() {
+		return Level;
 	}
 };
 
