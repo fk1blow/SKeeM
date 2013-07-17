@@ -16,30 +16,40 @@ else
 
 
 
-var ml = NewLogger.getLogger("rtf.api.manager.connector");
-var ml2 = NewLogger.getLogger("rtf.api.manager");
-var ml3 = NewLogger.getLogger("rtf.api");
-var ml4 = NewLogger.getLogger("rtf");
 
-// ml4.setLevel(4);
-// ml.setLevel(2);
-// myLogger.addHandler(console.log)
+NewLogger.getConfig().HierarchyEnabled = false;
 
-ml2.addHandler(function(message) {
-  $('#console').append.apply(jQuery, arguments.concat('ml2 message...'))
-})
 
-ml.setLevel(1)
+var ml = NewLogger.getLogger("rtf.api.manager");
+var ml2 = NewLogger.getLogger("rtf.api");
+// var ml3 = NewLogger.getLogger("rtf.api");
+// var ml4 = NewLogger.getLogger("rtf");
 
-ml2.setLevel(3)
+ml2.setLevel(1);
+
+// ml.setLevel(4);
+
+ml.addHandler(console.info)
+
+/*ml2.addHandler(function(message) {
+  $('#console').append('ml2 message...' + message)
+})*/
+
+// ml.setLevel(2)
+
+// ml2.setLevel(2)
 
 // ml2.error('ml2 : error')
 
 // NewLogger.getRootLogger().setLevel(4)
 
+cl('level :', ml.getLevel())
+cl('_______________________')
+
 ml.debug("ml : debug");
 ml.info("ml : info");
 ml.trace("ml : trace");
+ml.warning("ml : warning");
 
 
 // // myLogger.removeHandler(2NewLogger.Config.DefaultHandlers.debug)
