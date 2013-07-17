@@ -25,11 +25,17 @@ var ml4 = NewLogger.getLogger("rtf");
 // ml.setLevel(2);
 // myLogger.addHandler(console.log)
 
-// cl(ml)
+ml2.addHandler(function(message) {
+  $('#console').append.apply(jQuery, arguments.concat('ml2 message...'))
+})
 
-ml.setLevel(3)
+ml.setLevel(1)
 
-// NewLogger.getRootLogger().setLevel(1)
+ml2.setLevel(3)
+
+// ml2.error('ml2 : error')
+
+// NewLogger.getRootLogger().setLevel(4)
 
 ml.debug("ml : debug");
 ml.info("ml : info");
