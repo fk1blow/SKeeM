@@ -206,6 +206,7 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	addHandler: function(handler) {
 		if ( handler && typeof handler === 'function' )
 			this._handlers.push(handler);
+		return this;
 	},
 
 	/**
@@ -225,6 +226,7 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	setLevel: function(level) {
 		if ( ( level == 0 || level ) && typeof level === 'number' )
 			this._level = level;
+		return this;
 	},
 
 	/**
