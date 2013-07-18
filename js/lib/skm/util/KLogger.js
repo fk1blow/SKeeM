@@ -1,5 +1,8 @@
+
+// skm KLogger module
+
 /**
- * @todo Add a cache when lookup for namespaces are called
+ * @todo (Dragos) Add a cache when lookup for namespaces are called
  * @todo (Radu) append logger namespace to handler message
  *
  * 
@@ -26,9 +29,6 @@
 
  */
 
-
-// skm Logger module
-
 // Based on Google's Closure Library
 // @url http://docs.closure-library.googlecode.com/git/class_goog_debug_Logger.html
 
@@ -42,8 +42,11 @@ define(['skm/k/Objekt'], function(SKMObject) {
  */
 var Loggable = {
 	log: function(message, level) {
-		if ( this.isLoggable(level) )
-			this._processHandlers(message);
+		var prefix;
+		if ( this.isLoggable(level) ) {
+			prefix = this._name + ": \r\n\t";
+			this._processHandlers(new Array(prefix, message));
+		}
 	},
 
 	debug: function(message) {
@@ -306,9 +309,10 @@ SKMObject.mixin(Logger.prototype, Loggable, {
 	},
 
 	_processHandlers: function(message) {
-		var handlers = this._handlers, len = handlers.length;
-		for ( var i = 0; i < len; i++ )
-			handlers[i].call(this, message);
+		var i, list = this._handlers, len = list.length;
+		for ( i = 0; i < len; i++ ) {
+			list[i].apply(this, message);
+		}
 		this._callParentHandlers(message);
 	}
 });
