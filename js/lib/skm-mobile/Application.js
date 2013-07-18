@@ -1,11 +1,11 @@
   
 // Match List View
 
-define(['skm/util/Logger',
+define(['skm/util/KLogger',
   'skm-mobile/navigation/NavigationController',
   'skm/util/ConfigManager',
   'skm-mobile/EventCenter'],
-  function(SKMLogger, NavigationController, ConfigManager, EventCenter)
+  function(KLogger, NavigationController, ConfigManager, EventCenter)
 {
 'use strict';
 
@@ -22,6 +22,8 @@ var Application = function(options) {
   this.VERSION = options.VERSION || "x.x.x";
 
   this.BASEURL = options.BASEURL || null;
+
+  this.Logger = KLogger.getRootLogger().setLevel(1);
 
   this.ConfigManager = new ConfigManager();
 
