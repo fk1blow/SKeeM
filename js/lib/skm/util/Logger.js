@@ -1,5 +1,5 @@
 
-// Deprecated - use NewLogger.js instead
+// @deprecated - use NewLogger.js instead
 
 // skm Logger module
 

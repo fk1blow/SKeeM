@@ -28,6 +28,8 @@ ConfigManager.prototype = {
     return this.configurationList;
   },
 
+  // @todo(Dragos) refactor name - not shure what this method does 
+  // in the context of the config manager
   getPrefix: function(configAttr) {
     var prefix = null, list = this.getConfigurationList().prefix;
     if ( configAttr in list )
