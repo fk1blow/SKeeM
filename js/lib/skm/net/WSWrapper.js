@@ -98,6 +98,10 @@ SKMObject.mixin(NativeWebSocketHandler.prototype, Subscribable, {
     connection.onmessage = function() {
       that.handleOnMessage.apply(that, arguments);
     }
+    connection.onerror=function(){
+    	window['WebSocket']=null;
+    	window['MozWebSocket']=null;
+    }
     return this;
   },
 
@@ -212,7 +216,7 @@ var WSWrapper = function() {
    * that won't exchange any message - should close and mark WSWrapper as error
    * @type {Number}
    */
-  this.ghostTimeout = 5000;
+  this.ghostTimeout = 2500;
   /**
    * If will try to ping the server or not
    */
@@ -328,7 +332,7 @@ SKMObject.mixin(WSWrapper.prototype, Subscribable, {
       this._connectionHandler.stopConnectingAttempt(opt.expected);
     }
     // destroy the native socket instance
-    this._destroyNativeSocket();
+    this._destroyNativeSocket(opt);
   },
 
   _initPingTimer: function() {
@@ -346,7 +350,11 @@ SKMObject.mixin(WSWrapper.prototype, Subscribable, {
    *
    * @description
    */
-  _destroyNativeSocket: function() {
+  _destroyNativeSocket: function(opt) {
+	if(opt && opt.expected ==false ){
+          this.fire('implementation:missing');
+          return;
+    }
     if ( this._nativeSocket ) {
       Logger.debug('WSWrapper : closing native websocket object');
       this._nativeSocket.close();
