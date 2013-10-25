@@ -1,5 +1,8 @@
   
 // SKM Core Object definition
+// 
+// @todo
+// - export the utility object/array functions
 
 define([], function()
 {
