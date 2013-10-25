@@ -101,6 +101,9 @@ SKMObject.mixin(WSConnector.prototype, {
    */
   handleImplementationMissing: function() {
     Logger.info('WSConnector.handleImplementationMissing');
+    // in case of implementation missing we need to null websocket, so we will never try to use it again, time loose.
+    window['WebSocket']=null;
+	window['MozWebSocket']=null;
     this.fire('transport:error');
   },
 
@@ -145,6 +148,8 @@ SKMObject.mixin(WSConnector.prototype, {
    */
   handleLinkGhosting: function() {
     Logger.info('Connector.handleLinkInterrupted');
+    //we need to null the websocket so we can assure that we won't try again on it, since it is not working
+    window['websocket']=null;
     this.fire('transport:error');
   },
 
